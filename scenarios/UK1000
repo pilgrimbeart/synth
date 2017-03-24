@@ -1,0 +1,14 @@
+{
+    "initial_action" : "deleteExisting",
+    "device_count" : 1000,
+    "start_time" : "2017-01-17T00:00:00",
+    "end_time" : "2017-01-18T00:00:00",
+    "install_timespan" : 86400,
+    "queue_criterion" : "messages",
+    "queue_limit" : 500,
+    "area_centre" : "Manchester, UK",
+    "area_radius" : "Brighton, UK",
+    "battery_life_mu" : 31536000,
+    "battery_life_sigma" : 60,
+    "comms_reliability" : 1.0
+}

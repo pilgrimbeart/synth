@@ -1,0 +1,14 @@
+{
+    "initial_action" : "deleteDemo",
+    "device_count" : 10,
+    "start_time" : "-1",
+    "end_time" : "now",
+    "install_timespan" : 60,
+    "queue_criterion" : "messages",
+    "queue_limit" : 1000,
+    "area_centre" : "Melbourne, Australia",
+    "area_radius" : "Brisbane, Australia",
+    "battery_life_mu" : 300,
+    "battery_life_sigma" : 60,
+    "comms_reliability" : 1.0
+}

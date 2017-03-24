@@ -1,0 +1,14 @@
+{
+    "initial_action" : "deleteExisting",
+    "device_count" : 10,
+    "start_time" : "now",
+    "end_time" : null,
+    "install_timespan" : 60,
+    "queue_criterion" : "interactive",
+    "queue_limit" : 1,
+    "area_centre" : "Berlin, Germany",
+    "area_radius" : "Hamburg, Germany",
+    "battery_life_mu" : 300,
+    "battery_life_sigma" : 60,
+    "comms_reliability" : 1.0
+}

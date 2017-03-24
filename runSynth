@@ -1,0 +1,4 @@
+command="python synth.py $@"
+echo $command
+pkill -f "$command"
+nohup $command >> ../synth_logs/$1.out 2>&1 &

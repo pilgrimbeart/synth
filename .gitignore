@@ -1,0 +1,6 @@
+*.pyc
+*.crt
+*.csr
+*.key
+pytz/
+requests/
