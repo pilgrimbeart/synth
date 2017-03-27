@@ -31,13 +31,14 @@ import re
 import sys
 import time
 
-import device
-import peopleNames
-import sim
-import zeromq_rx
-from client_aws import aws_client
 from client_devicepilot import devicepilot
-from geo import geo
+
+import synth.device
+import synth.server.zeromq_rx
+from synth.clients.client_aws import aws_client
+from synth.simulation import sim
+from synth.simulation.geo import geo
+from synth.simulation.helpers import peopleNames
 
 params = {}
 
@@ -79,7 +80,7 @@ def read_paramfile(filename):
 
 def main():
     def create_device(_):
-        deviceNum = device.num_devices()
+        deviceNum = synth.device.num_devices()
         (lon, lat) = pp.pick_point()
         (firstName, lastName) = (peopleNames.first_name(deviceNum), peopleNames.last_name(deviceNum))
         firmware = random.choice(["0.51", "0.52", "0.6", "0.6", "0.6", "0.7", "0.7", "0.7", "0.7"])
@@ -101,13 +102,14 @@ def main():
                  "factoryFirmware": firmware,
                  "firmware": firmware,
                  "operator": operator,
-                 "rssi": ((1 - radioGoodness) * (device.BAD_RSSI - device.GOOD_RSSI) + device.GOOD_RSSI),
+                 "rssi": ((1 - radioGoodness) * (
+                     synth.device.BAD_RSSI - synth.device.GOOD_RSSI) + synth.device.GOOD_RSSI),
                  "battery": 100
                  }
         # To create a device in DevicePilot, just start posting it. But in AWS we have to explicitly create it.
         if aws:
             aws.create_device(props["$id"])
-        d = device.Device(props)
+        d = synth.device.Device(props)
         if "comms_reliability" in params:
             # d.setCommsReliability(upDownPeriod=sim.days(0.5), reliability=1.0-math.pow(random.random(), 2))
             # pow(r,2) skews distribution towards reliable end
@@ -120,12 +122,12 @@ def main():
                 if web_params["headers"]["Instancename"] == params["instance_name"]:
                     mini = float(params["web_response_min"])
                     maxi = float(params["web_response_max"])
-                    sim.inject_event_delta(mini + random.random() * maxi, device.external_event, web_params)
+                    sim.inject_event_delta(mini + random.random() * maxi, synth.device.external_event, web_params)
 
     def enter_interactive():
         if dp:
             dp.enter_interactive(
-                device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
+                synth.device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
 
     logging.info("*** Synth starting ***")
 
@@ -152,17 +154,17 @@ def main():
     if "devicepilot_api" in params:
         dp = devicepilot.Api(url=params["devicepilot_api"], key=params["devicepilot_key"])
         dp.set_queue_flush(params["queue_criterion"], params["queue_limit"])
-        device.init(dp.post_device_q, params["instance_name"])
+        synth.device.init(dp.post_device_q, params["instance_name"])
     elif ("on_aws" in params) or ("aws_access_key_id" in params):
         k, s, r = None, None, None
         if "aws_access_key_id" in params:
             k, s, r = params["aws_access_key_id"], params["aws_secret_access_key"], params["aws_region"]
         aws = aws_client.Api(k, s, r)
-        device.init(aws.post_device, params["instance_name"])
+        synth.device.init(aws.post_device, params["instance_name"])
     else:
         logging.info("No device client specified")
 
-    zeromq_rx.init(post_web_event)
+    synth.zeromq_rx.init(post_web_event)
 
     sim.init(enter_interactive)
     sim.set_time_str(params["start_time"], isStartTime=True)
@@ -185,7 +187,7 @@ def main():
             dp.delete_devices_where('(is_demo_device == true)')
         if params["initial_action"] == "loadExisting":  # Load existing world
             for d in dp.get_devices():
-                device.Device(d)
+                synth.device.Device(d)
     if aws:
         if params["initial_action"] in ["deleteExisting", "deleteDemo"]:
             aws.delete_demo_devices()
@@ -199,11 +201,11 @@ def main():
         sim.next_event()
         if dp:
             dp.flush_post_queue_if_ready()
-    device.flush()
+    synth.device.flush()
     if dp:
         dp.flush_post_queue()
         dp.recalc_historical(
-            device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
+            synth.device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
     logging.info("Simulation ends")
 
     if dp:

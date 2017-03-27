@@ -31,8 +31,8 @@ import random
 
 import numpy
 
-import ISO8601
 import utils
+from synth.synth import ISO8601
 
 
 def to_hours(spec):
