@@ -31,28 +31,29 @@ import zeromq_rx
 
 
 def spawnIt(params):
-    print datetime.now(), "Got",str(params)
+    print datetime.now(), "Got", str(params)
     if not "action" in params:
         print datetime.now(), "(ignoring)"
         return
     if params["action"] != "spawn":
         print datetime.now(), "(ignoring)"
-        return        
-    print datetime.now(), "Spawning "+str(params)
-    (dpKey, dpApi) = (params["key"],params["api"])
-    
+        return
+    print datetime.now(), "Spawning " + str(params)
+    (dpKey, dpApi) = (params["key"], params["api"])
+
     try:
-        command = "./runSynth devicepilot_key="+dpKey+" devicepilot_api="+dpApi+" instance_name=devicepilot_key="+dpKey+" UserDemo"
-        print datetime.now(), "Command:",command
+        command = "./runSynth devicepilot_key=" + dpKey + " devicepilot_api=" + dpApi + " instance_name=devicepilot_key=" + dpKey + " UserDemo"
+        print datetime.now(), "Command:", command
         result = subprocess.call(command, shell=True)
         # CAUTION: shell=True makes us vulnerable to injection attacks, so we trust that the ZeroMQ publisher has sanitised inputs
     except Exception as e:
-        print "Error in spawn: "+str(e)
+        print "Error in spawn: " + str(e)
         print traceback.format_exc()
-    print "Result:",result
+    print "Result:", result
+
 
 if __name__ == "__main__":
-    print datetime.now(),"Starting Spawner"
+    print datetime.now(), "Starting Spawner"
     zeromq_rx.init(spawnIt)
     while True:
         time.sleep(1)

@@ -19,8 +19,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
- 
-import sys, threading, logging, traceback, json, time
+
+import json
+import logging
+import threading
+import time
+import traceback
+
 import zmq
 
 ZEROMQ_PORT = 5556
@@ -28,10 +33,11 @@ ZEROMQ_PORT = 5556
 # Socket to talk to server
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
-socket.connect ("tcp://localhost:%s" % ZEROMQ_PORT)
+socket.connect("tcp://localhost:%s" % ZEROMQ_PORT)
 
-topicfilter = ""    # ZeroMQ will do filtering for us, but only on client side
+topicfilter = ""  # ZeroMQ will do filtering for us, but only on client side
 socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
+
 
 def rxThread(callback):
     logging.info("ZeroMQ rx thread started")
@@ -42,14 +48,15 @@ def rxThread(callback):
             params = json.loads(string)
             callback(params)
         except Exception as e:
-            logging.error("Error in ZeroMQ thread: "+str(e))
+            logging.error("Error in ZeroMQ thread: " + str(e))
             logging.error(traceback.format_exc())
-            time.sleep(1)    # Avoid 100% CPU in case socket.recv() dies
+            time.sleep(1)  # Avoid 100% CPU in case socket.recv() dies
 
     logging.critical("ZeroMQ rx thread exiting")
-    
+
+
 def init(callback):
     logging.info("Starting ZeroMQ rx thread")
-    t = threading.Thread(target=rxThread, kwargs={"callback":callback})
+    t = threading.Thread(target=rxThread, kwargs={"callback": callback})
     t.daemon = True
     t.start()

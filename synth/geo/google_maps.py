@@ -22,46 +22,53 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import json, httplib, urllib
+import httplib
+import json
+import urllib
 
-GOOGLE_MAPS_API_KEY = open("../synth_certs/googlemapskey","rt").read().strip()
+GOOGLE_MAPS_API_KEY = open("../synth_certs/googlemapskey", "rt").read().strip()
+
 
 def set_headers():
     """ Sets the headers for sending to the DM server. We assume that the
         user has a token that allows them to login. """
-    headers = {}
-    headers["Content-Type"] = "application/json"
+    headers = {"Content-Type": "application/json"}
     return headers
 
 
 # ==== Google Maps API ====
 geoCache = {}
+
+
 def addressToLongLat(address):
     global geoCache
     if address in geoCache:
-        return geoCache[address]    # Avoid thrashing Google (expensive!)
+        return geoCache[address]  # Avoid thrashing Google (expensive!)
 
-    (lng,lat) = (None, None)
+    (lng, lat) = (None, None)
 
-    #try:
-    conn = httplib.HTTPSConnection("maps.google.com")   # Must now use SSL
-    URL = '/maps/api/geocode/json' + '?' + urllib.urlencode({'key':GOOGLE_MAPS_API_KEY}) + '&' + urllib.urlencode({'address':address})
+    # try:
+    conn = httplib.HTTPSConnection("maps.google.com")  # Must now use SSL
+    URL = '/maps/api/geocode/json' + '?' + urllib.urlencode({'key': GOOGLE_MAPS_API_KEY}) + '&' + urllib.urlencode(
+        {'address': address})
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
     result = resp.read()
     data = json.loads(result)
     # print "For address "+address+" response from maps.google.com is "+str(data)
     geo = data["results"][0]["geometry"]["location"]
-    (lng,lat) = (geo["lng"], geo["lat"])
+    (lng, lat) = (geo["lng"], geo["lat"])
     ##    except:
     ##        print "FAILED to do Google Maps lookup on location "+str(address)
-    geoCache[address] = (lng,lat)
-    return (lng,lat)
+    geoCache[address] = (lng, lat)
+    return lng, lat
+
 
 def main():
     address = "Cambridge, UK"
-    lon,lat = addressToLongLat(address)
-    print "For address",address,"Lon,Lat = ",lon,lat
- 
+    lon, lat = addressToLongLat(address)
+    print "For address", address, "Lon,Lat = ", lon, lat
+
+
 if __name__ == "__main__":
     main()

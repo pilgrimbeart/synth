@@ -33,41 +33,46 @@
 #
 # All devices created/deleted are of type DEFAULT_TYPENAME, so this library shouldn't affect existing devices
 
-import logging, json
+import json
+import logging
+
 import boto3
 
 DEFAULT_TYPENAME = "DemoThingType"
 
-class api():
+
+class api:
     def __init__(self, aws_access_key_id=None, aws_secret_access_key=None, aws_region=None):
-        if aws_access_key_id != None:
+        if aws_access_key_id is not None:
             logging.info("Loading AWS iot client with specific credentials")
             self.iotClient = boto3.client('iot',
-                                        aws_access_key_id=aws_access_key_id,
-                                        aws_secret_access_key=aws_secret_access_key,
-                                        region_name=aws_region)
+                                          aws_access_key_id=aws_access_key_id,
+                                          aws_secret_access_key=aws_secret_access_key,
+                                          region_name=aws_region)
             logging.info("Loading AWS iot-data client with specific credentials")
             self.iotData = boto3.client('iot-data',
                                         aws_access_key_id=aws_access_key_id,
                                         aws_secret_access_key=aws_secret_access_key,
                                         region_name=aws_region)
-        else:   # Will pick up any credentials previously set using AWS Configure, or in environment variables http://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
+        else:  # Will pick up any credentials previously set using AWS Configure, or in environment variables http://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
             logging.info("Loading AWS client with default credentials")
             self.iotClient = boto3.client('iot')
             self.iotData = boto3.client('iot-data')
 
-    def createDeviceType(self,name=DEFAULT_TYPENAME,description="A Thing created by the DevicePilot Synth virtual device simulator"):
+    def createDeviceType(self, name=DEFAULT_TYPENAME,
+                         description="A Thing created by the DevicePilot Synth virtual device simulator"):
         # Returns ARN
         # OK if thing type already exists
-        logging.info("Creating AWS ThingType "+name)
+        logging.info("Creating AWS ThingType " + name)
         response = self.iotClient.create_thing_type(thingTypeName=name,
-                                            thingTypeProperties={'thingTypeDescription' : description, 'searchableAttributes' : []})
+                                                    thingTypeProperties={'thingTypeDescription': description,
+                                                                         'searchableAttributes': []})
         return response['thingTypeArn']
 
-    def createDevice(self, name,typename=DEFAULT_TYPENAME):
+    def createDevice(self, name, typename=DEFAULT_TYPENAME):
         # Returns ARN
         # OK if thing already exists
-        logging.info("Creating AWS Thing "+name)
+        logging.info("Creating AWS Thing " + name)
         self.createDeviceType()  # Ensure type exists (inefficient!)
         response = self.iotClient.create_thing(thingName=name, thingTypeName=typename)
         return response['thingArn']
@@ -76,9 +81,9 @@ class api():
         return self.iotClient.list_things()['things']
 
     def deleteDevice(self, name):
-        logging.info("Deleting AWS thing "+name+" (and its shadow if any)")
+        logging.info("Deleting AWS thing " + name + " (and its shadow if any)")
 
-        response = self.iotClient.delete_thing(thingName = name)
+        response = self.iotClient.delete_thing(thingName=name)
         assert 200 <= int(response['ResponseMetadata']['HTTPStatusCode']) < 300
 
         try:
@@ -98,9 +103,9 @@ class api():
         # topic = "$aws/things/"+name+"/shadow/update"
         # iotData.publish(topic=topic, qos=1, payload=payload)
         # Publish seems to return 200 OK regardless of whether it actually succeeds!
-        logging.info("Updating AWS device "+name+" : "+str(payload))
-        data = { "state" : { "reported" : payload } }
-        response = self.iotData.update_thing_shadow(thingName=name,payload=json.dumps(data))
+        logging.info("Updating AWS device " + name + " : " + str(payload))
+        data = {"state": {"reported": payload}}
+        response = self.iotData.update_thing_shadow(thingName=name, payload=json.dumps(data))
         assert 200 <= int(response['ResponseMetadata']['HTTPStatusCode']) < 300
 
     def postDevice(self, device):
@@ -109,6 +114,7 @@ class api():
     def getDevice(self, name):
         response = self.iotData.get_thing_shadow(thingName=name)
         return response["payload"].read()
+
 
 if __name__ == "__main__":
     logging.getLogger("").setLevel(logging.INFO)
@@ -122,5 +128,3 @@ if __name__ == "__main__":
 ##    post("MyFirstThing", { "hello" : "world" })
 ##    result = get("MyFirstThing")
 ##    print result
-
-    

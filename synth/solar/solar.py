@@ -32,13 +32,15 @@ from synth import ISO8601
 def secondOfDay(epochSecs):
     s = ISO8601.epochSecondsToISO8601(epochSecs)
     s = "1970-01-01" + s[10:]
-    return ISO8601.toEpochSeconds(s)    
+    return ISO8601.toEpochSeconds(s)
+
 
 def diurnalCycle(epochSecs):
     # Varies from 0 at midnight to 1 at midday and back again
     e = secondOfDay(epochSecs)
     frac = e / float(days(1))  # Fraction of a day
-    return 0.5 + sin(3*pi/2 + frac*pi*2)/2
+    return 0.5 + sin(3 * pi / 2 + frac * pi * 2) / 2
+
 
 def sunAngle(epochSecs, (longitude, latitude)):
     dateS = ISO8601.epochSecondsToISO8601(epochSecs)
@@ -51,25 +53,28 @@ def sunAngle(epochSecs, (longitude, latitude)):
     (azimuthD, elevationD) = sunpos_2.sun_position(year, month, day, hour, minute, sec, latitude, longitude)
     return azimuthD, elevationD
 
+
 def sunBright(epochSecs, (longitude, latitude)):
-    azD,elevD = sunAngle(epochSecs, (longitude, latitude))
-    elevR = 2*pi*(elevD/360.0)
+    azD, elevD = sunAngle(epochSecs, (longitude, latitude))
+    elevR = 2 * pi * (elevD / 360.0)
     bright = max(0.0, sin(elevR))
     return bright
 
+
 if __name__ == "__main__":
     import random
-    elevMin=1000000
-    elevMax=-1000000
+
+    elevMin = 1000000
+    elevMax = -1000000
     for i in range(1000):
-        longitude = random.random()*360-180.0
-        latitude = random.random()*180-9.0
-        t = int(random.random()*60*60*24*365*50)
+        longitude = random.random() * 360 - 180.0
+        latitude = random.random() * 180 - 9.0
+        t = int(random.random() * 60 * 60 * 24 * 365 * 50)
         print longitude, latitude, t
-        azD,elevD = sunBright(t, (longitude, latitude))
+        azD, elevD = sunBright(t, (longitude, latitude))
         print "shit"
-        elevR = 2*pi*(elevD/360.0)
-        print longitude, latitude, azD,elevD, sin(elevR)
+        elevR = 2 * pi * (elevD / 360.0)
+        print longitude, latitude, azD, elevD, sin(elevR)
         elevMin = min(elevMin, elevD)
         elevMax = max(elevMax, elevD)
-    print "Min/Max elev:",elevMin, elevMax
+    print "Min/Max elev:", elevMin, elevMax

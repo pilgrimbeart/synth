@@ -37,43 +37,49 @@ import utils
 
 def toHours(spec):
     # Spec is of the form "08:00-10:00"
-    return (int(spec[0:2])+int(spec[3:5])/60.0, int(spec[6:8])+int(spec[9:11])/60.0)
+    return int(spec[0:2]) + int(spec[3:5]) / 60.0, int(spec[6:8]) + int(spec[9:11]) / 60.0
+
 
 def hourInDay(t):
     # Returns hour in day (as a float, to nearest second, e.g. 07:30 is 7.5)
     dt = ISO8601.epochSecondsToDatetime(t)
-    return int(dt.strftime("%H")) + int(dt.strftime("%M"))/60.0 + int(dt.strftime("%S"))/3600.0    
+    return int(dt.strftime("%H")) + int(dt.strftime("%M")) / 60.0 + int(dt.strftime("%S")) / 3600.0
+
 
 def dayOfWeek(t):
     # Returns e.g. "Mon"
     dt = ISO8601.epochSecondsToDatetime(t)
     return dt.strftime("%a")
 
+
 def startOfNextDay(t):
     # Given a time, returns time of next midnight
-    s = ISO8601.epochSecondsToISO8601(t)    # e.g. "2007-10-23T23:32:10Z
+    s = ISO8601.epochSecondsToISO8601(t)  # e.g. "2007-10-23T23:32:10Z
     dt = ISO8601.epochSecondsToDatetime(t)
     dt += datetime.timedelta(days=1)
-    s = dt.strftime("%Y-%m-%dT00:00:00")    # We've assumed timezone!
+    s = dt.strftime("%Y-%m-%dT00:00:00")  # We've assumed timezone!
     return ISO8601.toEpochSeconds(s)
+
 
 def hourToHHMMSS(h):
     # Given a floating hour time, return a string in HH:MM:SS format (e.g. 14.5 becomes "14:30:00")
-    assert h<24
+    assert h < 24
     hours = int(h)
-    minsF = (h-int(h))*60.0
+    minsF = (h - int(h)) * 60.0
     mins = int(minsF)
-    secs = int((minsF-mins)*60.0)
+    secs = int((minsF - mins) * 60.0)
     return "%02d:%02d:%02d" % (hours, mins, secs)
 
-def hourWave(t,spec):
+
+def hourWave(t, spec):
     (startHour, endHour) = toHours(spec)
     h = hourInDay(t)
     if (h >= startHour) and (h < endHour):
         return 1.0
     return 0.0
 
-def dayWave(t,spec):
+
+def dayWave(t, spec):
     # spec is a list e.g. ["Mon", "Tue", "Wed"]
     if dayOfWeek(t) in spec:
         return 1.0
@@ -87,7 +93,8 @@ def jitter(t, X, amountS):
     dt = ISO8601.epochSecondsToDatetime(t)
     dayOfYear = int(dt.strftime("%j"))
     year = int(dt.strftime("%Y"))
-    uniqueValue = year*367+dayOfYear+abs(hash(X))   # Note that hash is implementation-dependent so may give different results on different platforms
+    uniqueValue = year * 367 + dayOfYear + abs(
+        hash(X))  # Note that hash is implementation-dependent so may give different results on different platforms
     rand = utils.hashIt(uniqueValue, 100)
     sign = int(str(uniqueValue)[0]) < 5
     v = (rand / 100.0) * amountS
@@ -101,20 +108,21 @@ def nextUsageTime(t, daySpec, hourSpec):
     # work out a next time t which falls within that spec (picking randomly within the hour range)
     # (if given a time already within spec, it moves to the NEXT such time)
     (startHour, endHour) = toHours(hourSpec)
-    (h,d) = (hourInDay(t), dayOfWeek(t))
-    if (d in daySpec) and (h<endHour):  # If already in spec, move beyond
-        t += 60*60*endHour-h
-        
-    while True: # Move to a valid day of the week
-        (h,d) = (hourInDay(t), dayOfWeek(t))
-        if (d in daySpec) and (h<endHour):
+    (h, d) = (hourInDay(t), dayOfWeek(t))
+    if (d in daySpec) and (h < endHour):  # If already in spec, move beyond
+        t += 60 * 60 * endHour - h
+
+    while True:  # Move to a valid day of the week
+        (h, d) = (hourInDay(t), dayOfWeek(t))
+        if (d in daySpec) and (h < endHour):
             break
         t = startOfNextDay(t)
-    chosenHour = startHour + (endHour-startHour)*random.random()
+    chosenHour = startHour + (endHour - startHour) * random.random()
     ts = ISO8601.epochSecondsToISO8601(t)
-    ts = ts[:11]+hourToHHMMSS(chosenHour)+ts[19:]
+    ts = ts[:11] + hourToHHMMSS(chosenHour) + ts[19:]
     t = ISO8601.toEpochSeconds(ts)
     return t
+
 
 def interp(specStr, t):
     # <specStr> is a string containing a list of pairs e.g. "[[0,20],[30,65],[60,50],[90,75]]"
@@ -124,14 +132,15 @@ def interp(specStr, t):
     specList = ast.literal_eval(specStr)
     X = [i[0] for i in specList]
     Y = [i[1] for i in specList]
-    day = t/(60*60*24.0)
-    return numpy.interp(day,X,Y)
+    day = t / (60 * 60 * 24.0)
+    return numpy.interp(day, X, Y)
+
 
 if __name__ == "__main__":
     specStr = "[[0,20],[30,65],[60,50],[90,75]]"
-    for day in range(-10,100):
-        print day, interp(specStr, day*60*60*24)
-    
+    for day in range(-10, 100):
+        print day, interp(specStr, day * 60 * 60 * 24)
+
 ##    specW = ["Mon","Tue","Wed","Thu","Fri"]
 ##    specD = "08:00-10:00"
 ##    t = 0
@@ -149,4 +158,3 @@ if __name__ == "__main__":
 ##                    hours(t,"08:00-10:00"), hours(t,"16:00-18:00")
 ##                )
 ##              )
-

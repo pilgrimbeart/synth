@@ -23,10 +23,9 @@
 # SOFTWARE.
 
 def hashIt(n, limit):
-    x = n * 19079 # Prime
-    x = (int(str(x)[::-1])) # Reverse its string representation
+    x = n * 19079  # Prime
+    x = (int(str(x)[::-1]))  # Reverse its string representation
     n = n ^ x
     n = (n * 7919)  # Prime
     n = n % limit
     return n
-    
