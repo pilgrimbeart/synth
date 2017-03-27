@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 #
+# Standalone program which spawns new Synth processes
+#
 # Copyright (c) 2017 DevicePilot Ltd.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,13 +22,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+
+from datetime import datetime
+
+import subprocess
 import time
 import zeromq_rx
 
-def printIt(params):
-    print str(params)
+
+def spawnIt(params):
+    print datetime.now(), "Got",str(params)
+    if not "action" in params:
+        print datetime.now(), "(ignoring)"
+        return
+    if params["action"] != "spawn":
+        print datetime.now(), "(ignoring)"
+        return        
+    print datetime.now(), "Spawning "+str(params)
+    (dpKey, dpApi) = (params["key"],params["api"])
+    
+    try:
+        command = "./runSynth devicepilot_key="+dpKey+" devicepilot_api="+dpApi+" instance_name=devicepilot_key="+dpKey+" UserDemo"
+        print datetime.now(), "Command:",command
+        result = subprocess.call(command, shell=True)
+        # CAUTION: shell=True makes us vulnerable to injection attacks, so we trust that the ZeroMQ publisher has sanitised inputs
+    except Exception as e:
+        print "Error in spawn: "+str(e)
+        print traceback.format_exc()
+    print "Result:",result
 
 if __name__ == "__main__":
-    zeromq_rx.init(printIt)
+    print datetime.now(),"Starting Spawner"
+    zeromq_rx.init(spawnIt)
     while True:
-        time.sleep(1)    
+        time.sleep(1)

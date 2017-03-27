@@ -23,16 +23,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging, math, time, sys, json, threading, subprocess, re
-import random   # Might want to replace this with something we control
-from geo import geo
-from client_devicepilot import devicepilot
-from client_aws import aws_client
+import json
+import logging
+import math
+import random  # Might want to replace this with something we control
+import re
+import sys
+import time
+
+import device
 import peopleNames
 import sim
-import ISO8601
-import device
 import zeromq_rx
+from client_aws import aws_client
+from client_devicepilot import devicepilot
+from geo import geo
 
 params = {}
 
@@ -92,7 +97,7 @@ def main():
                     "factoryFirmware" : firmware,
                     "firmware" : firmware,
                     "operator" : operator,
-                    "rssi" : ((1-radioGoodness)*(device.BAD_RSSI-device.GOOD_RSSI)+device.GOOD_RSSI),
+                    "rssi" : ((1-radioGoodness) * (device.BAD_RSSI - device.GOOD_RSSI) + device.GOOD_RSSI),
                     "battery" : 100
                 }
         # To create a device in DevicePilot, just start posting it. But in AWS we have to explicitly create it.
@@ -110,7 +115,7 @@ def main():
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
                     mini = float(params["web_response_min"])
                     maxi = float(params["web_response_max"])
-                    sim.injectEventDelta(mini + random.random()*maxi, device.externalEvent, webParams)
+                    sim.injectEventDelta(mini + random.random() * maxi, device.externalEvent, webParams)
 
     def enterInteractive():
         if dp:
@@ -146,7 +151,7 @@ def main():
         k,s = None,None
         if "aws_access_key_id" in params:
             k,s,r = params["aws_access_key_id"], params["aws_secret_access_key"], params["aws_region"]
-        aws = aws_client.api(k,s,r)
+        aws = aws_client.api(k, s, r)
         device.init(aws.postDevice, params["instance_name"])
     else:
         logging.info("No device client specified")

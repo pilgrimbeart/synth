@@ -25,9 +25,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import ISO8601, datetime, random, ast
+import ast
+import datetime
+import random
+
 import numpy
+
+import ISO8601
 import utils
+
 
 def toHours(spec):
     # Spec is of the form "08:00-10:00"
@@ -82,7 +88,7 @@ def jitter(t, X, amountS):
     dayOfYear = int(dt.strftime("%j"))
     year = int(dt.strftime("%Y"))
     uniqueValue = year*367+dayOfYear+abs(hash(X))   # Note that hash is implementation-dependent so may give different results on different platforms
-    rand = utils.hashIt(uniqueValue,100)
+    rand = utils.hashIt(uniqueValue, 100)
     sign = int(str(uniqueValue)[0]) < 5
     v = (rand / 100.0) * amountS
     if sign:

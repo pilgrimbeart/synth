@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 
-from utils import hashIt
+from synth.utils import hashIt
 
 femaleNames=["Amelia","Olivia","Isla","Emily","Poppy","Ava","Isabella","Jessica","Lily","Sophie","Grace","Sophia","Mia","Evie","Ruby","Ella","Scarlett","Isabelle","Chloe","Sienna","Freya","Phoebe","Charlotte","Daisy","Alice","Florence","Eva","Sofia","Millie","Lucy","Evelyn","Elsie","Rosie","Imogen","Lola","Matilda","Elizabeth","Layla","Holly","Lilly","Molly","Erin","Ellie","Maisie","Maya","Abigail","Eliza","Georgia","Jasmine","Esme","Willow","Bella","Annabelle","Ivy","Amber","Emilia","Emma","Summer","Hannah","Eleanor","Harriet","Rose","Amelie","Lexi","Megan","Gracie","Zara","Lacey","Martha","Anna","Violet","Darcey","Maria","Maryam","Brooke","Aisha","Katie","Leah","Thea","Darcie","Hollie","Amy","Mollie","Heidi","Lottie","Bethany","Francesca","Faith","Harper","Nancy","Beatrice","Isabel","Darcy","Lydia","Sarah","Sara","Julia","Victoria","Zoe","Robyn"]
 

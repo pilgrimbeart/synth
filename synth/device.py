@@ -25,13 +25,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import random, math
-import sim
-import timewave
-from solar import solar
 import datetime
-import threading
-import logging, traceback
+import logging
+import math
+import random
+import traceback
+
+import sim
+from solar import solar
+from synth import timewave
 
 devices = []
 
@@ -55,7 +57,7 @@ def numDevices():
     return n
 
 def logEntry(properties):
-    logfile.write(sim.getTimeStr()+" ")
+    logfile.write(sim.getTimeStr() + " ")
     for k in sorted(properties.keys()):
         s = str(k) + ","
         if isinstance(properties[k], basestring):
@@ -71,7 +73,7 @@ def logEntry(properties):
 
 def logString(s):
     logging.info(s)
-    logfile.write(sim.getTimeStr()+" "+s+"\n")
+    logfile.write(sim.getTimeStr() + " " + s + "\n")
 
 def flush():
     logfile.close()
@@ -138,7 +140,7 @@ class device():
     def tickProductUsage(self, _):
         if self.getProperty("battery") > 0:
             self.setProperty("buttonPress", 1)
-            t = timewave.nextUsageTime(sim.getTime(), ["Mon","Tue","Wed","Thu","Fri"], "06:00-09:00")
+            t = timewave.nextUsageTime(sim.getTime(), ["Mon", "Tue", "Wed", "Thu", "Fri"], "06:00-09:00")
             sim.injectEvent(t, self.tickProductUsage, self)
 
     def setCommsReliability(self, upDownPeriod=sim.days(1), reliability=1.0):
@@ -183,13 +185,13 @@ class device():
         return propName in self.properties
     
     def setProperty(self, propName, value):
-        newProps = { propName : value, "$ts" : sim.getTime1000(), "$id" : self.properties["$id"] }
+        newProps = {propName : value, "$ts" : sim.getTime1000(), "$id" : self.properties["$id"]}
         self.properties.update(newProps)
         self.doComms(newProps)
 
     def setProperties(self, newProps):
         self.properties.update(newProps)
-        self.properties.update({ "$ts" : sim.getTime1000(), "$id" : self.properties["$id"] })
+        self.properties.update({ "$ts" : sim.getTime1000(), "$id" : self.properties["$id"]})
         self.doComms(newProps)
 
     def tickBatteryDecay(self, _):
@@ -206,8 +208,8 @@ class device():
     def tickHourly(self, _):
         if self.getProperty("battery") > 0:
             self.setProperty("light", solar.sunBright(sim.getTime(),
-                                                    (float(device.getProperty(self,"longitude")),float(device.getProperty(self,"latitude")))
-                                                    ))
+                                                      (float(device.getProperty(self,"longitude")),float(device.getProperty(self,"latitude")))
+                                                      ))
             sim.injectEventDelta(sim.hours(1), self.tickHourly, self)
 
 

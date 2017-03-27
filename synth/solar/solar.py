@@ -24,8 +24,10 @@
 # SOFTWARE.
 
 from math import sin, pi
+
 import sunpos_2
-import ISO8601
+from synth import ISO8601
+
 
 def secondOfDay(epochSecs):
     s = ISO8601.epochSecondsToISO8601(epochSecs)
@@ -46,7 +48,7 @@ def sunAngle(epochSecs, (longitude, latitude)):
     hour = int(dateS[11:13])
     minute = int(dateS[14:16])
     sec = int(dateS[17:19])
-    (azimuthD, elevationD) = sunpos_2.sun_position(year,month,day, hour,minute,sec, latitude,longitude)
+    (azimuthD, elevationD) = sunpos_2.sun_position(year, month, day, hour, minute, sec, latitude, longitude)
     return azimuthD, elevationD
 
 def sunBright(epochSecs, (longitude, latitude)):

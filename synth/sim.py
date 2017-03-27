@@ -23,10 +23,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import time
 import logging
-import ISO8601
 import threading
+import time
+
+import ISO8601
 
 simTime = 0     # Global "now" in epoch-seconds
 startTime = None
