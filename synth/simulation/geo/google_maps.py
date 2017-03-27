@@ -45,7 +45,7 @@ def address_to_long_lat(address):
     if address in geoCache:
         return geoCache[address]  # Avoid thrashing Google (expensive!)
 
-    (lng, lat) = (None, None)
+    # (lng, lat) = (None, None)
 
     # try:
     conn = httplib.HTTPSConnection("maps.google.com")  # Must now use SSL

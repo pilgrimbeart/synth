@@ -32,7 +32,7 @@ import random
 import numpy
 
 import utils
-from synth.synth import ISO8601
+from synth.simulation.helpers import ISO8601
 
 
 def to_hours(spec):
@@ -54,7 +54,7 @@ def day_of_week(t):
 
 def start_of_next_day(t):
     # Given a time, returns time of next midnight
-    s = ISO8601.epoch_seconds_to_iso8601(t)  # e.g. "2007-10-23T23:32:10Z
+    # s = ISO8601.epoch_seconds_to_iso8601(t)  # e.g. "2007-10-23T23:32:10Z
     dt = ISO8601.epoch_seconds_to_datetime(t)
     dt += datetime.timedelta(days=1)
     s = dt.strftime("%Y-%m-%dT00:00:00")  # We've assumed timezone!
@@ -132,8 +132,8 @@ def interp(spec_str, t):
     specList = ast.literal_eval(spec_str)
     X = [i[0] for i in specList]
     Y = [i[1] for i in specList]
-    day = t / (60 * 60 * 24.0)
-    return numpy.interp(day, X, Y)
+    _day = t / (60 * 60 * 24.0)
+    return numpy.interp([_day], X, Y)[0]
 
 
 if __name__ == "__main__":

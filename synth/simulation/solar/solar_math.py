@@ -38,11 +38,12 @@ def second_of_day(epoch_secs):
 def diurnal_cycle(epoch_secs):
     # Varies from 0 at midnight to 1 at midday and back again
     e = second_of_day(epoch_secs)
-    frac = e / float(days(1))  # Fraction of a day
+    days = 60 * 60 * 24
+    frac = e / float(days)  # Fraction of a day
     return 0.5 + sin(3 * pi / 2 + frac * pi * 2) / 2
 
 
-def sun_angle(epoch_secs, (longitude, latitude)):
+def sun_angle(epoch_secs, (_longitude, _latitude)):
     date_s = ISO8601.epoch_seconds_to_iso8601(epoch_secs)
     year = int(date_s[0:4])
     month = int(date_s[5:7])
@@ -50,12 +51,12 @@ def sun_angle(epoch_secs, (longitude, latitude)):
     hour = int(date_s[11:13])
     minute = int(date_s[14:16])
     sec = int(date_s[17:19])
-    (azimuthD, elevationD) = sunpos_2.sun_position(year, month, day, hour, minute, sec, latitude, longitude)
+    (azimuthD, elevationD) = sunpos_2.sun_position(year, month, day, hour, minute, sec, _latitude, _longitude)
     return azimuthD, elevationD
 
 
-def sun_bright(epoch_secs, (longitude, latitude)):
-    az_d, elev_d = sun_angle(epoch_secs, (longitude, latitude))
+def sun_bright(epoch_secs, (_longitude, _latitude)):
+    az_d, elev_d = sun_angle(epoch_secs, (_longitude, _latitude))
     elev_r = 2 * pi * (elev_d / 360.0)
     bright = max(0.0, sin(elev_r))
     return bright

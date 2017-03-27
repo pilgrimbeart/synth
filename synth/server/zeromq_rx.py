@@ -32,10 +32,12 @@ ZEROMQ_PORT = 5556
 
 # Socket to talk to server
 context = zmq.Context()
+# noinspection PyUnresolvedReferences
 socket = context.socket(zmq.SUB)
 socket.connect("tcp://localhost:%s" % ZEROMQ_PORT)
 
 topicfilter = ""  # ZeroMQ will do filtering for us, but only on client side
+# noinspection PyUnresolvedReferences
 socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
 
 

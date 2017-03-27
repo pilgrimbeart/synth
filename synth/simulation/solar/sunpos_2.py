@@ -85,8 +85,8 @@ def latlong_float_conversion(latitude, longitude):
     """ Convert from floating values into DMS Sexagesimal notation
     """
     # determine direction from sign
-    lat = 'N' if latitude >= 0 else 'S'
-    lon = 'E' if longitude >= 0 else 'W'
+    _lat = 'N' if latitude >= 0 else 'S'
+    _lon = 'E' if longitude >= 0 else 'W'
     #
     latitude = abs(latitude)
     longitude = abs(longitude)
@@ -103,7 +103,7 @@ def latlong_float_conversion(latitude, longitude):
     lat_s = present_seconds(lat_s)
     lon_s = present_seconds(lon_s)
     #
-    res = "%d°%d'%s%s %d°%d'%s%s" % (lat_d, lat_m, lat_s, lat, lon_d, lon_m, lon_s, lon)
+    res = "%d°%d'%s%s %d°%d'%s%s" % (lat_d, lat_m, lat_s, _lat, lon_d, lon_m, lon_s, _lon)
     return res
 
 
@@ -129,28 +129,28 @@ def parse_digits(value):
     return res
 
 
-def latlong_str_conversion(latlong):
+def latlong_str_conversion(_latlong):
     """ parse a DMS string return floats for lat, lon """
-    latlong = latlong.upper()
-    lat = lon = False
-    n = latlong.find('N')
-    s = latlong.find('S')
-    e = latlong.find('E')
-    w = latlong.find('W')
+    _latlong = _latlong.upper()
+    _lat = _lon = False
+    n = _latlong.find('N')
+    _s = _latlong.find('S')
+    e = _latlong.find('E')
+    w = _latlong.find('W')
     # print n,s,e,w, latlong
-    if n > 0 or s > 0:
-        lat = latlong[:n + s + 1].strip()
-        if e > 0 or w > 0 and n + s + 2 <= len(latlong):
-            lon = latlong[n + s + 2:e + w + 1].strip()
+    if n > 0 or _s > 0:
+        _lat = _latlong[:n + _s + 1].strip()
+        if e > 0 or w > 0 and n + _s + 2 <= len(_latlong):
+            _lon = _latlong[n + _s + 2:e + w + 1].strip()
     # print "#",lat
     # print "#",lon
-    lat_tuple = parse_digits(lat)
+    lat_tuple = parse_digits(_lat)
     # lat_tuple = [int(a) if a else 0 for a in lat_tuple]
-    lon_tuple = parse_digits(lon)
+    lon_tuple = parse_digits(_lon)
     # lon_tuple = [int(a) if a else 0 for a in lon_tuple]
     # print lat_tuple, lon_tuple
     latitude = lat_tuple[0] + lat_tuple[1] / 60.0 + lat_tuple[2] / 3600.0
-    latitude = -latitude if s > 0 else latitude
+    latitude = -latitude if _s > 0 else latitude
     longitude = lon_tuple[0] + lon_tuple[1] / 60.0 + lon_tuple[2] / 3600.0
     longitude = -longitude if w > 0 else longitude
     return latitude, longitude
@@ -208,7 +208,7 @@ def right_ascension_radians(oblqec, eclong):
     ra = math.atan(num / den)
     if den < 0:
         ra += math.pi
-    if den >= 0 > num:
+    if den >= 0.0 and den > num:
         ra += 2 * math.pi
     return ra
 
@@ -229,8 +229,8 @@ def hour_angle_radians(lmst, ra):
     return ((lmst - ra + math.pi) % (2 * math.pi)) - math.pi
 
 
-def elevation_radians(lat, dec, ha):
-    return math.asin(math.sin(dec) * math.sin(lat) + math.cos(dec) * math.cos(lat) * math.cos(ha))
+def elevation_radians(_lat, dec, ha):
+    return math.asin(math.sin(dec) * math.sin(_lat) + math.cos(dec) * math.cos(_lat) * math.cos(ha))
 
 
 # def solarAzimuthRadiansJosh(lat, dec, ha, el):
@@ -241,18 +241,18 @@ def elevation_radians(lat, dec, ha):
 #    if not cosAzPos: az = math.pi-az
 #    return (az)
 
-def solar_azimuth_radians_charlie(lat, dec, ha):
-    zenithAngle = math.acos(math.sin(lat) * math.sin(dec) + math.cos(lat) * math.cos(dec) * math.cos(ha))
-    az = math.acos((math.sin(lat) * math.cos(zenithAngle) - math.sin(dec)) / (math.cos(lat) * math.sin(zenithAngle)))
+def solar_azimuth_radians_charlie(_lat, dec, ha):
+    zenithAngle = math.acos(math.sin(_lat) * math.sin(dec) + math.cos(_lat) * math.cos(dec) * math.cos(ha))
+    _az = math.acos((math.sin(_lat) * math.cos(zenithAngle) - math.sin(dec)) / (math.cos(_lat) * math.sin(zenithAngle)))
     if ha > 0:
-        az = az + math.pi
+        _az = _az + math.pi
     else:
-        az = (3 * math.pi - az) % (2 * math.pi)
-    return az
+        _az = (3 * math.pi - _az) % (2 * math.pi)
+    return _az
 
 
 def sun_position(year, month, day, hour=12, minute=0, sec=0,
-                 lat=46.5, longitude=6.5):
+                 _lat=46.5, longitude=6.5):
     time = calc_time(year, month, day, hour, minute, sec)
     hour = hour + minute / 60.0 + sec / 3600.0
     # Ecliptic coordinates  
@@ -269,13 +269,13 @@ def sun_position(year, month, day, hour=12, minute=0, sec=0,
     # Hour angle
     ha = hour_angle_radians(lmst, ra)
     # Latitude to radians
-    lat = math.radians(lat)
+    _lat = math.radians(_lat)
     # Azimuth and elevation
-    el = elevation_radians(lat, dec, ha)
+    _el = elevation_radians(_lat, dec, ha)
     # azJ = solarAzimuthRadiansJosh(lat, dec, ha, el)
-    azC = solar_azimuth_radians_charlie(lat, dec, ha)
+    azC = solar_azimuth_radians_charlie(_lat, dec, ha)
 
-    elevation = math.degrees(el)
+    elevation = math.degrees(_el)
     #    azimuthJ  = math.degrees(azJ)
     azimuth = math.degrees(azC)
     return azimuth, elevation
@@ -307,17 +307,17 @@ if __name__ == '__main__':
                (0, 0, 2.26, 66.89)
                ]
     print "Noon July 1 2014 at 0,0 = 2.26, 66.89"
-    print "", sun_position(2014, 7, 1, lat=0, longitude=0)
+    print "", sun_position(2014, 7, 1, _lat=0, longitude=0)
     print "Noon Dec 22 2012 at 41,0 = 180.03, 25.6"
-    print "", sun_position(2012, 12, 22, lat=41, longitude=0)
+    print "", sun_position(2012, 12, 22, _lat=41, longitude=0)
     print "Noon Dec 22 2012 at -41,0 = 359.09, 72.44"
-    print "", sun_position(2012, 12, 22, lat=-41, longitude=0)
+    print "", sun_position(2012, 12, 22, _lat=-41, longitude=0)
     print
 
     for s in samples:
         lat, lon, az, el = s
         print "\nFor lat,long:", lat, lon,
-        calc_az, calc_el = sun_position(2014, 7, 1, lat=lat, longitude=lon)
+        calc_az, calc_el = sun_position(2014, 7, 1, _lat=lat, longitude=lon)
         az_ok = abs(az - calc_az) < 0.5
         el_ok = abs(el - calc_el) < 0.5
         if not (az_ok and el_ok):

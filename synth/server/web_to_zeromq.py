@@ -54,6 +54,7 @@ def create_socket():
     global zeromqSocket
     logging.info("Initialising ZeroMQ to publish to port " + str(ZEROMQ_PORT))
     context = zmq.Context()
+    # noinspection PyUnresolvedReferences
     zeromqSocket = context.socket(zmq.PUB)
     zeromqSocket.bind("tcp://*:%s" % ZEROMQ_PORT)
 
@@ -138,8 +139,8 @@ def is_running():
         abort(403)
 
     try:
-        x = subprocess.check_output("ps uax | grep 'python' | grep 'devicepilot_key=" + dpKey + "' | grep -v grep",
-                                    shell=True)
+        subprocess.check_output("ps uax | grep 'python' | grep 'devicepilot_key=" + dpKey + "' | grep -v grep",
+                                shell=True)
     except subprocess.CalledProcessError:
         return '{ "active" : false }'
     return '{ "active" : true }'
@@ -169,7 +170,7 @@ def start_web_server():
                                                         "ssl_context": (
                                                             '../synth_certs/ssl.crt', '../synth_certs/ssl.key')})
     # Doing app.run() with "threaded=True" starts a new thread for each incoming request, improving crash resilience
-    # By default Flask serves to 127.0.0.1 which is local loopback (not externally-visible), so use 0.0.0.0 for
+    # By default Flask serves to 127.0.0.1 which is local loop back (not externally-visible), so use 0.0.0.0 for
     # externally-visible
     # We run entire Flask server as a distinct process so we can terminate it if it fails (can't terminate
     # threads in Python)

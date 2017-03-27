@@ -31,10 +31,10 @@ import re
 import sys
 import time
 
-from client_devicepilot import devicepilot
+from synth.clients.client_devicepilot import devicepilot
 
-import synth.device
-import synth.server.zeromq_rx
+from synth.device import device
+from synth.server import zeromq_rx
 from synth.clients.client_aws import aws_client
 from synth.simulation import sim
 from synth.simulation.geo import geo
@@ -66,7 +66,7 @@ params.update({
 
 def rand_list(start, delta, n):
     # Create a sorted list of <n> whole numbers ranging between <start> and <delta>
-    L = [start + random.random() * delta for x in range(n)]
+    L = [start + random.random() * delta for _ in range(n)]
     return sorted(L)
 
 
@@ -80,7 +80,7 @@ def read_paramfile(filename):
 
 def main():
     def create_device(_):
-        deviceNum = synth.device.num_devices()
+        deviceNum = device.num_devices()
         (lon, lat) = pp.pick_point()
         (firstName, lastName) = (peopleNames.first_name(deviceNum), peopleNames.last_name(deviceNum))
         firmware = random.choice(["0.51", "0.52", "0.6", "0.6", "0.6", "0.7", "0.7", "0.7", "0.7"])
@@ -89,7 +89,7 @@ def main():
             radioGoodness = 1.0 - math.pow(random.random(), 2)  # Skewed towards 1
         else:
             radioGoodness = math.pow(random.random(), 2)  # Skewed towards 0
-        props = {"$id": "-".join([format(random.randrange(0, 255), '02x') for i in range(6)]),
+        props = {"$id": "-".join([format(random.randrange(0, 255), '02x') for _ in range(6)]),
                  # A 6-byte MAC address 01-23-45-67-89-ab
                  "$ts": sim.get_time_1000(),
                  "is_demo_device": True,  # A flag which lets us selectively delete later
@@ -103,18 +103,18 @@ def main():
                  "firmware": firmware,
                  "operator": operator,
                  "rssi": ((1 - radioGoodness) * (
-                     synth.device.BAD_RSSI - synth.device.GOOD_RSSI) + synth.device.GOOD_RSSI),
+                     device.BAD_RSSI - device.GOOD_RSSI) + device.GOOD_RSSI),
                  "battery": 100
                  }
         # To create a device in DevicePilot, just start posting it. But in AWS we have to explicitly create it.
         if aws:
             aws.create_device(props["$id"])
-        d = synth.device.Device(props)
+        _d = device.Device(props)
         if "comms_reliability" in params:
             # d.setCommsReliability(upDownPeriod=sim.days(0.5), reliability=1.0-math.pow(random.random(), 2))
             # pow(r,2) skews distribution towards reliable end
-            d.set_comms_reliability(upDownPeriod=sim.days(0.5), reliability=params["comms_reliability"])
-        d.set_battery_life(params["battery_life_mu"], params["battery_life_sigma"], "battery_autoreplace" in params)
+            _d.set_comms_reliability(up_down_period=sim.days(0.5), reliability=params["comms_reliability"])
+        _d.set_battery_life(params["battery_life_mu"], params["battery_life_sigma"], "battery_autoreplace" in params)
 
     def post_web_event(web_params):  # CAUTION: Called asynchronously from the web server thread
         if "action" in web_params:
@@ -122,12 +122,12 @@ def main():
                 if web_params["headers"]["Instancename"] == params["instance_name"]:
                     mini = float(params["web_response_min"])
                     maxi = float(params["web_response_max"])
-                    sim.inject_event_delta(mini + random.random() * maxi, synth.device.external_event, web_params)
+                    sim.inject_event_delta(mini + random.random() * maxi, device.external_event, web_params)
 
     def enter_interactive():
         if dp:
             dp.enter_interactive(
-                synth.device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
+                device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
 
     logging.info("*** Synth starting ***")
 
@@ -154,20 +154,20 @@ def main():
     if "devicepilot_api" in params:
         dp = devicepilot.Api(url=params["devicepilot_api"], key=params["devicepilot_key"])
         dp.set_queue_flush(params["queue_criterion"], params["queue_limit"])
-        synth.device.init(dp.post_device_q, params["instance_name"])
+        device.init(dp.post_device_q, params["instance_name"])
     elif ("on_aws" in params) or ("aws_access_key_id" in params):
         k, s, r = None, None, None
         if "aws_access_key_id" in params:
             k, s, r = params["aws_access_key_id"], params["aws_secret_access_key"], params["aws_region"]
         aws = aws_client.Api(k, s, r)
-        synth.device.init(aws.post_device, params["instance_name"])
+        device.init(aws.post_device, params["instance_name"])
     else:
         logging.info("No device client specified")
 
-    synth.zeromq_rx.init(post_web_event)
+        zeromq_rx.init(post_web_event)
 
     sim.init(enter_interactive)
-    sim.set_time_str(params["start_time"], isStartTime=True)
+    sim.set_time_str(params["start_time"], is_start_time=True)
     sim.set_end_time_str(params["end_time"])
 
     pp = geo.PointPicker()
@@ -187,7 +187,7 @@ def main():
             dp.delete_devices_where('(is_demo_device == true)')
         if params["initial_action"] == "loadExisting":  # Load existing world
             for d in dp.get_devices():
-                synth.device.Device(d)
+                device.Device(d)
     if aws:
         if params["initial_action"] in ["deleteExisting", "deleteDemo"]:
             aws.delete_demo_devices()
@@ -201,11 +201,11 @@ def main():
         sim.next_event()
         if dp:
             dp.flush_post_queue_if_ready()
-    synth.device.flush()
+        device.flush()
     if dp:
         dp.flush_post_queue()
         dp.recalc_historical(
-            synth.device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
+            device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
     logging.info("Simulation ends")
 
     if dp:

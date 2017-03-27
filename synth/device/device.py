@@ -31,25 +31,30 @@ import math
 import random
 import traceback
 
-import synth.synth.timewave
+import synth.simulation.helpers.timewave
 
-from synth import synth
-from synth.synth import solar
+from synth.simulation import sim
+from synth.simulation.solar import solar_math
 
 devices = []
 
-updateCallback = None
+
+def update_callback_fn(_):
+    pass
+
+update_callback = update_callback_fn
+
 logfile = None
-DEFAULT_BATTERY_LIFE_S = synth.simulation.sim.minutes(5)  # For interactive process demo
+DEFAULT_BATTERY_LIFE_S = sim.minutes(5)  # For interactive process demo
 
 GOOD_RSSI = -50.0
 BAD_RSSI = -120.0
 
 
 def init(updatecallback, logfile_name):
-    global updateCallback
+    global update_callback
     global logfile
-    updateCallback = updatecallback
+    update_callback = updatecallback
     logfile = open("../synth_logs/" + logfile_name + ".evt", "at", 0)  # Unbuffered
     logfile.write("*** New simulation starting at real time " + datetime.datetime.now().ctime() + "\n")
 
@@ -61,9 +66,10 @@ def num_devices():
 
 
 def log_entry(properties):
-    logfile.write(synth.simulation.sim.get_time_str() + " ")
+    logfile.write(sim.get_time_str() + " ")
     for k in sorted(properties.keys()):
         s = str(k) + ","
+        # noinspection PyTypeChecker
         if isinstance(properties[k], basestring):
             try:
                 s += properties[k].encode('ascii',
@@ -100,7 +106,7 @@ def external_event(params):
                     arg = body["arg"]
                 d.external_event(body["eventName"], arg)
                 return
-        e = "No such device " + str(deviceID) + " for incoming event " + str(eventName)
+        e = "No such device"  # + str(deviceID) + " for incoming event " + str(eventName)
         log_string(e)
     except Exception as e:
         log_string("Error processing external event")
@@ -149,7 +155,9 @@ class Device:
     def tick_product_usage(self, _):
         if self.get_property("battery") > 0:
             self.set_property("buttonPress", 1)
-            t = synth.timewave.next_usage_time(synth.simulation.sim.get_time(), ["Mon", "Tue", "Wed", "Thu", "Fri"], "06:00-09:00")
+            t = synth.simulation.helpers.timewave.next_usage_time(synth.simulation.sim.get_time(),
+                                                                  ["Mon", "Tue", "Wed", "Thu", "Fri"],
+                                                                  "06:00-09:00")
             synth.simulation.sim.inject_event(t, self.tick_product_usage, self)
 
     def set_comms_reliability(self, up_down_period=synth.simulation.sim.days(1), reliability=1.0):
@@ -170,7 +178,7 @@ class Device:
             self.commsOK = self.commsReliability > random.random()
         else:  # Probability spec, i.e. varies with time
             rel_time = synth.simulation.sim.get_time() - synth.simulation.sim.startTime
-            prob = synth.timewave.interp(self.commsReliability, rel_time)
+            prob = synth.simulation.helpers.timewave.interp(self.commsReliability, rel_time)
             if self.property_exists("rssi"):  # Now affect comms according to RSSI
                 rssi = self.get_property("rssi")
                 radio_goodness = 1.0 - (rssi - GOOD_RSSI) / (BAD_RSSI - GOOD_RSSI)  # Map to 0..1
@@ -184,7 +192,7 @@ class Device:
 
     def do_comms(self, properties):
         if self.commsOK:
-            updateCallback()
+            update_callback(properties)
             log_entry(properties)
 
     def get_property(self, prop_name):
@@ -216,10 +224,10 @@ class Device:
 
     def tick_hourly(self, _):
         if self.get_property("battery") > 0:
-            self.set_property("light", solar.sun_bright(synth.simulation.sim.get_time(),
-                                                        (float(Device.get_property(self, "longitude")),
-                                                         float(Device.get_property(self, "latitude")))
-                                                        ))
+            self.set_property("light", solar_math.sun_bright(synth.simulation.sim.get_time(),
+                                                             (float(Device.get_property(self, "longitude")),
+                                                              float(Device.get_property(self, "latitude")))
+                                                             ))
             synth.simulation.sim.inject_event_delta(synth.simulation.sim.hours(1), self.tick_hourly, self)
 
 # Model for comms unreliability

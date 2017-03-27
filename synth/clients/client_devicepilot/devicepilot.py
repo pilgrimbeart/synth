@@ -101,7 +101,7 @@ class Api:
             if len(self.postQueue) >= self.queueFlushLimit:
                 return True
         if self.queueFlushCriterion == "time":
-            # Note that $ts properties in the post queue will be in epoch-MILLIseconds as that's what DP expects
+            # Note that $ts properties in the post queue will be in epoch-MILLI seconds as that's what DP expects
             if self.postQueue[-1]["$ts"] - self.postQueue[0]["$ts"] >= self.queueFlushLimit * 1000:
                 return True
         if self.queueFlushCriterion == "interactive":
@@ -115,7 +115,7 @@ class Api:
             for d in device:
                 if d["$id"] == "device0":
                     pass  # logging.info(str(d))
-            self.postQueue.extend(device.copy())
+                self.postQueue.extend(d.copy())
         else:
             if device["$id"] == "device0":
                 pass  # logging.info(str(device))
@@ -139,8 +139,9 @@ class Api:
                          historical=False)
         # After a run of historical posts, posting anything with (historical==False)
         # triggers DevicePilot to update all its event calculations [we just need any valid id]
-        resp = requests.put(self.url + '/propertySummaries',
-                            headers=set_headers(self.key))  # Tell DP that we should regen property summaries
+        assert requests.put(self.url + '/propertySummaries',
+                            headers=set_headers(self.key)).status_code == 200
+        # Tell DP that we should regen property summaries
 
     def enter_interactive(self, an_id):
         logging.info("DevicePilot client entering (interactive,1sec) mode")
@@ -150,7 +151,7 @@ class Api:
 
     def delete_all_devices(self):
         logging.info("Deleting all devices on this account...")
-        resp = requests.delete(self.url + "/devices", headers=set_headers(self.key))
+        assert requests.delete(self.url + "/devices", headers=set_headers(self.key)).status_code == 200
         logging.info("All devices deleted")
 
     def delete_devices_where(self, where_str):
@@ -191,7 +192,7 @@ class Api:
             logging.error(str(resp.text))
         return json.loads(resp.text)
 
-    def create_filter(self, name, spec, monitor=False):
+    def create_filter(self, name, spec):
         # spec could be "$ts < ago(86400)"
         # Returns the $id value of the new filter
         url = self.url + "/savedSearches"
@@ -219,5 +220,5 @@ class Api:
         return the_id
 
     def setup_demo_filters(self):  # Very specific set of filters and processes
-        f_id = self.create_filter("Down (demo)", "$ts < ago(86400)", True)
-        i_id = self.create_incident_config(f_id)  # Add monitoring to this filter
+        f_id = self.create_filter("Down (demo)", "$ts < ago(86400)")
+        self.create_incident_config(f_id)  # Add monitoring to this filter

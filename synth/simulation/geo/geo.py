@@ -33,12 +33,6 @@ from PIL import Image  # To get this on Linux, suggest using "sudo apt-get insta
 from google_maps import address_to_long_lat
 
 DEFAULT_POP_MAP = "dnb_land_ocean_ice.2012.13500x6750_grey.jpg"
-# DEFAULT_POP_MAP = "dnb_land_ocean_ice.2012.13500x6750_britain_outline.jpg"
-# DEFAULT_POP_MAP = "dplogo.jpg"
-# DEFAULT_POP_MAP = "norwich.jpg"
-# DEFAULT_POP_MAP = "britain.jpg"
-# DEFAULT_POP_MAP = "usa.jpg"
-
 Image.MAX_IMAGE_PIXELS = 1000000000  # We're dealing with large images, so prevent DecompressionBomb errors
 
 MINLONG = 100000
@@ -53,8 +47,9 @@ MAXY = -100000
 
 class PointPicker:  # It uses a huge amount of memory. So strongly recommend
     def __init__(self, population_map=DEFAULT_POP_MAP):
+        self.area_centre, self.area_edge = 0, 0
         # Load map
-        self.areaCentreXY, self.areaEdgeXY = self.lon_lat_to_x_y(areaCentre), self.lon_lat_to_x_y(areaEdge)
+        self.areaCentreXY, self.areaEdgeXY = self.lon_lat_to_x_y(self.area_centre), self.lon_lat_to_x_y(self.area_edge)
         self.areaRadiusPixels = math.sqrt(
             math.pow(self.areaCentreXY[0] - self.areaEdgeXY[0], 2) + math.pow(self.areaCentreXY[1] - self.areaEdgeXY[1],
                                                                               2))
@@ -62,9 +57,7 @@ class PointPicker:  # It uses a huge amount of memory. So strongly recommend
         im = Image.open(os.path.join(module_local_dir, population_map))
         self.arr = numpy.asarray(im)
         self.xlimit, self.ylimit = float(len(self.arr[0])), float(len(self.arr))
-        # print "Loaded image of size",self.xlimit,"x",self.ylimit
-        # print "Pixel range:",numpy.amin(self.arr), numpy.amax(self.arr)
-        # self.arr = self.arr / 255.0 # We used to normalise the "uint8" pixels into floating point -
+        # We used to normalise the pixels into floating point -
         # but explodes memory usage by x8!
         # Set area to choose from
         self.area = None
@@ -82,7 +75,7 @@ class PointPicker:  # It uses a huge amount of memory. So strongly recommend
         # but an increasingly vertical oval towards the poles (e.g. UK).
         self.area = area
 
-        area_centre, area_edge = address_to_long_lat(area[0]), address_to_long_lat(area[1])
+        self.area_centre, self.area_edge = address_to_long_lat(area[0]), address_to_long_lat(area[1])
 
     def xy_to_lon_lat(self, (x, y)):
         # Normalise axes to +/-1
@@ -156,7 +149,7 @@ class PointPicker:  # It uses a huge amount of memory. So strongly recommend
 
 def main():
     p = PointPicker()
-    l = p.pick_points(n=1000)  # , area=["London,UK","Cambridge,UK"])
+    p.pick_points(n=1000)  # , area=["London,UK","Cambridge,UK"])
 
     print "LONG:", MINLONG, MAXLONG, "DIFF", MAXLONG - MINLONG
     print "LAT:", MINLAT, MAXLAT, "DIFF", MAXLAT - MINLAT

@@ -35,7 +35,12 @@ endTime = None
 events = []  # A sorted list of simulation callbacks: [(epochTime,function,arg), ...]
 
 caughtUp = False
-caughtUpCallback = None  # Called when simulator catches-up with real-time
+
+
+def caught_up_callback_fn():
+    pass  # Called when simulator catches-up with real-time
+
+caught_up_callback = caught_up_callback_fn
 
 # Protects events[] and simTime to make sim thread-safe, as event-injection can
 # happen asynchronously (we can't use Queues because we need peeking)
@@ -88,8 +93,8 @@ def years(n):
 
 
 def init(cb):
-    global caughtUpCallback
-    caughtUpCallback = cb
+    global caught_up_callback
+    caught_up_callback = cb
 
 
 # Simulation control and monitoring
@@ -152,7 +157,7 @@ def events_to_come():
                 if events[0][0] >= time.time():
                     if not caughtUp:
                         logging.info("Caught-up with real time")
-                        caughtUpCallback()  # Mustn't create new events, or deadlock will occur
+                        caught_up_callback()  # Mustn't create new events, or deadlock will occur
                     caughtUp = True
             return True
         if endTime == "now":  # Terminate when we've caught-up with real-time
@@ -205,9 +210,9 @@ def inject_events(times, func, arg=None):
     simLock.release()
 
 
-def inject_event(time, func, arg=None):
+def inject_event(_time, func, arg=None):
     global events
-    l = [(time, func, arg)]
+    l = [(_time, func, arg)]
     simLock.acquire()
     events = sorted(events + l)
     simLock.release()

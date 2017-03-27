@@ -1,4 +1,4 @@
-# ISO 8601 specifies a format for time which is a good tradeoff between machine-readable and human-readable
+# ISO 8601 specifies a format for time which is a good trade-off between machine-readable and human-readable
 # It has optional separators.
 # This module just turns a "seconds-since-the-Epoch" number into a valid string
 # like "1995-02-04T13:11:00Z"
@@ -39,7 +39,7 @@ import re
 
 
 def make_timezone(tzname):
-    # s is Olsen name of a timezone, e.g. "America/Los_Angeles"
+    # s is Olsen name of a timezone, e.g. "America/LA"
     return pytz.timezone(tzname)
 
 
@@ -163,6 +163,7 @@ def parse_date(datestring, default_timezone=UTC):
     default timezone specified in default_timezone is used. This is UTC by
     default.
     """
+    # noinspection PyTypeChecker
     if not isinstance(datestring, basestring):
         raise ParseError("Expecting a string %r" % datestring)
     m = ISO8601_REGEX.match(datestring)

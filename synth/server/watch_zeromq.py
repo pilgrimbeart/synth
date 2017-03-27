@@ -25,7 +25,7 @@ import time
 import zeromq_rx
 
 
-def prinßt_it(params):
+def print_it(params):
     print str(params)
 
 if __name__ == "__main__":

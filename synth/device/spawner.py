@@ -25,9 +25,9 @@
 
 import subprocess
 import time
+import traceback
 from datetime import datetime
-
-from synth import synth
+from synth.server import zeromq_rx
 
 
 def spawn_it(params):
@@ -57,6 +57,6 @@ def spawn_it(params):
 
 if __name__ == "__main__":
     print datetime.now(), "Starting Spawner"
-    synth.zeromq_rx.init(spawn_it)
+    zeromq_rx.init(spawn_it)
     while True:
         time.sleep(1)
