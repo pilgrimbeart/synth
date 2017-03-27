@@ -39,7 +39,7 @@ topicfilter = ""  # ZeroMQ will do filtering for us, but only on client side
 socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
 
 
-def rxThread(callback):
+def rx_thread(callback):
     logging.info("ZeroMQ rx thread started")
     while True:
         try:
@@ -52,11 +52,11 @@ def rxThread(callback):
             logging.error(traceback.format_exc())
             time.sleep(1)  # Avoid 100% CPU in case socket.recv() dies
 
-    logging.critical("ZeroMQ rx thread exiting")
+    # logging.critical("ZeroMQ rx thread exiting")
 
 
 def init(callback):
     logging.info("Starting ZeroMQ rx thread")
-    t = threading.Thread(target=rxThread, kwargs={"callback": callback})
+    t = threading.Thread(target=rx_thread, kwargs={"callback": callback})
     t.daemon = True
     t.start()

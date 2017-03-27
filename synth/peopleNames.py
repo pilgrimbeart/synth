@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 
-from synth.utils import hashIt
+from synth.utils import hash_it
 
 femaleNames = ["Amelia", "Olivia", "Isla", "Emily", "Poppy", "Ava", "Isabella", "Jessica", "Lily", "Sophie", "Grace",
                "Sophia", "Mia", "Evie", "Ruby", "Ella", "Scarlett", "Isabelle", "Chloe", "Sienna", "Freya", "Phoebe",
@@ -83,17 +83,17 @@ lastNames = ["Adams", "Aigner", "Allen", "Andersen", "Anderson", "André", "Andr
              "Wouters", "Wright", "Young", "Zaytsev"]
 
 
-def firstName(r):
-    if hashIt(r, 1):
+def first_name(r):
+    if hash_it(r, 1):
         first = femaleNames
     else:
         first = maleNames
-    return first[hashIt(r, len(first))]
+    return first[hash_it(r, len(first))]
 
 
-def lastName(r):
-    return lastNames[hashIt(r, len(lastNames))]
+def last_name(r):
+    return lastNames[hash_it(r, len(lastNames))]
 
 
-def fullName(r):
-    return firstName(r) + " " + lastName(r)
+def full_name(r):
+    return first_name(r) + " " + last_name(r)

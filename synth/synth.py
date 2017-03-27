@@ -63,25 +63,25 @@ params.update({
 })
 
 
-def randList(start, delta, n):
+def rand_list(start, delta, n):
     # Create a sorted list of <n> whole numbers ranging between <start> and <delta>
     L = [start + random.random() * delta for x in range(n)]
     return sorted(L)
 
 
-def readParamfile(filename):
+def read_paramfile(filename):
     try:
         s = open("scenarios/" + filename, "rt").read()
-    except:
+    except IOError:
         s = open("../synth_accounts/" + filename, "rt").read()
     return s
 
 
 def main():
-    def createDevice(_):
-        deviceNum = device.numDevices()
-        (lon, lat) = pp.pickPoint()
-        (firstName, lastName) = (peopleNames.firstName(deviceNum), peopleNames.lastName(deviceNum))
+    def create_device(_):
+        deviceNum = device.num_devices()
+        (lon, lat) = pp.pick_point()
+        (firstName, lastName) = (peopleNames.first_name(deviceNum), peopleNames.last_name(deviceNum))
         firmware = random.choice(["0.51", "0.52", "0.6", "0.6", "0.6", "0.7", "0.7", "0.7", "0.7"])
         operator = random.choice(["O2", "O2", "O2", "EE", "EE", "EE", "EE", "EE"])
         if operator == "O2":
@@ -90,7 +90,7 @@ def main():
             radioGoodness = math.pow(random.random(), 2)  # Skewed towards 0
         props = {"$id": "-".join([format(random.randrange(0, 255), '02x') for i in range(6)]),
                  # A 6-byte MAC address 01-23-45-67-89-ab
-                 "$ts": sim.getTime1000(),
+                 "$ts": sim.get_time_1000(),
                  "is_demo_device": True,  # A flag which lets us selectively delete later
                  "label": "Thing " + str(deviceNum),
                  "longitude": lon,
@@ -106,24 +106,25 @@ def main():
                  }
         # To create a device in DevicePilot, just start posting it. But in AWS we have to explicitly create it.
         if aws:
-            aws.createDevice(props["$id"])
-        d = device.device(props)
+            aws.create_device(props["$id"])
+        d = device.Device(props)
         if "comms_reliability" in params:
-            #            d.setCommsReliability(upDownPeriod=sim.days(0.5), reliability=1.0-math.pow(random.random(), 2)) # pow(r,2) skews distribution towards reliable end
-            d.setCommsReliability(upDownPeriod=sim.days(0.5), reliability=params["comms_reliability"])
-        d.setBatteryLife(params["battery_life_mu"], params["battery_life_sigma"], "battery_autoreplace" in params)
+            # d.setCommsReliability(upDownPeriod=sim.days(0.5), reliability=1.0-math.pow(random.random(), 2))
+            # pow(r,2) skews distribution towards reliable end
+            d.set_comms_reliability(upDownPeriod=sim.days(0.5), reliability=params["comms_reliability"])
+        d.set_battery_life(params["battery_life_mu"], params["battery_life_sigma"], "battery_autoreplace" in params)
 
-    def postWebEvent(webParams):  # CAUTION: Called asynchronously from the web server thread
-        if "action" in webParams:
-            if webParams["action"] == "event":
-                if webParams["headers"]["Instancename"] == params["instance_name"]:
+    def post_web_event(web_params):  # CAUTION: Called asynchronously from the web server thread
+        if "action" in web_params:
+            if web_params["action"] == "event":
+                if web_params["headers"]["Instancename"] == params["instance_name"]:
                     mini = float(params["web_response_min"])
                     maxi = float(params["web_response_max"])
-                    sim.injectEventDelta(mini + random.random() * maxi, device.externalEvent, webParams)
+                    sim.inject_event_delta(mini + random.random() * maxi, device.external_event, web_params)
 
-    def enterInteractive():
+    def enter_interactive():
         if dp:
-            dp.enterInteractive(
+            dp.enter_interactive(
                 device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
 
     logging.info("*** Synth starting ***")
@@ -135,7 +136,7 @@ def main():
             params.update({key: value})
         else:
             logging.info("Loading parameter file " + arg)
-            s = readParamfile(arg)
+            s = read_paramfile(arg)
             s = re.sub("#.*$", "", s, flags=re.MULTILINE)  # Remove Python-style comments
             params.update(json.loads(s))
 
@@ -143,71 +144,71 @@ def main():
     for p in sorted(params):
         logging.info("    " + str(p) + " : " + str(params[p]))
 
-    Tstart = time.time()
-    random.seed(12345)  # Ensure reproduceability
+    tstart = time.time()
+    random.seed(12345)  # Ensure reproduction
 
     dp = None
     aws = None
     if "devicepilot_api" in params:
-        dp = devicepilot.api(url=params["devicepilot_api"], key=params["devicepilot_key"])
-        dp.setQueueFlush(params["queue_criterion"], params["queue_limit"])
-        device.init(dp.postDeviceQ, params["instance_name"])
+        dp = devicepilot.Api(url=params["devicepilot_api"], key=params["devicepilot_key"])
+        dp.set_queue_flush(params["queue_criterion"], params["queue_limit"])
+        device.init(dp.post_device_q, params["instance_name"])
     elif ("on_aws" in params) or ("aws_access_key_id" in params):
-        k, s = None, None
+        k, s, r = None, None, None
         if "aws_access_key_id" in params:
             k, s, r = params["aws_access_key_id"], params["aws_secret_access_key"], params["aws_region"]
-        aws = aws_client.api(k, s, r)
-        device.init(aws.postDevice, params["instance_name"])
+        aws = aws_client.Api(k, s, r)
+        device.init(aws.post_device, params["instance_name"])
     else:
         logging.info("No device client specified")
 
-    zeromq_rx.init(postWebEvent)
+    zeromq_rx.init(post_web_event)
 
-    sim.init(enterInteractive)
-    sim.setTimeStr(params["start_time"], isStartTime=True)
-    sim.setEndTimeStr(params["end_time"])
+    sim.init(enter_interactive)
+    sim.set_time_str(params["start_time"], isStartTime=True)
+    sim.set_end_time_str(params["end_time"])
 
-    pp = geo.pointPicker()
+    pp = geo.PointPicker()
     if "area_centre" in params:
-        pp.setArea([params["area_centre"], params["area_radius"]])
+        pp.set_area([params["area_centre"], params["area_radius"]])
 
     # Set up the world
 
     if params["setup_demo_filters"]:
         if dp:
-            dp.setupDemoFilters()
+            dp.setup_demo_filters()
 
     if dp:
         if params["initial_action"] == "deleteExisting":  # Recreate world from scratch
-            dp.deleteAllDevices()  # !!! TODO: Delete properties too.
+            dp.delete_all_devices()  # !!! TODO: Delete properties too.
         if params["initial_action"] == "deleteDemo":  # Delete only demo devices (slow)
-            dp.deleteDevicesWhere('(is_demo_device == true)')
+            dp.delete_devices_where('(is_demo_device == true)')
         if params["initial_action"] == "loadExisting":  # Load existing world
-            for d in dp.getDevices():
-                device.device(d)
+            for d in dp.get_devices():
+                device.Device(d)
     if aws:
         if params["initial_action"] in ["deleteExisting", "deleteDemo"]:
-            aws.deleteDemoDevices()
+            aws.delete_demo_devices()
             # Loading device state from AWS not yet supported
 
     if params["initial_action"] != "loadExisting":
-        sim.injectEvents(randList(sim.getTime(), params["install_timespan"], params["device_count"]), createDevice)
+        sim.inject_events(rand_list(sim.get_time(), params["install_timespan"], params["device_count"]), create_device)
 
     logging.info("Simulation starts")
-    while sim.eventsToCome():
-        sim.nextEvent()
+    while sim.events_to_come():
+        sim.next_event()
         if dp:
-            dp.flushPostQueueIfReady()
+            dp.flush_post_queue_if_ready()
     device.flush()
     if dp:
-        dp.flushPostQueue()
-        dp.recalcHistorical(
+        dp.flush_post_queue()
+        dp.recalc_historical(
             device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
     logging.info("Simulation ends")
 
     if dp:
         logging.info("A total of " + str(dp.postCount) + " items were posted to DevicePilot")
-    logging.info("Elapsed real time: " + str(int(time.time() - Tstart)) + " seconds")
+    logging.info("Elapsed real time: " + str(int(time.time() - tstart)) + " seconds")
 
 
 if __name__ == "__main__":

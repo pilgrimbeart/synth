@@ -40,7 +40,7 @@ def set_headers():
 geoCache = {}
 
 
-def addressToLongLat(address):
+def address_to_long_lat(address):
     global geoCache
     if address in geoCache:
         return geoCache[address]  # Avoid thrashing Google (expensive!)
@@ -49,24 +49,24 @@ def addressToLongLat(address):
 
     # try:
     conn = httplib.HTTPSConnection("maps.google.com")  # Must now use SSL
-    URL = '/maps/api/geocode/json' + '?' + urllib.urlencode({'key': GOOGLE_MAPS_API_KEY}) + '&' + urllib.urlencode(
+    url = '/maps/api/geocode/json' + '?' + urllib.urlencode({'key': GOOGLE_MAPS_API_KEY}) + '&' + urllib.urlencode(
         {'address': address})
-    conn.request('GET', URL, None, set_headers())
+    conn.request('GET', url, None, set_headers())
     resp = conn.getresponse()
     result = resp.read()
     data = json.loads(result)
     # print "For address "+address+" response from maps.google.com is "+str(data)
     geo = data["results"][0]["geometry"]["location"]
     (lng, lat) = (geo["lng"], geo["lat"])
-    ##    except:
-    ##        print "FAILED to do Google Maps lookup on location "+str(address)
+    # except:
+    # print "FAILED to do Google Maps lookup on location "+str(address)
     geoCache[address] = (lng, lat)
     return lng, lat
 
 
 def main():
     address = "Cambridge, UK"
-    lon, lat = addressToLongLat(address)
+    lon, lat = address_to_long_lat(address)
     print "For address", address, "Lon,Lat = ", lon, lat
 
 

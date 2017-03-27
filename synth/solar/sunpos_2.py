@@ -58,10 +58,11 @@
 #   Longitude:-76.992187°
 
 
-import math, re
+import math
+import re
 
 
-# Note: re moduule only used for parsing lat long from string
+# Note: re module only used for parsing lat long from string
 
 def present_seconds(seconds):
     """ strip off useless zeros or return nothing if zero
@@ -113,7 +114,7 @@ def parse_digits(value):
     m = re.match(expr, value, re.I | re.M)
     try:
         groups = m.groups()
-    except:
+    except IndexError:
         pass
     print groups
     res = [a if a else 0 for a in groups]
@@ -149,9 +150,9 @@ def latlong_str_conversion(latlong):
     # lon_tuple = [int(a) if a else 0 for a in lon_tuple]
     # print lat_tuple, lon_tuple
     latitude = lat_tuple[0] + lat_tuple[1] / 60.0 + lat_tuple[2] / 3600.0
-    if s > 0: latitude = -latitude
+    latitude = -latitude if s > 0 else latitude
     longitude = lon_tuple[0] + lon_tuple[1] / 60.0 + lon_tuple[2] / 3600.0
-    if w > 0: longitude = -longitude
+    longitude = -longitude if w > 0 else longitude
     return latitude, longitude
 
 
@@ -171,7 +172,8 @@ def calc_time(year, month, day, hour=12, minute=0, sec=0):
     month_days = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30]
     day = day + sum(month_days[:month])
     leapdays = leapyear(year) and day >= 60 and (not (month == 2 and day == 60))
-    if leapdays: day += 1
+    if leapdays:
+        day += 1
 
     # Get Julian date - 2400000
     hour = hour + minute / 60.0 + sec / 3600.0  # hour plus fraction
@@ -184,60 +186,62 @@ def calc_time(year, month, day, hour=12, minute=0, sec=0):
     return time
 
 
-def meanLongitudeDegrees(time):
+def mean_longitude_degrees(time):
     return (280.460 + 0.9856474 * time) % 360
 
 
-def meanAnomalyRadians(time):
+def mean_anomaly_radians(time):
     return math.radians((357.528 + 0.9856003 * time) % 360)
 
 
-def eclipticLongitudeRadians(mnlong, mnanomaly):
+def ecliptic_longitude_radians(mnlong, mnanomaly):
     return math.radians((mnlong + 1.915 * math.sin(mnanomaly) + 0.020 * math.sin(2 * mnanomaly)) % 360)
 
 
-def eclipticObliquityRadians(time):
+def ecliptic_obliquity_radians(time):
     return math.radians(23.439 - 0.0000004 * time)
 
 
-def rightAscensionRadians(oblqec, eclong):
+def right_ascension_radians(oblqec, eclong):
     num = math.cos(oblqec) * math.sin(eclong)
     den = math.cos(eclong)
     ra = math.atan(num / den)
-    if den < 0: ra += math.pi
-    if den >= 0 and num < 0: ra += 2 * math.pi
+    if den < 0:
+        ra += math.pi
+    if den >= 0 > num:
+        ra += 2 * math.pi
     return ra
 
 
-def rightDeclinationRadians(oblqec, eclong):
+def right_declination_radians(oblqec, eclong):
     return math.asin(math.sin(oblqec) * math.sin(eclong))
 
 
-def greenwichMeanSiderealTimeHours(time, hour):
+def greenwich_mean_sidereal_time_hours(time, hour):
     return (6.697375 + 0.0657098242 * time + hour) % 24
 
 
-def localMeanSiderealTimeRadians(gmst, longitude):
+def local_mean_sidereal_time_radians(gmst, longitude):
     return math.radians(15 * ((gmst + longitude / 15.0) % 24))
 
 
-def hourAngleRadians(lmst, ra):
+def hour_angle_radians(lmst, ra):
     return ((lmst - ra + math.pi) % (2 * math.pi)) - math.pi
 
 
-def elevationRadians(lat, dec, ha):
+def elevation_radians(lat, dec, ha):
     return math.asin(math.sin(dec) * math.sin(lat) + math.cos(dec) * math.cos(lat) * math.cos(ha))
 
 
-##def solarAzimuthRadiansJosh(lat, dec, ha, el):
-##    az = math.asin(-math.cos(dec) * math.sin(ha) / math.cos(el))
-##    cosAzPos = 0 <= math.sin(dec) - math.sin(el) * math.sin(lat)
-##    sinAzNeg = math.sin(az) < 0
-##    if (cosAzPos and sinAzNeg): az += 2 * math.pi
-##    if not cosAzPos: az = math.pi-az
-##    return (az)
+# def solarAzimuthRadiansJosh(lat, dec, ha, el):
+#    az = math.asin(-math.cos(dec) * math.sin(ha) / math.cos(el))
+#    cosAzPos = 0 <= math.sin(dec) - math.sin(el) * math.sin(lat)
+#    sinAzNeg = math.sin(az) < 0
+#    if (cosAzPos and sinAzNeg): az += 2 * math.pi
+#    if not cosAzPos: az = math.pi-az
+#    return (az)
 
-def solarAzimuthRadiansCharlie(lat, dec, ha):
+def solar_azimuth_radians_charlie(lat, dec, ha):
     zenithAngle = math.acos(math.sin(lat) * math.sin(dec) + math.cos(lat) * math.cos(dec) * math.cos(ha))
     az = math.acos((math.sin(lat) * math.cos(zenithAngle) - math.sin(dec)) / (math.cos(lat) * math.sin(zenithAngle)))
     if ha > 0:
@@ -252,34 +256,34 @@ def sun_position(year, month, day, hour=12, minute=0, sec=0,
     time = calc_time(year, month, day, hour, minute, sec)
     hour = hour + minute / 60.0 + sec / 3600.0
     # Ecliptic coordinates  
-    mnlong = meanLongitudeDegrees(time)
-    mnanom = meanAnomalyRadians(time)
-    eclong = eclipticLongitudeRadians(mnlong, mnanom)
-    oblqec = eclipticObliquityRadians(time)
+    mnlong = mean_longitude_degrees(time)
+    mnanom = mean_anomaly_radians(time)
+    eclong = ecliptic_longitude_radians(mnlong, mnanom)
+    oblqec = ecliptic_obliquity_radians(time)
     # Celestial coordinates
-    ra = rightAscensionRadians(oblqec, eclong)
-    dec = rightDeclinationRadians(oblqec, eclong)
+    ra = right_ascension_radians(oblqec, eclong)
+    dec = right_declination_radians(oblqec, eclong)
     # Local coordinates
-    gmst = greenwichMeanSiderealTimeHours(time, hour)
-    lmst = localMeanSiderealTimeRadians(gmst, longitude)
+    gmst = greenwich_mean_sidereal_time_hours(time, hour)
+    lmst = local_mean_sidereal_time_radians(gmst, longitude)
     # Hour angle
-    ha = hourAngleRadians(lmst, ra)
+    ha = hour_angle_radians(lmst, ra)
     # Latitude to radians
     lat = math.radians(lat)
     # Azimuth and elevation
-    el = elevationRadians(lat, dec, ha)
+    el = elevation_radians(lat, dec, ha)
     # azJ = solarAzimuthRadiansJosh(lat, dec, ha, el)
-    azC = solarAzimuthRadiansCharlie(lat, dec, ha)
+    azC = solar_azimuth_radians_charlie(lat, dec, ha)
 
     elevation = math.degrees(el)
-    ##    azimuthJ  = math.degrees(azJ)
+    #    azimuthJ  = math.degrees(azJ)
     azimuth = math.degrees(azC)
     return azimuth, elevation
 
 
 ###
 if __name__ == '__main__':
-    ### Tests
+    # Tests
     # Latitude: North = +, South = -
     # Longitude: East = +, West = -
     # For July 1 2014

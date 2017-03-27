@@ -22,6 +22,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
+import math
+import os
+from random import randint, random
+
+import numpy
+from PIL import Image  # To get this on Linux, suggest using "sudo apt-get install python-imaging"
+
+from google_maps import address_to_long_lat
+
 DEFAULT_POP_MAP = "dnb_land_ocean_ice.2012.13500x6750_grey.jpg"
 # DEFAULT_POP_MAP = "dnb_land_ocean_ice.2012.13500x6750_britain_outline.jpg"
 # DEFAULT_POP_MAP = "dplogo.jpg"
@@ -29,16 +39,7 @@ DEFAULT_POP_MAP = "dnb_land_ocean_ice.2012.13500x6750_grey.jpg"
 # DEFAULT_POP_MAP = "britain.jpg"
 # DEFAULT_POP_MAP = "usa.jpg"
 
-import os
-
-from PIL import Image  # To get this on Linux, suggest using "sudo apt-get install python-imaging"
-
 Image.MAX_IMAGE_PIXELS = 1000000000  # We're dealing with large images, so prevent DecompressionBomb errors
-import numpy
-from random import randint, random
-import math
-from google_maps import addressToLongLat
-import logging
 
 MINLONG = 100000
 MAXLONG = -10000
@@ -50,38 +51,40 @@ MINY = 100000
 MAXY = -100000
 
 
-class pointPicker:  # It uses a huge amount of memory. So strongly recommend
-    def __init__(self, populationMap=DEFAULT_POP_MAP):
+class PointPicker:  # It uses a huge amount of memory. So strongly recommend
+    def __init__(self, population_map=DEFAULT_POP_MAP):
         # Load map
-        self.areaCentreXY, self.areaEdgeXY = self.lonLatToXY(areaCentre), self.lonLatToXY(areaEdge)
+        self.areaCentreXY, self.areaEdgeXY = self.lon_lat_to_x_y(areaCentre), self.lon_lat_to_x_y(areaEdge)
         self.areaRadiusPixels = math.sqrt(
             math.pow(self.areaCentreXY[0] - self.areaEdgeXY[0], 2) + math.pow(self.areaCentreXY[1] - self.areaEdgeXY[1],
                                                                               2))
-        moduleLocalDir = os.path.dirname(__file__)
-        im = Image.open(os.path.join(moduleLocalDir, populationMap))
+        module_local_dir = os.path.dirname(__file__)
+        im = Image.open(os.path.join(module_local_dir, population_map))
         self.arr = numpy.asarray(im)
         self.xlimit, self.ylimit = float(len(self.arr[0])), float(len(self.arr))
         # print "Loaded image of size",self.xlimit,"x",self.ylimit
         # print "Pixel range:",numpy.amin(self.arr), numpy.amax(self.arr)
-        # self.arr = self.arr / 255.0 # We used to normalise the "uint8" pixels into floating point - but explodes memory usage by x8!
+        # self.arr = self.arr / 255.0 # We used to normalise the "uint8" pixels into floating point -
+        # but explodes memory usage by x8!
         # Set area to choose from
         self.area = None
 
         logging.warning("Image size is " + str(self.arr.nbytes / (1024 * 1024)) + " MB")
 
-    def setArea(self, area):
+    def set_area(self, area):
         """If <area> is defined it must be two strings: ["centre","edge"].
         Each string is an address (e.g. "Cambridge, UK") which is looked-up to get lat/lon.
         These are then used to define the centre and edge of an allowable circle to pick within"""
         # Pathologies:
         # . Asking for an area which contains zero population will spin forever
         # . Providing a huge map with a tiny populated area will be very slow
-        # . The circle is a lon/lat circle. So on most map projections it will look circular over the equator, but an increasingly vertical oval towards the poles (e.g. UK).
+        # . The circle is a lon/lat circle. So on most map projections it will look circular over the equator,
+        # but an increasingly vertical oval towards the poles (e.g. UK).
         self.area = area
 
-        areaCentre, areaEdge = addressToLongLat(area[0]), addressToLongLat(area[1])
+        area_centre, area_edge = address_to_long_lat(area[0]), address_to_long_lat(area[1])
 
-    def xyToLonLat(self, (x, y)):
+    def xy_to_lon_lat(self, (x, y)):
         # Normalise axes to +/-1
         y = (2 * y / self.ylimit) - 1.0
         x = (2 * x / self.xlimit) - 1.0
@@ -94,7 +97,7 @@ class pointPicker:  # It uses a huge amount of memory. So strongly recommend
 
         return longitude, latitude
 
-    def lonLatToXY(self, (longitude, latitude)):
+    def lon_lat_to_x_y(self, (longitude, latitude)):
         # Reduce to +/-1
         x = longitude / 180.0
         y = latitude / -90.0
@@ -107,7 +110,7 @@ class pointPicker:  # It uses a huge amount of memory. So strongly recommend
 
         return x, y
 
-    def pickPoint(self):
+    def pick_point(self):
         """Returns a (latitude,longitude) point, on population map, within area"""
 
         global MINLONG, MAXLONG, MINLAT, MAXLAT, MINX, MAXX, MINY, MAXY
@@ -131,7 +134,7 @@ class pointPicker:  # It uses a huge amount of memory. So strongly recommend
         x += random()
         y += random()
 
-        longitude, latitude = self.xyToLonLat((x, y))
+        longitude, latitude = self.xy_to_lon_lat((x, y))
 
         MINLAT = min(MINLAT, latitude)
         MAXLAT = max(MAXLAT, latitude)
@@ -144,16 +147,16 @@ class pointPicker:  # It uses a huge amount of memory. So strongly recommend
         # print "x,y=",x,y," longitude,latitude=",longitude,latitude
         return longitude, latitude
 
-    def pickPoints(self, n=1):
-        L = []
+    def pick_points(self, n=1):
+        l = []
         for i in range(n):
-            L.append(self.pickPoint())
-        return L
+            l.append(self.pick_point())
+        return l
 
 
 def main():
-    p = pointPicker()
-    L = p.pickPoints(n=1000)  # , area=["London,UK","Cambridge,UK"])
+    p = PointPicker()
+    l = p.pick_points(n=1000)  # , area=["London,UK","Cambridge,UK"])
 
     print "LONG:", MINLONG, MAXLONG, "DIFF", MAXLONG - MINLONG
     print "LAT:", MINLAT, MAXLAT, "DIFF", MAXLAT - MINLAT

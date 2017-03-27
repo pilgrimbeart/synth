@@ -37,24 +37,28 @@ events = []  # A sorted list of simulation callbacks: [(epochTime,function,arg),
 caughtUp = False
 caughtUpCallback = None  # Called when simulator catches-up with real-time
 
-simLock = threading.Lock()  # Protects events[] and simTime to make sim thread-safe, as event-injection can happen asynchronously (we can't use Queues because we need peeking)
+# Protects events[] and simTime to make sim thread-safe, as event-injection can
+# happen asynchronously (we can't use Queues because we need peeking)
+simLock = threading.Lock()
 
 
 # Set up Python logger to report simulated time
-def inSimulatedTime(self, secs=None):
-    return ISO8601.epochSecondsToDatetime(
-        getTimeNoLock()).timetuple()  # Logging might be emitted within sections where simLock is acquired, so we accept a small chance of duff time values in log messages, in order to allow diagnostics without deadlock
+def in_simulated_time():
+    return ISO8601.epoch_seconds_to_datetime(
+        # Logging might be emitted within sections where simLock is acquired, so we accept
+        # a small chance of duff time values in log messages, in order to allow diagnostics without deadlock
+        get_time_no_lock()).timetuple()
 
 
-def initLogging():
+def init_logging():
     logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s %(message)s',
                         datefmt='%Y-%m-%dT%H:%M:%S'
                         )
-    logging.Formatter.converter = inSimulatedTime  # Make logger use simulated time
+    logging.Formatter.converter = in_simulated_time  # Make logger use simulated time
 
 
-initLogging()
+init_logging()
 
 
 # UTILITY FUNCTIONS (no side effects)
@@ -88,37 +92,37 @@ def init(cb):
     caughtUpCallback = cb
 
 
-### Simulation control and monitoring
-### All times in epoch-seconds
+# Simulation control and monitoring
+# All times in epoch-seconds
 
-def setTime(epochSecs):
+def set_time(epoch_secs):
     global simTime
     simLock.acquire()
-    simTime = epochSecs
+    simTime = epoch_secs
     simLock.release()
 
 
-def setTimeStr(timeString, isStartTime=False):
+def set_time_str(time_string, is_start_time=False):
     global startTime, simTime
-    if timeString == "now":
-        setTime(time.time())
-    elif timeString.startswith("-"):  # A day in the past specified with "-N", e.g. "-180"
-        setTime(time.time() + int(timeString) * 60 * 60 * 24)
+    if time_string == "now":
+        set_time(time.time())
+    elif time_string.startswith("-"):  # A day in the past specified with "-N", e.g. "-180"
+        set_time(time.time() + int(time_string) * 60 * 60 * 24)
     else:
-        setTime(ISO8601.toEpochSeconds(timeString))
-    if isStartTime:
+        set_time(ISO8601.to_epoch_seconds(time_string))
+    if is_start_time:
         startTime = simTime
 
 
-def setEndTimeStr(timeString):
+def set_end_time_str(time_string):
     global endTime
-    if timeString in [None, "now"]:
-        endTime = timeString
+    if time_string in [None, "now"]:
+        endTime = time_string
     else:
-        endTime = ISO8601.toEpochSeconds(timeString)
+        endTime = ISO8601.to_epoch_seconds(time_string)
 
 
-def getTime():
+def get_time():
     global simTime
     simLock.acquire()
     t = simTime
@@ -126,20 +130,20 @@ def getTime():
     return t
 
 
-def getTimeNoLock():
+def get_time_no_lock():
     global simTime
     return simTime
 
 
-def getTime1000():
-    return int(getTime() * 1000)
+def get_time_1000():
+    return int(get_time() * 1000)
 
 
-def getTimeStr():
-    return str(ISO8601.epochSecondsToISO8601(getTime()))
+def get_time_str():
+    return str(ISO8601.epoch_seconds_to_iso8601(get_time()))
 
 
-def eventsToCome():
+def events_to_come():
     global caughtUp
     simLock.acquire()  # <--
     try:
@@ -148,7 +152,7 @@ def eventsToCome():
                 if events[0][0] >= time.time():
                     if not caughtUp:
                         logging.info("Caught-up with real time")
-                        caughtUpCallback  # Mustn't create new events, or deadlock will occur
+                        caughtUpCallback()  # Mustn't create new events, or deadlock will occur
                     caughtUp = True
             return True
         if endTime == "now":  # Terminate when we've caught-up with real-time
@@ -167,10 +171,11 @@ def eventsToCome():
         simLock.release()  # -->
 
 
-def nextEvent():
+def next_event():
     # If we have to wait for real time to catch up, then
     # new external events can appear asychronously whilst we wait.
-    # So we wait only a short period and then release so can reassess from scratch again soon (and so any other heartbeats can happen)
+    # So we wait only a short period and then release so can reassess from scratch again soon
+    # (and so any other heartbeats can happen)
     global events
     simLock.acquire()  # <---
     if len(events) < 1:
@@ -182,35 +187,35 @@ def nextEvent():
         if wait <= 0:
             events.pop(0)
             simLock.release()  # --->
-            setTime(t)
+            set_time(t)
             logging.debug(str(fn.__name__) + "(" + str(arg) + ")")
             fn(arg)  # Note that this is likely to itself inject more events, so we must have released lock
             return
     simLock.release()  # --->
     logging.info("Waiting " + str(wait) + "s for real time")
     time.sleep(min(1.0, wait))
-    setTime(time.time())  # So that any events injected asynchronously will correctly get stamped with current time
+    set_time(time.time())  # So that any events injected asynchronously will correctly get stamped with current time
 
 
-def injectEvents(times, func, arg=None):
+def inject_events(times, func, arg=None):
     global events
-    L = [(t, func, arg) for t in times]
+    l = [(t, func, arg) for t in times]
     simLock.acquire()
-    events = sorted(events + L)
+    events = sorted(events + l)
     simLock.release()
 
 
-def injectEvent(time, func, arg=None):
+def inject_event(time, func, arg=None):
     global events
-    L = [(time, func, arg)]
+    l = [(time, func, arg)]
     simLock.acquire()
-    events = sorted(events + L)
+    events = sorted(events + l)
     simLock.release()
 
 
-def injectEventDelta(deltaTime, func, arg=None):
+def inject_event_delta(delta_time, func, arg=None):
     global events
-    L = [(getTime() + deltaTime, func, arg)]
+    l = [(get_time() + delta_time, func, arg)]
     simLock.acquire()
-    events = sorted(events + L)
+    events = sorted(events + l)
     simLock.release()

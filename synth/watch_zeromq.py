@@ -25,10 +25,10 @@ import time
 import zeromq_rx
 
 
-def printIt(params):
+def prinßt_it(params):
     print str(params)
 
 if __name__ == "__main__":
-    zeromq_rx.init(printIt)
+    zeromq_rx.init(print_it)
     while True:
         time.sleep(1)    

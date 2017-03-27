@@ -41,7 +41,7 @@ import boto3
 DEFAULT_TYPENAME = "DemoThingType"
 
 
-class api:
+class Api:
     def __init__(self, aws_access_key_id=None, aws_secret_access_key=None, aws_region=None):
         if aws_access_key_id is not None:
             logging.info("Loading AWS iot client with specific credentials")
@@ -54,13 +54,15 @@ class api:
                                         aws_access_key_id=aws_access_key_id,
                                         aws_secret_access_key=aws_secret_access_key,
                                         region_name=aws_region)
-        else:  # Will pick up any credentials previously set using AWS Configure, or in environment variables http://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
+        else:
+            # Will pick up any credentials previously set using AWS Configure, or in environment variables
+            # http://boto3.readthedocs.io/en/latest/guide/configuration.html#configuring-credentials
             logging.info("Loading AWS client with default credentials")
             self.iotClient = boto3.client('iot')
             self.iotData = boto3.client('iot-data')
 
-    def createDeviceType(self, name=DEFAULT_TYPENAME,
-                         description="A Thing created by the DevicePilot Synth virtual device simulator"):
+    def create_device_type(self, name=DEFAULT_TYPENAME,
+                           description="A Thing created by the DevicePilot Synth virtual device simulator"):
         # Returns ARN
         # OK if thing type already exists
         logging.info("Creating AWS ThingType " + name)
@@ -69,18 +71,18 @@ class api:
                                                                          'searchableAttributes': []})
         return response['thingTypeArn']
 
-    def createDevice(self, name, typename=DEFAULT_TYPENAME):
+    def create_device(self, name, typename=DEFAULT_TYPENAME):
         # Returns ARN
         # OK if thing already exists
         logging.info("Creating AWS Thing " + name)
-        self.createDeviceType()  # Ensure type exists (inefficient!)
+        self.create_device_type()  # Ensure type exists (inefficient!)
         response = self.iotClient.create_thing(thingName=name, thingTypeName=typename)
         return response['thingArn']
 
-    def getDevices(self):
+    def get_devices(self):
         return self.iotClient.list_things()['things']
 
-    def deleteDevice(self, name):
+    def delete_device(self, name):
         logging.info("Deleting AWS thing " + name + " (and its shadow if any)")
 
         response = self.iotClient.delete_thing(thingName=name)
@@ -90,14 +92,14 @@ class api:
             response = self.iotData.delete_thing_shadow(thingName=name)
             assert 200 <= int(response['ResponseMetadata']['HTTPStatusCode']) < 300
             logging.info("(deleted shadow)")
-        except:
+        except AssertionError:
             logging.info("(no shadow to delete)")
 
-    def deleteDemoDevices(self):
+    def delete_demo_devices(self):
         logging.info("Deleting AWS demo devices")
-        for t in self.getDevices():
+        for t in self.get_devices():
             if t['thingTypeName'] == DEFAULT_TYPENAME:
-                self.deleteDevice(t['thingName'])
+                self.delete_device(t['thingName'])
 
     def post(self, name, payload):
         # topic = "$aws/things/"+name+"/shadow/update"
@@ -108,23 +110,14 @@ class api:
         response = self.iotData.update_thing_shadow(thingName=name, payload=json.dumps(data))
         assert 200 <= int(response['ResponseMetadata']['HTTPStatusCode']) < 300
 
-    def postDevice(self, device):
+    def post_device(self, device):
         self.post(device["$id"], device)
 
-    def getDevice(self, name):
+    def get_device(self, name):
         response = self.iotData.get_thing_shadow(thingName=name)
         return response["payload"].read()
 
 
 if __name__ == "__main__":
     logging.getLogger("").setLevel(logging.INFO)
-    client = api()
-##    if True:
-##        deleteDemoDevices()
-##        print "INITIALLY:\n",getDevices()
-##        typeARN = createDeviceType()
-##        thingARN = createDevice("MyFirstThing")
-##        print "AFTER ADDING A DEMO DEVICE:\n",getDevices()
-##    post("MyFirstThing", { "hello" : "world" })
-##    result = get("MyFirstThing")
-##    print result
+    client = Api()

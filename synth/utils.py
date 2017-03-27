@@ -22,7 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-def hashIt(n, limit):
+
+def hash_it(n, limit):
     x = n * 19079  # Prime
     x = (int(str(x)[::-1]))  # Reverse its string representation
     n = n ^ x

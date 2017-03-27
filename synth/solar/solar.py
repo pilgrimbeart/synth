@@ -29,35 +29,35 @@ import sunpos_2
 from synth import ISO8601
 
 
-def secondOfDay(epochSecs):
-    s = ISO8601.epochSecondsToISO8601(epochSecs)
+def second_of_day(epoch_secs):
+    s = ISO8601.epoch_seconds_to_iso8601(epoch_secs)
     s = "1970-01-01" + s[10:]
-    return ISO8601.toEpochSeconds(s)
+    return ISO8601.to_epoch_seconds(s)
 
 
-def diurnalCycle(epochSecs):
+def diurnal_cycle(epoch_secs):
     # Varies from 0 at midnight to 1 at midday and back again
-    e = secondOfDay(epochSecs)
+    e = second_of_day(epoch_secs)
     frac = e / float(days(1))  # Fraction of a day
     return 0.5 + sin(3 * pi / 2 + frac * pi * 2) / 2
 
 
-def sunAngle(epochSecs, (longitude, latitude)):
-    dateS = ISO8601.epochSecondsToISO8601(epochSecs)
-    year = int(dateS[0:4])
-    month = int(dateS[5:7])
-    day = int(dateS[8:10])
-    hour = int(dateS[11:13])
-    minute = int(dateS[14:16])
-    sec = int(dateS[17:19])
+def sun_angle(epoch_secs, (longitude, latitude)):
+    date_s = ISO8601.epoch_seconds_to_iso8601(epoch_secs)
+    year = int(date_s[0:4])
+    month = int(date_s[5:7])
+    day = int(date_s[8:10])
+    hour = int(date_s[11:13])
+    minute = int(date_s[14:16])
+    sec = int(date_s[17:19])
     (azimuthD, elevationD) = sunpos_2.sun_position(year, month, day, hour, minute, sec, latitude, longitude)
     return azimuthD, elevationD
 
 
-def sunBright(epochSecs, (longitude, latitude)):
-    azD, elevD = sunAngle(epochSecs, (longitude, latitude))
-    elevR = 2 * pi * (elevD / 360.0)
-    bright = max(0.0, sin(elevR))
+def sun_bright(epoch_secs, (longitude, latitude)):
+    az_d, elev_d = sun_angle(epoch_secs, (longitude, latitude))
+    elev_r = 2 * pi * (elev_d / 360.0)
+    bright = max(0.0, sin(elev_r))
     return bright
 
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
         latitude = random.random() * 180 - 9.0
         t = int(random.random() * 60 * 60 * 24 * 365 * 50)
         print longitude, latitude, t
-        azD, elevD = sunBright(t, (longitude, latitude))
+        azD, elevD = sun_bright(t, (longitude, latitude))
         print "shit"
         elevR = 2 * pi * (elevD / 360.0)
         print longitude, latitude, azD, elevD, sin(elevR)

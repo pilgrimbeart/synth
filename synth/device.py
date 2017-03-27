@@ -45,29 +45,29 @@ GOOD_RSSI = -50.0
 BAD_RSSI = -120.0
 
 
-def init(updatecallback, logfileName):
+def init(updatecallback, logfile_name):
     global updateCallback
     global logfile
     updateCallback = updatecallback
-    logfile = open("../synth_logs/" + logfileName + ".evt", "at", 0)  # Unbuffered
+    logfile = open("../synth_logs/" + logfile_name + ".evt", "at", 0)  # Unbuffered
     logfile.write("*** New simulation starting at real time " + datetime.datetime.now().ctime() + "\n")
 
 
-def numDevices():
+def num_devices():
     global devices
     n = len(devices)
     return n
 
 
-def logEntry(properties):
-    logfile.write(sim.getTimeStr() + " ")
+def log_entry(properties):
+    logfile.write(sim.get_time_str() + " ")
     for k in sorted(properties.keys()):
         s = str(k) + ","
         if isinstance(properties[k], basestring):
             try:
                 s += properties[k].encode('ascii',
                                           'ignore')  # Python 2.x barfs if you try to write unicode into an ascii file
-            except:
+            except UnicodeError:
                 s += "<unicode encoding error>"
         else:
             s += str(properties[k])
@@ -76,16 +76,16 @@ def logEntry(properties):
     logfile.write("\n")
 
 
-def logString(s):
+def log_string(s):
     logging.info(s)
-    logfile.write(sim.getTimeStr() + " " + s + "\n")
+    logfile.write(sim.get_time_str() + " " + s + "\n")
 
 
 def flush():
     logfile.close()
 
 
-def externalEvent(params):
+def external_event(params):
     # Accept events from outside world
     # (these have already been synchronised via the event queue so we don't need to worry about thread-safety here)
     global devices
@@ -97,17 +97,17 @@ def externalEvent(params):
                 arg = None
                 if "arg" in body:
                     arg = body["arg"]
-                d.externalEvent(body["eventName"], arg)
+                d.external_event(body["eventName"], arg)
                 return
         e = "No such device " + str(deviceID) + " for incoming event " + str(eventName)
-        logString(e)
+        log_string(e)
     except Exception as e:
-        logString("Error processing external event")
+        log_string("Error processing external event")
         logging.error("Error processing externalEvent: " + str(e))
         logging.error(traceback.format_exc())
 
 
-class device:
+class Device:
     def __init__(self, props):
         global devices
         self.properties = props
@@ -117,46 +117,46 @@ class device:
         self.batteryLife = DEFAULT_BATTERY_LIFE_S
         self.batteryAutoreplace = False
         self.commsOK = True
-        self.doComms(self.properties)
-        self.startTicks()
+        self.do_comms(self.properties)
+        self.start_ticks()
 
-    def startTicks(self):
-        sim.injectEventDelta(self.batteryLife / 100.0, self.tickBatteryDecay, self)
-        sim.injectEventDelta(sim.hours(1), self.tickHourly, self)
-        sim.injectEventDelta(0, self.tickProductUsage, self)  # Immediately
+    def start_ticks(self):
+        sim.inject_event_delta(self.batteryLife / 100.0, self.tick_battery_decay, self)
+        sim.inject_event_delta(sim.hours(1), self.tick_hourly, self)
+        sim.inject_event_delta(0, self.tick_product_usage, self)  # Immediately
 
-    def externalEvent(self, eventName, arg):
-        s = "Processing external event " + eventName + " for device " + str(self.properties["$id"])
-        logString(s)
-        if eventName == "replaceBattery":
-            self.setProperty("battery", 100)
-            self.startTicks()
+    def external_event(self, event_name, arg):
+        s = "Processing external event " + event_name + " for device " + str(self.properties["$id"])
+        log_string(s)
+        if event_name == "replaceBattery":
+            self.set_property("battery", 100)
+            self.start_ticks()
 
         # All other commands require device to be functional!
-        if self.getProperty("battery") <= 0:
-            logString("...ignored because battery flat")
+        if self.get_property("battery") <= 0:
+            log_string("...ignored because battery flat")
             return
         if not self.commsOK:
-            logString("...ignored because comms down")
+            log_string("...ignored because comms down")
             return
 
-        if eventName == "upgradeFirmware":
-            self.setProperty("firmware", arg)
-        if eventName == "factoryReset":
-            self.setProperty("firmware", self.getProperty("factoryFirmware"))
+        if event_name == "upgradeFirmware":
+            self.set_property("firmware", arg)
+        if event_name == "factoryReset":
+            self.set_property("firmware", self.get_property("factoryFirmware"))
 
-    def tickProductUsage(self, _):
-        if self.getProperty("battery") > 0:
-            self.setProperty("buttonPress", 1)
-            t = timewave.nextUsageTime(sim.getTime(), ["Mon", "Tue", "Wed", "Thu", "Fri"], "06:00-09:00")
-            sim.injectEvent(t, self.tickProductUsage, self)
+    def tick_product_usage(self, _):
+        if self.get_property("battery") > 0:
+            self.set_property("buttonPress", 1)
+            t = timewave.next_usage_time(sim.get_time(), ["Mon", "Tue", "Wed", "Thu", "Fri"], "06:00-09:00")
+            sim.inject_event(t, self.tick_product_usage, self)
 
-    def setCommsReliability(self, upDownPeriod=sim.days(1), reliability=1.0):
-        self.commsUpDownPeriod = upDownPeriod
+    def set_comms_reliability(self, up_down_period=sim.days(1), reliability=1.0):
+        self.commsUpDownPeriod = up_down_period
         self.commsReliability = reliability
-        sim.injectEventDelta(0, self.tickCommsUpDown, self)  # Immediately
+        sim.inject_event_delta(0, self.tick_comms_up_down, self)  # Immediately
 
-    def setBatteryLife(self, mu, sigma, autoreplace=False):
+    def set_battery_life(self, mu, sigma, autoreplace=False):
         # Set battery life with a normal distribution which won't exceed 2 standard deviations
         life = random.normalvariate(mu, sigma)
         life = min(life, mu + 2 * sigma)
@@ -164,70 +164,71 @@ class device:
         self.batteryLife = life
         self.batteryAutoreplace = autoreplace
 
-    def tickCommsUpDown(self, _):
+    def tick_comms_up_down(self, _):
         if isinstance(self.commsReliability, (int, float)):  # Simple probability
             self.commsOK = self.commsReliability > random.random()
         else:  # Probability spec, i.e. varies with time
-            relTime = sim.getTime() - sim.startTime
-            prob = timewave.interp(self.commsReliability, relTime)
-            if self.propertyExists("rssi"):  # Now affect comms according to RSSI
-                rssi = self.getProperty("rssi")
-                radioGoodness = 1.0 - (rssi - GOOD_RSSI) / (BAD_RSSI - GOOD_RSSI)  # Map to 0..1
-                radioGoodness = 1.0 - math.pow((1.0 - radioGoodness), 4)  # Skew heavily towards "good"
-                prob *= radioGoodness
+            rel_time = sim.get_time() - sim.startTime
+            prob = timewave.interp(self.commsReliability, rel_time)
+            if self.property_exists("rssi"):  # Now affect comms according to RSSI
+                rssi = self.get_property("rssi")
+                radio_goodness = 1.0 - (rssi - GOOD_RSSI) / (BAD_RSSI - GOOD_RSSI)  # Map to 0..1
+                radio_goodness = 1.0 - math.pow((1.0 - radio_goodness), 4)  # Skew heavily towards "good"
+                prob *= radio_goodness
             self.commsOK = prob > random.random()
 
-        deltaTime = random.expovariate(1 / self.commsUpDownPeriod)
-        deltaTime = min(deltaTime, self.commsUpDownPeriod * 100)  # Limit long tail
-        sim.injectEventDelta(deltaTime, self.tickCommsUpDown, self)
+        delta_time = random.expovariate(1 / self.commsUpDownPeriod)
+        delta_time = min(delta_time, self.commsUpDownPeriod * 100)  # Limit long tail
+        sim.inject_event_delta(delta_time, self.tick_comms_up_down, self)
 
-    def doComms(self, properties):
+    def do_comms(self, properties):
         if self.commsOK:
-            updateCallback
-            logEntry(properties)
+            updateCallback()
+            log_entry(properties)
 
-    def getProperty(self, propName):
-        return self.properties[propName]
+    def get_property(self, prop_name):
+        return self.properties[prop_name]
 
-    def propertyExists(self, propName):
-        return propName in self.properties
+    def property_exists(self, prop_name):
+        return prop_name in self.properties
 
-    def setProperty(self, propName, value):
-        newProps = {propName: value, "$ts": sim.getTime1000(), "$id": self.properties["$id"]}
-        self.properties.update(newProps)
-        self.doComms(newProps)
+    def set_property(self, prop_name, value):
+        new_props = {prop_name: value, "$ts": sim.get_time_1000(), "$id": self.properties["$id"]}
+        self.properties.update(new_props)
+        self.do_comms(new_props)
 
-    def setProperties(self, newProps):
-        self.properties.update(newProps)
-        self.properties.update({"$ts": sim.getTime1000(), "$id": self.properties["$id"]})
-        self.doComms(newProps)
+    def set_properties(self, new_props):
+        self.properties.update(new_props)
+        self.properties.update({"$ts": sim.get_time_1000(), "$id": self.properties["$id"]})
+        self.do_comms(new_props)
 
-    def tickBatteryDecay(self, _):
-        v = self.getProperty("battery")
+    def tick_battery_decay(self, _):
+        v = self.get_property("battery")
         if v > 0:
-            self.setProperty("battery", v - 1)
-            sim.injectEventDelta(self.batteryLife / 100.0, self.tickBatteryDecay, self)
+            self.set_property("battery", v - 1)
+            sim.inject_event_delta(self.batteryLife / 100.0, self.tick_battery_decay, self)
         else:
             if self.batteryAutoreplace:
                 logging.info("Auto-replacing battery")
-                self.setProperty("battery", 100)
-                sim.injectEventDelta(self.batteryLife / 100.0, self.tickBatteryDecay, self)
+                self.set_property("battery", 100)
+                sim.inject_event_delta(self.batteryLife / 100.0, self.tick_battery_decay, self)
 
-    def tickHourly(self, _):
-        if self.getProperty("battery") > 0:
-            self.setProperty("light", solar.sunBright(sim.getTime(),
-                                                      (float(device.getProperty(self, "longitude")),
-                                                       float(device.getProperty(self, "latitude")))
-                                                      ))
-            sim.injectEventDelta(sim.hours(1), self.tickHourly, self)
+    def tick_hourly(self, _):
+        if self.get_property("battery") > 0:
+            self.set_property("light", solar.sun_bright(sim.get_time(),
+                                                        (float(Device.get_property(self, "longitude")),
+                                                         float(Device.get_property(self, "latitude")))
+                                                        ))
+            sim.inject_event_delta(sim.hours(1), self.tick_hourly, self)
 
 # Model for comms unreliability
 # -----------------------------
 # Two variables define comms (un)reliability:
-# a) updownPeriod: (secs) The typical period over which comms might change between working and failed state. We use an exponential distribution with this value as the mean.
+# a) up/down period: (secs) The typical period over which comms might change between working and failed state.
+#    We use an exponential distribution with this value as the mean.
 # b) reliability: (0..1) The chance of comms working at any moment in time
 # The comms state is then driven independently of other actions.
 # 
 # Chance of comms failing at any moment is [0..1]
-# Python function random.expovariate(lambd) returns values from 0 to infinity, with most common values in a hump in the middle
-# such that that mean value is 1.0/<lambd>
+# Python function random.expovariate(lambda) returns values from 0 to infinity, with most common values in a hump in
+# the middle such that that mean value is 1.0/<lambda>

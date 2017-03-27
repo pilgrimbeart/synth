@@ -50,7 +50,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 magicKey = open("../synth_certs/webkey", "rt").read().strip()
 
 
-def createSocket():
+def create_socket():
     global zeromqSocket
     logging.info("Initialising ZeroMQ to publish to port " + str(ZEROMQ_PORT))
     context = zmq.Context()
@@ -62,7 +62,7 @@ def createSocket():
 def event():  # Accept an incoming event and route it to a Synth instance
     global zeromqSocket
     if zeromqSocket is None:
-        createSocket()
+        create_socket()
 
     logging.info("Got web request to /event")
     h = {}
@@ -78,8 +78,8 @@ def event():  # Accept an incoming event and route it to a Synth instance
     return "ok"
 
 
-def getAndCheckKey(req):
-    if not "devicepilot_key" in req.args:
+def get_and_check_key(req):
+    if "devicepilot_key" not in req.args:
         logging.error("Missing devicepilot_key argument")
         return None
 
@@ -96,15 +96,15 @@ def getAndCheckKey(req):
     return dpKey
 
 
-def getAndCheckApi(req):
+def get_and_check_api(req):
     # Stop people passing-in any old URL!
-    if not "devicepilot_api" in req.args:
+    if "devicepilot_api" not in req.args:
         dpApi = "api"
     else:
         dpApi = req.args["devicepilot_api"]
 
     # Defend against injection attack
-    if not dpApi in ["api", "api-staging", "api-development"]:
+    if dpApi not in ["api", "api-staging", "api-development"]:
         dpApi = "api"
 
     return "https://" + dpApi + ".devicepilot.com"
@@ -114,14 +114,14 @@ def getAndCheckApi(req):
 def spawn():  # Start a new Synth instance
     global zeromqSocket
     if zeromqSocket is None:
-        createSocket()
+        create_socket()
 
     logging.info("Got web request to /spawn")
-    dpKey = getAndCheckKey(request)
+    dpKey = get_and_check_key(request)
     if dpKey is None:
         abort(403)
 
-    dpApi = getAndCheckApi(request)
+    dpApi = get_and_check_api(request)
 
     packet = {"action": "spawn", "key": dpKey, "api": dpApi}
     zeromqSocket.send(json.dumps(packet))
@@ -131,22 +131,22 @@ def spawn():  # Start a new Synth instance
 
 
 @app.route("/is_running")
-def isRunning():
+def is_running():
     logging.info("Got web request to /is_running")
-    dpKey = getAndCheckKey(request)
+    dpKey = get_and_check_key(request)
     if dpKey is None:
         abort(403)
 
     try:
         x = subprocess.check_output("ps uax | grep 'python' | grep 'devicepilot_key=" + dpKey + "' | grep -v grep",
                                     shell=True)
-    except:
+    except subprocess.CalledProcessError:
         return '{ "active" : false }'
     return '{ "active" : true }'
 
 
 @app.route("/")
-def whatIsRunning():
+def what_is_running():
     # This is the route that we expect Pingdom to ping regularly to reset the heartbeat
     global lastPingTime
     logging.info("Got web request to /")
@@ -157,31 +157,33 @@ def whatIsRunning():
         x = subprocess.check_output("ps uax | grep 'python' | grep -v grep", shell=True)
         x += "<br>"
         x += subprocess.check_output("free -m", shell=True)
-    except:
+    except subprocess.CalledProcessError:
         return "Nothing"
     return "<pre>" + x.replace("\n", "<br>") + "</pre>"
 
 
-def startWebServer():
+def start_web_server():
     logging.info("Starting Flask web server process, listening on port " + str(
         WEB_PORT))  # If port < 1000 then this process must be run with elevated privileges
     p = multiprocessing.Process(target=app.run, kwargs={"threaded": True, "host": "0.0.0.0", "port": WEB_PORT,
                                                         "ssl_context": (
                                                             '../synth_certs/ssl.crt', '../synth_certs/ssl.key')})
     # Doing app.run() with "threaded=True" starts a new thread for each incoming request, improving crash resilience
-    # By default Flask serves to 127.0.0.1 which is local loopback (not externally-visible), so use 0.0.0.0 for externally-visible
-    # We run entire Flask server as a distinct process so we can terminate it if it fails (can't terminate threads in Python)
+    # By default Flask serves to 127.0.0.1 which is local loopback (not externally-visible), so use 0.0.0.0 for
+    # externally-visible
+    # We run entire Flask server as a distinct process so we can terminate it if it fails (can't terminate
+    # threads in Python)
     p.daemon = True
     p.start()
     return p
 
 
 if __name__ == "__main__":
-    server = startWebServer()
+    server = start_web_server()
     while True:
         time.sleep(1)
         if time.time() - lastPingTime.value > PING_TIMEOUT:
             logging.critical("Web server not detecting pings - restarting")
             server.terminate()
-            server = startWebServer()
+            server = start_web_server()
             time.sleep(60)

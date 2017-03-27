@@ -38,24 +38,25 @@ import pytz
 import re
 
 
-def makeTimezone(tzname):
+def make_timezone(tzname):
     # s is Olsen name of a timezone, e.g. "America/Los_Angeles"
     return pytz.timezone(tzname)
 
 
-def epochSecondsToDatetime(secs, tz=pytz.utc):
+def epoch_seconds_to_datetime(secs, tz=pytz.utc):
     # get time in UTC
     utc_dt = datetime.utcfromtimestamp(secs).replace(tzinfo=pytz.utc)
     # convert it to tz
     return tz.normalize(utc_dt.astimezone(tz))
 
 
-def epochSecondsToISO8601(secs, tz=pytz.utc):
-    return epochSecondsToDatetime(secs, tz).strftime('%Y-%m-%dT%H:%M:%S%z')
+def epoch_seconds_to_iso8601(secs, tz=pytz.utc):
+    return epoch_seconds_to_datetime(secs, tz).strftime('%Y-%m-%dT%H:%M:%S%z')
 
 
-def toEpochSeconds(iso8601, tz=pytz.utc):  # Default UTC timezone has no DST
-    # (from pytz docs) Note: Unfortunately using the tzinfo argument of the standard datetime constructors does not work with pytz for many timezones
+def to_epoch_seconds(iso8601, tz=pytz.utc):  # Default UTC timezone has no DST
+    # (from pytz docs) Note: Unfortunately using the tzinfo argument of the standard datetime constructors does not
+    # work with pytz for many timezones
     dt = parse_date(iso8601)
     tt = dt.timetuple()
     loc_dt = tz.localize(datetime(tt[0], tt[1], tt[2], tt[3], tt[4], tt[5], 00))
@@ -64,19 +65,20 @@ def toEpochSeconds(iso8601, tz=pytz.utc):  # Default UTC timezone has no DST
     return epochsecs
 
 
-def YesterdayInHours():
+def yesterday_in_hours():
     t = time.time()
     (d, d, d, h, m, s, d, d, d) = time.gmtime(t)
     start = t - s - m * 60 - h * 60 * 60 - 86400  # Find start of previous whole day
     end = start + 86400
-    startS = epochSecondsToISO8601(start)
-    endS = epochSecondsToISO8601(end)
-    return startS, endS, 3600
+    start_s = epoch_seconds_to_iso8601(start)
+    end_s = epoch_seconds_to_iso8601(end)
+    return start_s, end_s, 3600
 
 
 # Adapted from http://delete.me.uk/2005/03/iso8601.html
 ISO8601_REGEX = re.compile(r"(?P<year>[0-9]{4})(-(?P<month>[0-9]{1,2})(-(?P<day>[0-9]{1,2})"
-                           r"((?P<separator>.)(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2})(:(?P<second>[0-9]{2})(\.(?P<fraction>[0-9]+))?)?"
+                           r"((?P<separator>.)(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2})"
+                           r"(:(?P<second>[0-9]{2})(\.(?P<fraction>[0-9]+))?)?"
                            r"(?P<timezone>Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?"
                            )
 TIMEZONE_REGEX = re.compile("(?P<prefix>[+-])(?P<hours>[0-9]{2}).(?P<minutes>[0-9]{2})")
@@ -86,7 +88,7 @@ class ParseError(Exception):
     """Raised when there is a problem parsing a date string"""
 
 
-# Yoinked from python docs
+# Taken from python docs
 ZERO = timedelta(0)
 
 
@@ -177,24 +179,24 @@ def parse_date(datestring, default_timezone=UTC):
                     int(groups["fraction"]), tz)
 
 
-def selfTest():
+def self_test():
     # BST generally begins on the last Sunday in March
     # Note that there was no BST until 1972 because of a UK "BST all year" experiment!
     # Try 1972 - Sun 19th March was transition
 
     print "Testing DST"
-    tz = makeTimezone("Europe/London")  # Should work for any time zone, e.g. "America/New_York"
+    tz = make_timezone("Europe/London")  # Should work for any time zone, e.g. "America/New_York"
 
     for day in range(1, 31):
         today_str = "1972-03-%02dT00:00:00" % day
-        today_secs = toEpochSeconds(today_str, tz)
+        today_secs = to_epoch_seconds(today_str, tz)
 
         tomorrow_str = "1972-03-%02dT00:00:00" % (day + 1)
-        tomorrow_secs = toEpochSeconds(tomorrow_str, tz)
+        tomorrow_secs = to_epoch_seconds(tomorrow_str, tz)
 
         secs = int(tomorrow_secs - today_secs)
-        print "Day " + epochSecondsToISO8601(today_secs, tz) + " starts at " + str(today_secs) + " and contains " + str(
-            secs) + " seconds"
+        print "Day " + epoch_seconds_to_iso8601(today_secs, tz) + " starts at " + str(today_secs) + " and contains " +\
+              str(secs) + " seconds"
 
         if day != 19:
             assert secs == 24 * 60 * 60
@@ -206,4 +208,4 @@ def selfTest():
 
 
 if __name__ == "__main__":
-    selfTest()
+    self_test()

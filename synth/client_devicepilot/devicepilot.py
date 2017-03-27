@@ -39,7 +39,7 @@ def set_headers(token):
     return headers
 
 
-class api:
+class Api:
     def __init__(self, url=None, key=None):
         logging.info("Initialising DevicePilot client")
         self.url = url
@@ -50,7 +50,7 @@ class api:
         self.queueFlushLimit = 1000
         self.postCount = 0
 
-    def setQueueFlush(self, criterion="messages", limit=1000):
+    def set_queue_flush(self, criterion="messages", limit=1000):
         # queue_criterion/limit sets how often we flush messages to DevicePilot API
         # If criterion=="messages" then limit is number of messages, e.g. 1000
         # If criterion=="time" then limit is amount of simulated time passing, e.g. sim.days(30)
@@ -59,7 +59,7 @@ class api:
         self.queueFlushCriterion = criterion
         self.queueFlushLimit = limit
 
-    def postDevice(self, device, historical=False):
+    def post_device(self, device, historical=False):
         # DevicePilot API accepts either a single JSON object, or an array of such
         # If <historical> is true, DevicePilot doesn't calculate any dependent events (so e.g. won't send alerts)
         global lastPostTime
@@ -72,6 +72,7 @@ class api:
         else:
             self.postCount += 1
 
+        resp = None
         try:
             url = self.url + '/device-state'
             if historical:
@@ -89,14 +90,13 @@ class api:
         else:
             if resp.status_code != requests.codes.ok and resp.status_code != requests.codes.created:
                 logging.error("devicepilot.PostDevice() couldn't create on server")
-                # print  '%(status)03d (%(text)s)' % {"status": resp.status_code, "text": httplib.responses[resp.status_code]}
                 logging.error("Status code:" + str(resp.status_code))
                 logging.error("Text:" + str(resp.text))
                 logging.error("Body:" + str(body))
 
         return True
 
-    def readyToFlush(self):
+    def ready_to_flush(self):
         if self.queueFlushCriterion == "messages":
             if len(self.postQueue) >= self.queueFlushLimit:
                 return True
@@ -109,7 +109,7 @@ class api:
                 return True
         return False
 
-    def postDeviceQ(self, device):
+    def post_device_q(self, device):
 
         if isinstance(device, list):
             for d in device:
@@ -121,39 +121,41 @@ class api:
                 pass  # logging.info(str(device))
             self.postQueue.append(device.copy())
 
-        self.flushPostQueueIfReady()
+        self.flush_post_queue_if_ready()
 
-    def flushPostQueueIfReady(self):
-        if self.readyToFlush():
-            self.flushPostQueue()
+    def flush_post_queue_if_ready(self):
+        if self.ready_to_flush():
+            self.flush_post_queue()
 
-    def flushPostQueue(self):
+    def flush_post_queue(self):
         if len(self.postQueue) > 0:
             logging.info("POSTing " + str(len(self.postQueue)) + " queued items into DevicePilot")
-            self.postDevice(self.postQueue, historical=True)
+            self.post_device(self.postQueue, historical=True)
             self.postQueue = []
 
-    def recalcHistorical(self, anId):
+    def recalc_historical(self, an_id):
         logging.info("DevicePilot client finalising historical updates")
-        self.postDevice({"$id": anId},
-                        historical=False)  # After a run of historical posts, posting anything with (historical==False) triggers DevicePilot to update all its event calculations [we just need any valid id]
+        self.post_device({"$id": an_id},
+                         historical=False)
+        # After a run of historical posts, posting anything with (historical==False)
+        # triggers DevicePilot to update all its event calculations [we just need any valid id]
         resp = requests.put(self.url + '/propertySummaries',
                             headers=set_headers(self.key))  # Tell DP that we should regen property summaries
 
-    def enterInteractive(self, anId):
+    def enter_interactive(self, an_id):
         logging.info("DevicePilot client entering (interactive,1sec) mode")
-        self.recalcHistorical(anId)
+        self.recalc_historical(an_id)
         self.queueFlushCriterion = "interactive"
         self.queueFlushLimit = 1
 
-    def deleteAllDevices(self):
+    def delete_all_devices(self):
         logging.info("Deleting all devices on this account...")
         resp = requests.delete(self.url + "/devices", headers=set_headers(self.key))
         logging.info("All devices deleted")
 
-    def deleteDevicesWhere(self, whereStr):
-        logging.info("Deleting all devices where " + whereStr)
-        devs = self.getDevicesWhere(whereStr)
+    def delete_devices_where(self, where_str):
+        logging.info("Deleting all devices where " + where_str)
+        devs = self.get_devices_where(where_str)
         logging.info(str(len(devs)) + " devices")
         for dev in devs:
             logging.info("Deleting " + str(dev["$urn"]))
@@ -161,7 +163,7 @@ class api:
             if not resp.ok:
                 logging.error(str(resp.reason) + ":" + str(resp.text))
 
-    def getDevices(self):
+    def get_devices(self):
         logging.info("Loading all devices")
         r = self.url + '/devices'
         resp = requests.get(r, headers=set_headers(self.key))
@@ -174,13 +176,13 @@ class api:
                     del device[propName]
         return devices
 
-    def getDevicesWhere(self, where):  # where could be e.g. '(State == "LIVE_OCCUPIED")'
+    def get_devices_where(self, where):  # where could be e.g. '(State == "LIVE_OCCUPIED")'
         r = self.url + '/devices?$profile=/profiles/$view&where=' + urllib.quote_plus(where)
         resp = requests.get(r, headers=set_headers(self.key))
         return json.loads(resp.text)
 
-    def getDeviceHistory(self, deviceURN, start, end, fields):
-        req = self.url + deviceURN + "/history" + "?" + urllib.urlencode(
+    def get_device_history(self, device_urn, start, end, fields):
+        req = self.url + device_urn + "/history" + "?" + urllib.urlencode(
             {"start": start, "end": end, "fields": fields}) + "&timezoneOffset=0" + "&random=973"
         resp = requests.get(req, headers=set_headers(
             self.key))  # Beware caching of live data (change 'random' value to avoid)
@@ -189,7 +191,7 @@ class api:
             logging.error(str(resp.text))
         return json.loads(resp.text)
 
-    def createFilter(self, name, spec, monitor=False):
+    def create_filter(self, name, spec, monitor=False):
         # spec could be "$ts < ago(86400)"
         # Returns the $id value of the new filter
         url = self.url + "/savedSearches"
@@ -200,22 +202,22 @@ class api:
         if not resp.ok:
             logging.error("createFilter:" + str(resp))
             return None
-        theID = json.loads(resp.text)["$id"]
-        logging.info("Created filter with id " + str(theID))
-        return theID
+        the_id = json.loads(resp.text)["$id"]
+        logging.info("Created filter with id " + str(the_id))
+        return the_id
 
-    def createIncidentConfig(self, filterID, active=True):
+    def create_incident_config(self, filter_id, active=True):
         url = self.url + "/incidentConfigs"
-        body = json.dumps({"$savedSearch": filterID, "active": active})
+        body = json.dumps({"$savedSearch": filter_id, "active": active})
         logging.info("createIncidentConfig " + str(body))
         resp = requests.post(url, verify=True, headers=set_headers(self.key), data=body)
         if not resp.ok:
             logging.error("createIncidentConfig:" + str(resp))
             return None
-        theID = json.loads(resp.text)["$id"]
-        logging.info("Created incidentConfig with id " + str(theID))
-        return theID
+        the_id = json.loads(resp.text)["$id"]
+        logging.info("Created incidentConfig with id " + str(the_id))
+        return the_id
 
-    def setupDemoFilters(self):  # Very specific set of filters and processes, to support zero-touch onboarding
-        fID = self.createFilter("Down (demo)", "$ts < ago(86400)", True)
-        iID = self.createIncidentConfig(fID)  # Add monitoring to this filter
+    def setup_demo_filters(self):  # Very specific set of filters and processes
+        f_id = self.create_filter("Down (demo)", "$ts < ago(86400)", True)
+        i_id = self.create_incident_config(f_id)  # Add monitoring to this filter
