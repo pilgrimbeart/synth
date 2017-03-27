@@ -1,0 +1,9 @@
+requests
+zmq
+flask
+numpy
+pytz
+flask_cors
+pillow
+boto3
+

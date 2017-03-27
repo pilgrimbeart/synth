@@ -33,7 +33,7 @@ import traceback
 
 import sim
 from solar import solar
-from synth import timewave
+import timewave
 
 devices = []
 
