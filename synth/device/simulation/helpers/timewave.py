@@ -32,7 +32,7 @@ import random
 import numpy
 
 import utils
-from synth.simulation.helpers import ISO8601
+from synth.device.simulation.helpers import ISO8601
 
 
 def to_hours(spec):

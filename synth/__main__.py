@@ -31,14 +31,13 @@ import re
 import sys
 import time
 
-from synth.clients.client_devicepilot import devicepilot
+from synth.device.simulation import sim
+from synth.device.simulation.helpers import peopleNames
 
+from synth.clients import devicepilot
 from synth.device import device
+from synth.device.simulation.geo import geo
 from synth.server import zeromq_rx
-from synth.clients.client_aws import aws_client
-from synth.simulation import sim
-from synth.simulation.geo import geo
-from synth.simulation.helpers import peopleNames
 
 params = {}
 
@@ -159,7 +158,7 @@ def main():
         k, s, r = None, None, None
         if "aws_access_key_id" in params:
             k, s, r = params["aws_access_key_id"], params["aws_secret_access_key"], params["aws_region"]
-        aws = aws_client.Api(k, s, r)
+        aws = aws.Api(k, s, r)
         device.init(aws.post_device, params["instance_name"])
     else:
         logging.info("No device client specified")

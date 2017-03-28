@@ -26,7 +26,7 @@
 from math import sin, pi
 
 import sunpos_2
-from synth.simulation.helpers import ISO8601
+from synth.device.simulation.helpers import ISO8601
 
 
 def second_of_day(epoch_secs):

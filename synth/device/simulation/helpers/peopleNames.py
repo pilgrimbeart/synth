@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 
-from synth.simulation.helpers.utils import hash_it
+from synth.device.simulation.helpers.utils import hash_it
 
 femaleNames = ["Amelia", "Olivia", "Isla", "Emily", "Poppy", "Ava", "Isabella", "Jessica", "Lily", "Sophie", "Grace",
                "Sophia", "Mia", "Evie", "Ruby", "Ella", "Scarlett", "Isabelle", "Chloe", "Sienna", "Freya", "Phoebe",
