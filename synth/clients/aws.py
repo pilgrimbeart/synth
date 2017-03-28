@@ -31,8 +31,10 @@ DEFAULT_TYPENAME = "DemoThingType"
 
 
 class Api:
+    """AWS IoT API client for synth."""
+
     def __init__(self, aws_access_key_id=None, aws_secret_access_key=None, aws_region=None):
-        """Return a instance of the AWS API.
+        """Return an instance of the AWS API.
         
         The API will be configured from credentials in the environment/AWS Configure files, unless explicitly
         provided as arguments.
@@ -52,18 +54,18 @@ class Api:
         """
         if None not in (aws_access_key_id, aws_secret_access_key, aws_region):
             logging.info("Loading AWS iot/-data client with specific credentials")
-            self.iotClient = boto3.client('iot',
-                                          aws_access_key_id=aws_access_key_id,
-                                          aws_secret_access_key=aws_secret_access_key,
-                                          region_name=aws_region)
-            self.iotData = boto3.client('iot-data',
-                                        aws_access_key_id=aws_access_key_id,
-                                        aws_secret_access_key=aws_secret_access_key,
-                                        region_name=aws_region)
+            self.iot_client = boto3.client('iot',
+                                           aws_access_key_id=aws_access_key_id,
+                                           aws_secret_access_key=aws_secret_access_key,
+                                           region_name=aws_region)
+            self.iot_data = boto3.client('iot-data',
+                                         aws_access_key_id=aws_access_key_id,
+                                         aws_secret_access_key=aws_secret_access_key,
+                                         region_name=aws_region)
         else:
             logging.info("Loading AWS client with default credentials")
-            self.iotClient = boto3.client('iot')
-            self.iotData = boto3.client('iot-data')
+            self.iot_client = boto3.client('iot')
+            self.iot_data = boto3.client('iot-data')
 
     def create_device_type(self, type_name=DEFAULT_TYPENAME,
                            description="A Thing created by the DevicePilot Synth virtual device simulator"):
@@ -79,9 +81,9 @@ class Api:
         
         """
         logging.info("Creating AWS ThingType " + type_name)
-        response = self.iotClient.create_thing_type(thingTypeName=type_name,
-                                                    thingTypeProperties={'thingTypeDescription': description,
-                                                                         'searchableAttributes': []})
+        response = self.iot_client.create_thing_type(thingTypeName=type_name,
+                                                     thingTypeProperties={'thingTypeDescription': description,
+                                                                          'searchableAttributes': []})
         return response['thingTypeArn']
 
     def create_device(self, name, type_name=DEFAULT_TYPENAME):
@@ -92,13 +94,14 @@ class Api:
             type_name (str, optional):
                 Name of the device type to create a new device of (created if non-existant).
                 Defaults to the consistent synth default type.
+                
         Returns:
             str: AWS ARN of the created device (or already existing with that `name` and `type_name`).
             
         """
         logging.info("Creating AWS Thing " + name)
         self.create_device_type(type_name)
-        response = self.iotClient.create_thing(thingName=name, thingTypeName=type_name)
+        response = self.iot_client.create_thing(thingName=name, thingTypeName=type_name)
         return response['thingArn']
 
     def get_device(self, name):
@@ -111,7 +114,7 @@ class Api:
             dict: JSON'esq dictionary of the specified device from AWS IoT.
 
         """
-        response = self.iotData.get_thing_shadow(thingName=name)
+        response = self.iot_data.get_thing_shadow(thingName=name)
         return response["payload"].read()
 
     def get_devices(self):
@@ -120,7 +123,7 @@ class Api:
         Returns:
             dict: JSON'esq dictionary of all defined devices in AWS IoT.
         """
-        return self.iotClient.list_things()['things']
+        return self.iot_client.list_things()['things']
 
     def post_device(self, device):
         """Posts the updated state of the specified device.
@@ -147,7 +150,7 @@ class Api:
         """
         logging.info("Updating AWS device " + name + " : " + str(payload))
         data = {"state": {"reported": payload}}
-        response = self.iotData.update_thing_shadow(thingName=name, payload=json.dumps(data))
+        response = self.iot_data.update_thing_shadow(thingName=name, payload=json.dumps(data))
         assert 200 <= int(response['ResponseMetadata']['HTTPStatusCode']) < 300
 
     def delete_device(self, name):
@@ -163,14 +166,14 @@ class Api:
         logging.info("Deleting AWS thing " + name + " (and its shadow if any)")
 
         try:
-            response = self.iotData.delete_thing_shadow(thingName=name)
+            response = self.iot_data.delete_thing_shadow(thingName=name)
             assert 200 <= int(response['ResponseMetadata']['HTTPStatusCode']) < 300
             logging.info("(deleted shadow)")
         except AssertionError:
             logging.info("(no shadow to delete)")
 
         try:
-            response = self.iotClient.delete_thing(thingName=name)
+            response = self.iot_client.delete_thing(thingName=name)
             assert 200 <= int(response['ResponseMetadata']['HTTPStatusCode']) < 300
             return True
         except AssertionError:
@@ -180,6 +183,6 @@ class Api:
     def delete_default_devices(self):
         """Deletes all devices with the synth consistent default type."""
         logging.info("Deleting AWS demo devices")
-        for t in self.get_devices():
-            if t['thingTypeName'] == DEFAULT_TYPENAME:
-                self.delete_device(t['thingName'])
+        for thing in self.get_devices():
+            if thing['thingTypeName'] == DEFAULT_TYPENAME:
+                self.delete_device(thing['thingName'])

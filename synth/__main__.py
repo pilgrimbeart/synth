@@ -151,9 +151,9 @@ def main():
     dp = None
     aws_api = None
     if "devicepilot_api" in params:
-        dp = devicepilot.Api(url=params["devicepilot_api"], key=params["devicepilot_key"])
+        dp = devicepilot.Api(api_key=params["devicepilot_key"], url=params["devicepilot_api"])
         dp.set_queue_flush(params["queue_criterion"], params["queue_limit"])
-        device.init(dp.post_device_q, params["instance_name"])
+        device.init(dp.post_device, params["instance_name"])
     elif ("on_aws" in params) or ("aws_access_key_id" in params):
         k, s, r = None, None, None
         if "aws_access_key_id" in params:
@@ -177,7 +177,8 @@ def main():
 
     if params["setup_demo_filters"]:
         if dp:
-            dp.setup_demo_filters()
+            f_id = dp.create_filter("Down (demo)", "$ts < ago(86400)")
+            dp.create_event_config(f_id)  # Add monitoring to this filter
 
     if dp:
         if params["initial_action"] == "deleteExisting":  # Recreate world from scratch
@@ -208,7 +209,7 @@ def main():
     logging.info("Simulation ends")
 
     if dp:
-        logging.info("A total of " + str(dp.postCount) + " items were posted to DevicePilot")
+        logging.info("A total of " + str(dp.post_count) + " items were posted to DevicePilot")
     logging.info("Elapsed real time: " + str(int(time.time() - tstart)) + " seconds")
 
 
