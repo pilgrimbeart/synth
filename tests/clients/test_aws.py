@@ -20,7 +20,7 @@ class MockResponse:
 
 # mock to match boto3, therefore:
 # noinspection PyPep8Naming
-class MockIotClient:
+class Mockiot_client:
     def __init__(self, _):
         self.posted = None
         self.things = []
@@ -75,7 +75,7 @@ class MockIotClient:
 @pytest.fixture
 def api(mocker):
     mocker.patch.object(aws, 'boto3')
-    aws.boto3.client = MockIotClient
+    aws.boto3.client = Mockiot_client
     aws_api = aws.Api()
     return aws_api
 
@@ -99,7 +99,7 @@ class TestApi:
     def test_post_device(self, api):
         state = {"$id": "bob's_car", "speed": "50mph"}
         api.post_device(state)
-        assert api.iotData.last_posted() == {
+        assert api.iot_data.last_posted() == {
             "name": "bob's_car",
             "payload": json.dumps({"state": {"reported": state}})
         }
@@ -107,29 +107,29 @@ class TestApi:
     def test_post(self, api):
         payload = {"arm": "lifted"}
         api.post("bob's_digger", payload)
-        assert api.iotData.last_posted() == {
+        assert api.iot_data.last_posted() == {
             "name": "bob's_digger",
             "payload": json.dumps({"state": {"reported": payload}})
         }
 
     def test_delete_device(self, api):
         # With shadow
-        api.iotClient.add_thing("dave's_tractor")
-        api.iotData.add_thing("dave's_tractor")
-        assert api.iotData.has_thing("dave's_tractor")
+        api.iot_client.add_thing("dave's_tractor")
+        api.iot_data.add_thing("dave's_tractor")
+        assert api.iot_data.has_thing("dave's_tractor")
         assert api.delete_device("dave's_tractor")
-        assert not api.iotData.has_thing("dave's_tractor")
+        assert not api.iot_data.has_thing("dave's_tractor")
         # Without shadow
-        api.iotClient.add_thing("dave's_castle")
+        api.iot_client.add_thing("dave's_castle")
         assert api.delete_device("dave's_castle")
         # Without anything
         assert not api.delete_device("dave's_airship")
 
     def test_delete_default_devices(self, api):
-        api.iotClient.add_thing("highwind")
-        api.iotClient.add_thing("ragnarok")
-        api.iotClient.add_thing("tiny_bronco")
+        api.iot_client.add_thing("highwind")
+        api.iot_client.add_thing("ragnarok")
+        api.iot_client.add_thing("tiny_bronco")
         api.delete_default_devices()
-        assert not api.iotClient.has_thing("highwind")
-        assert not api.iotClient.has_thing("ragnarok")
-        assert api.iotClient.has_thing("tiny_bronco")
+        assert not api.iot_client.has_thing("highwind")
+        assert not api.iot_client.has_thing("ragnarok")
+        assert api.iot_client.has_thing("tiny_bronco")

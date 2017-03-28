@@ -96,7 +96,7 @@ class Api:
             for device in devices:
                 if device["$id"] == "device0":  # skip magic device id.
                     pass
-                self.post_queue.extend(device.copy())
+                self.post_queue.append(device.copy())
         else:
             if devices["$id"] == "device0":
                 pass
@@ -160,7 +160,7 @@ class Api:
         if self.queue_criterion == "messages":
             if len(self.post_queue) >= self.queue_limit:
                 return True
-        if self.queue_criterion == "time":
+        if self.queue_criterion == "time" and len(self.post_queue) > 1:
             # Note that $ts properties in the post queue will be in epoch-MILLI seconds.
             if (self.post_queue[-1]["$ts"] - self.post_queue[0]["$ts"]) >= (self.queue_limit * 1000):
                 return True
@@ -215,13 +215,8 @@ class Api:
         """
         logging.info("Loading all devices")
         response = requests.get(self.url + '/devices', headers=set_headers(self.api_key))
-        devices = json.loads(response.text)
+        devices = self.filter_got_devices(response.text)
         logging.info("Loaded " + str(len(devices)) + " devices")
-        # Strip all DevicePilot-internal properties
-        for device in devices:
-            for propName in dict(device):
-                if (propName.startswith("$") and propName not in ["$ts", "$id"]) or propName.endswith("State"):
-                    del device[propName]
         return devices
 
     def get_devices_where(self, where):
@@ -237,7 +232,16 @@ class Api:
         """
         r = self.url + '/devices?$profile=/profiles/$view&where=' + urllib.quote_plus(where)
         resp = requests.get(r, headers=set_headers(self.api_key))
-        return json.loads(resp.text)
+        return self.filter_got_devices(resp.text)
+
+    @staticmethod
+    def filter_got_devices(body):
+        devices = json.loads(body)
+        for device in devices:
+            for propName in dict(device):
+                if (propName.startswith("$") and propName not in ["$ts", "$id", "$urn"]) or propName.endswith("State"):
+                    del device[propName]
+        return devices
 
     def get_device_history(self, device_urn, start, end, fields):
         """Get the history of field changes for a device across an interval.
@@ -279,15 +283,15 @@ class Api:
             
         """
         logging.info("Deleting all devices where " + where)
-        devs = self.get_devices_where(where)
-        logging.info(str(len(devs)) + " devices")
-        for dev in devs:
-            logging.info("Deleting " + str(dev["$urn"]))
-            resp = requests.delete(self.url + dev["$urn"], headers=set_headers(self.api_key))
+        devices = self.get_devices_where(where)
+        logging.info(str(len(devices)) + " devices")
+        for device in devices:
+            logging.info("Deleting " + str(device["$urn"]))
+            resp = requests.delete(self.url + device["$urn"], headers=set_headers(self.api_key))
             if not resp.ok:
                 logging.error(str(resp.reason) + ":" + str(resp.text))
                 return False
-            return True
+        return True
 
     def create_filter(self, name, spec):
         """Create a device filter.

@@ -9,3 +9,4 @@ boto3
 pytest
 mock
 pytest_mock
+requests_mock
