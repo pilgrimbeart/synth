@@ -34,7 +34,7 @@ import time
 from synth.device.simulation import sim
 from synth.device.simulation.helpers import peopleNames
 
-from synth.clients import devicepilot
+from synth.clients import devicepilot, aws
 from synth.device import device
 from synth.device.simulation.geo import geo
 from synth.server import zeromq_rx
@@ -106,8 +106,8 @@ def main():
                  "battery": 100
                  }
         # To create a device in DevicePilot, just start posting it. But in AWS we have to explicitly create it.
-        if aws:
-            aws.create_device(props["$id"])
+        if aws_api:
+            aws_api.create_device(props["$id"])
         _d = device.Device(props)
         if "comms_reliability" in params:
             # d.setCommsReliability(upDownPeriod=sim.days(0.5), reliability=1.0-math.pow(random.random(), 2))
@@ -149,7 +149,7 @@ def main():
     random.seed(12345)  # Ensure reproduction
 
     dp = None
-    aws = None
+    aws_api = None
     if "devicepilot_api" in params:
         dp = devicepilot.Api(url=params["devicepilot_api"], key=params["devicepilot_key"])
         dp.set_queue_flush(params["queue_criterion"], params["queue_limit"])
@@ -158,8 +158,8 @@ def main():
         k, s, r = None, None, None
         if "aws_access_key_id" in params:
             k, s, r = params["aws_access_key_id"], params["aws_secret_access_key"], params["aws_region"]
-        aws = aws.Api(k, s, r)
-        device.init(aws.post_device, params["instance_name"])
+        aws_api = aws.Api(k, s, r)
+        device.init(aws_api.post_device, params["instance_name"])
     else:
         logging.info("No device client specified")
 
@@ -187,9 +187,9 @@ def main():
         if params["initial_action"] == "loadExisting":  # Load existing world
             for d in dp.get_devices():
                 device.Device(d)
-    if aws:
+    if aws_api:
         if params["initial_action"] in ["deleteExisting", "deleteDemo"]:
-            aws.delete_demo_devices()
+            aws_api.delete_default_devices()
             # Loading device state from AWS not yet supported
 
     if params["initial_action"] != "loadExisting":

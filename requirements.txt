@@ -6,4 +6,6 @@ pytz
 flask_cors
 pillow
 boto3
-
+pytest
+mock
+pytest_mock
