@@ -135,10 +135,15 @@ def isRunning():
 def whatIsRunning():
     # This is the route that we expect Pingdom to ping regularly to reset the heartbeat
     global lastPingTime
+    global zeromqSocket
+    if zeromqSocket == None:
+        createSocket()
+
     logging.info("Got web request to /")
     lastPingTime.value = time.time()
     if magicKey not in request.args:
         abort(403)
+    zeromqSocket.send(json.dumps({"action": "ping"}))   # Propagate pings into ZeroMQ for liveness logging throughout rest of system
     try:
         x = subprocess.check_output("ps uax | grep 'python' | grep -v grep", shell=True)
         x += "<br>"
