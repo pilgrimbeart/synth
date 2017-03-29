@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#
+
 # UTILS
 #
 # Copyright (c) 2017 DevicePilot Ltd.

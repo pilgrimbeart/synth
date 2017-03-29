@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#
+
 # DEVICE
 # A generic device class
 # A global set of all known devices

@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 
-from synth.device.simulation.helpers.utils import hash_it
+from utilities import hash_it
 
 femaleNames = ["Amelia", "Olivia", "Isla", "Emily", "Poppy", "Ava", "Isabella", "Jessica", "Lily", "Sophie", "Grace",
                "Sophia", "Mia", "Evie", "Ruby", "Ella", "Scarlett", "Isabelle", "Chloe", "Sienna", "Freya", "Phoebe",
@@ -83,17 +83,15 @@ lastNames = ["Adams", "Aigner", "Allen", "Andersen", "Anderson", "André", "Andr
              "Wouters", "Wright", "Young", "Zaytsev"]
 
 
-def first_name(r):
-    if hash_it(r, 1):
+def first_name(seed):
+    """Return a random first name consistent with a given seed."""
+    if hash_it(seed, 1):
         first = femaleNames
     else:
         first = maleNames
-    return first[hash_it(r, len(first))]
+    return first[hash_it(seed, len(first))]
 
 
-def last_name(r):
-    return lastNames[hash_it(r, len(lastNames))]
-
-
-def full_name(r):
-    return first_name(r) + " " + last_name(r)
+def last_name(seed):
+    """Return a random second name consistent with a given seed."""
+    return lastNames[hash_it(seed, len(lastNames))]

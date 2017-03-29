@@ -32,7 +32,7 @@ import sys
 import time
 
 from synth.device.simulation import sim
-from synth.device.simulation.helpers import peopleNames
+from synth.device.simulation.helpers import namify
 
 from synth.clients import devicepilot, aws
 from synth.device import device
@@ -81,7 +81,7 @@ def main():
     def create_device(_):
         deviceNum = device.num_devices()
         (lon, lat) = pp.pick_point()
-        (firstName, lastName) = (peopleNames.first_name(deviceNum), peopleNames.last_name(deviceNum))
+        (firstName, lastName) = (namify.first_name(deviceNum), namify.last_name(deviceNum))
         firmware = random.choice(["0.51", "0.52", "0.6", "0.6", "0.6", "0.7", "0.7", "0.7", "0.7"])
         operator = random.choice(["O2", "O2", "O2", "EE", "EE", "EE", "EE", "EE"])
         if operator == "O2":
