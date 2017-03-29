@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# UTILS
+# Utilities
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #
@@ -23,10 +23,20 @@
 # SOFTWARE.
 
 
-def hash_it(n, limit):
-    x = n * 19079  # Prime
+def consistent_hash(value, limit):
+    """Return a consistent hash.
+    
+    Args:
+        value (int): Value to hash from
+        limit (int): Range to hash within
+    
+    Returns:
+        int: Hash consistent with value/limit.
+    
+    """
+    x = value * 19079  # Prime
     x = (int(str(x)[::-1]))  # Reverse its string representation
-    n = n ^ x
-    n = (n * 7919)  # Prime
-    n = n % limit
-    return n
+    value = value ^ x
+    value = (value * 7919)  # Prime
+    value = value % limit
+    return value

@@ -95,7 +95,7 @@ def jitter(t, x, amount_s):
     year = int(dt.strftime("%Y"))
     uniqueValue = year * 367 + dayOfYear + abs(
         hash(x))  # Note that hash is implementation-dependent so may give different results on different platforms
-    rand = utilities.hash_it(uniqueValue, 100)
+    rand = utilities.consistent_hash(uniqueValue, 100)
     sign = int(str(uniqueValue)[0]) < 5
     v = (rand / 100.0) * amount_s
     if sign:

@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 
-from utilities import hash_it
+from utilities import consistent_hash
 
 femaleNames = ["Amelia", "Olivia", "Isla", "Emily", "Poppy", "Ava", "Isabella", "Jessica", "Lily", "Sophie", "Grace",
                "Sophia", "Mia", "Evie", "Ruby", "Ella", "Scarlett", "Isabelle", "Chloe", "Sienna", "Freya", "Phoebe",
@@ -85,13 +85,13 @@ lastNames = ["Adams", "Aigner", "Allen", "Andersen", "Anderson", "André", "Andr
 
 def first_name(seed):
     """Return a random first name consistent with a given seed."""
-    if hash_it(seed, 1):
+    if consistent_hash(seed, 1):
         first = femaleNames
     else:
         first = maleNames
-    return first[hash_it(seed, len(first))]
+    return first[consistent_hash(seed, len(first))]
 
 
 def last_name(seed):
     """Return a random second name consistent with a given seed."""
-    return lastNames[hash_it(seed, len(lastNames))]
+    return lastNames[consistent_hash(seed, len(lastNames))]
