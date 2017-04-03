@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-#
-# Looks up Google Maps
+
+# Google Map address look-up.
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #
@@ -22,53 +22,42 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import httplib
-import json
+import os
+import logging
+import requests
 import urllib
 
-GOOGLE_MAPS_API_KEY = open("../synth_certs/googlemapskey", "rt").read().strip()
+try:
+    GOOGLE_API_KEY = os.environ('GOOGLE_API_KEY')
+except AttributeError:
+    GOOGLE_API_KEY = 'UNDEFINED'
+    logging.error("No GOOGLE_API_KEY has been set.")
 
 
-def set_headers():
-    """ Sets the headers for sending to the DM server. We assume that the
-        user has a token that allows them to login. """
-    headers = {"Content-Type": "application/json"}
-    return headers
-
-
-# ==== Google Maps API ====
-geoCache = {}
+geo_cache = {}
 
 
 def address_to_long_lat(address):
-    global geoCache
-    if address in geoCache:
-        return geoCache[address]  # Avoid thrashing Google (expensive!)
+    """Get the longitude and latitude of an address from Google Maps.
+    
+    Args:
+         address (string): Lookup string of the address.
+     
+    Returns:
+        (float, float): Longitude and latitude of address.
+        
+    """
+    global geo_cache
+    if address in geo_cache:
+        return geo_cache[address]
 
-    # (lng, lat) = (None, None)
+    query = '?' + urllib.urlencode({'key': GOOGLE_API_KEY}) + '&' + urllib.urlencode({'address': address})
+    response = requests.get('https://maps.googleapis.com/maps/api/geocode/json' + query,
+                            verify=True, headers={"Content-Type": "application/json"})
+    data = response.json()
 
-    # try:
-    conn = httplib.HTTPSConnection("maps.google.com")  # Must now use SSL
-    url = '/maps/api/geocode/json' + '?' + urllib.urlencode({'key': GOOGLE_MAPS_API_KEY}) + '&' + urllib.urlencode(
-        {'address': address})
-    conn.request('GET', url, None, set_headers())
-    resp = conn.getresponse()
-    result = resp.read()
-    data = json.loads(result)
-    # print "For address "+address+" response from maps.google.com is "+str(data)
-    geo = data["results"][0]["geometry"]["location"]
-    (lng, lat) = (geo["lng"], geo["lat"])
-    # except:
-    # print "FAILED to do Google Maps lookup on location "+str(address)
-    geoCache[address] = (lng, lat)
+    geocode = data["results"][0]["geometry"]["location"]
+    (lng, lat) = (geocode["lng"], geocode["lat"])
+
+    geo_cache[address] = (lng, lat)
     return lng, lat
-
-
-def main():
-    address = "Cambridge, UK"
-    lon, lat = address_to_long_lat(address)
-    print "For address", address, "Lon,Lat = ", lon, lat
-
-
-if __name__ == "__main__":
-    main()

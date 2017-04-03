@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#
+
 # Standalone program which spawns new Synth processes
 #
 # Copyright (c) 2017 DevicePilot Ltd.

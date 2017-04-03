@@ -36,7 +36,7 @@ from synth.device.simulation.helpers import namify
 
 from synth.clients import devicepilot, aws
 from synth.device import device
-from synth.device.simulation.geo import geo
+from synth.device.simulation.geo import point_picker
 from synth.server import zeromq_rx
 
 params = {}
@@ -169,8 +169,9 @@ def main():
     sim.set_time_str(params["start_time"], is_start_time=True)
     sim.set_end_time_str(params["end_time"])
 
-    pp = geo.PointPicker()
+    pp = point_picker.PointPicker()
     if "area_centre" in params:
+        # address_to_long_lat(area[0]), address_to_long_lat(area[1])
         pp.set_area([params["area_centre"], params["area_radius"]])
 
     # Set up the world
