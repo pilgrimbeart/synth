@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-#
-# SOLAR
+
 # Utility solar functions (with no side-effects)
 #
 # Copyright (c) 2017 DevicePilot Ltd.
@@ -23,59 +22,39 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import time
 from math import sin, pi
 
-import sunpos_2
-from synth.device.simulation.helpers import ISO8601
+import sun_position
 
 
-def second_of_day(epoch_secs):
-    s = ISO8601.epoch_seconds_to_iso8601(epoch_secs)
-    s = "1970-01-01" + s[10:]
-    return ISO8601.to_epoch_seconds(s)
+def sun_angle(epoch_secs, (longitude, latitude)):
+    """Returns the angle of the sun at a given time.
+    
+    Args:
+        epoch_secs (int): Seconds since the ISO8601 epoch.
+        (longtiude, latitude) (float, float): Longitude/Latitude pair to calculate sun angle at.
+        
+    Returns:
+        (float, float): azimuth and elevation.
+    """
+    at = time.gmtime(epoch_secs)
+    (azimuth, elevation) = sun_position.sun_position(at.tm_year, at.tm_mon, at.tm_mday, at.tm_hour, at.tm_min,
+                                                     at.tm_sec, latitude, longitude)
+    return azimuth, elevation
 
 
-def diurnal_cycle(epoch_secs):
-    # Varies from 0 at midnight to 1 at midday and back again
-    e = second_of_day(epoch_secs)
-    days = 60 * 60 * 24
-    frac = e / float(days)  # Fraction of a day
-    return 0.5 + sin(3 * pi / 2 + frac * pi * 2) / 2
-
-
-def sun_angle(epoch_secs, (_longitude, _latitude)):
-    date_s = ISO8601.epoch_seconds_to_iso8601(epoch_secs)
-    year = int(date_s[0:4])
-    month = int(date_s[5:7])
-    day = int(date_s[8:10])
-    hour = int(date_s[11:13])
-    minute = int(date_s[14:16])
-    sec = int(date_s[17:19])
-    (azimuthD, elevationD) = sunpos_2.sun_position(year, month, day, hour, minute, sec, _latitude, _longitude)
-    return azimuthD, elevationD
-
-
-def sun_bright(epoch_secs, (_longitude, _latitude)):
-    az_d, elev_d = sun_angle(epoch_secs, (_longitude, _latitude))
+def sun_bright(epoch_secs, (longitude, latitude)):
+    """Returns the sun's brightness at a given time.
+    
+    Args:
+        epoch_secs (int): Seconds since the ISO8601 epoch.
+        (longtiude, latitude) (float, float): Longitude/Latitude pair to calculate sun angle at.
+        
+    Returns:
+        float: Brigtness.
+    """
+    az_d, elev_d = sun_angle(epoch_secs, (longitude, latitude))
     elev_r = 2 * pi * (elev_d / 360.0)
     bright = max(0.0, sin(elev_r))
     return bright
-
-
-if __name__ == "__main__":
-    import random
-
-    elevMin = 1000000
-    elevMax = -1000000
-    for i in range(1000):
-        longitude = random.random() * 360 - 180.0
-        latitude = random.random() * 180 - 9.0
-        t = int(random.random() * 60 * 60 * 24 * 365 * 50)
-        print longitude, latitude, t
-        azD, elevD = sun_bright(t, (longitude, latitude))
-        print "shit"
-        elevR = 2 * pi * (elevD / 360.0)
-        print longitude, latitude, azD, elevD, sin(elevR)
-        elevMin = min(elevMin, elevD)
-        elevMax = max(elevMax, elevD)
-    print "Min/Max elev:", elevMin, elevMax
