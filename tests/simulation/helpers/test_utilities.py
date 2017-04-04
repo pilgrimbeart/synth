@@ -1,4 +1,4 @@
-from synth.device.simulation.helpers.utilities import consistent_hash
+from synth.simulation.helpers.utilities import consistent_hash
 
 
 def test_consistent_hash():

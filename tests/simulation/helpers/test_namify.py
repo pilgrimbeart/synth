@@ -1,4 +1,4 @@
-from synth.device.simulation.helpers.namify import first_name, last_name
+from synth.simulation.helpers.namify import first_name, last_name
 
 
 def verify_consistent_naming(namer):

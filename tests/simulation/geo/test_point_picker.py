@@ -1,4 +1,4 @@
-from synth.device.simulation.geo.point_picker import PointPicker
+from synth.simulation.geo.point_picker import PointPicker
 
 
 # noinspection PyClassHasNoInit

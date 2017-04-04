@@ -1,4 +1,4 @@
-from synth.device.simulation.solar.sun_position import sun_position
+from synth.simulation.solar.sun_position import sun_position
 
 
 def check_position(got, expected):

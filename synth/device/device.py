@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-# DEVICE
-# A generic device class
-# A global set of all known devices
-# Some simple behaviours
-#
 # Copyright (c) 2017 DevicePilot Ltd.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,7 +28,8 @@ import traceback
 
 import synth.device.simulation.helpers.timewave
 from synth.device.simulation import sim
-from synth.device.simulation.solar import solar_math
+
+from synth.simulation.solar import solar_math
 
 devices = []
 
@@ -85,7 +81,7 @@ def log_entry(properties):
 
 def log_string(s):
     logging.info(s)
-    logfile.write(synth.device.simulation.sim.get_time_str() + " " + s + "\n")
+    logfile.write(synth.simulation.sim.get_time_str() + " " + s + "\n")
 
 
 def flush():
@@ -120,7 +116,7 @@ class Device:
         self.properties = props
         devices.append(self)
         self.commsReliability = 1.0  # Either a fraction, or a string containing a specification of the trajectory
-        self.commsUpDownPeriod = synth.device.simulation.sim.days(1)
+        self.commsUpDownPeriod = synth.simulation.sim.days(1)
         self.batteryLife = DEFAULT_BATTERY_LIFE_S
         self.batteryAutoreplace = False
         self.commsOK = True
@@ -128,9 +124,9 @@ class Device:
         self.start_ticks()
 
     def start_ticks(self):
-        synth.device.simulation.sim.inject_event_delta(self.batteryLife / 100.0, self.tick_battery_decay, self)
-        synth.device.simulation.sim.inject_event_delta(synth.device.simulation.sim.hours(1), self.tick_hourly, self)
-        synth.device.simulation.sim.inject_event_delta(0, self.tick_product_usage, self)  # Immediately
+        synth.simulation.sim.inject_event_delta(self.batteryLife / 100.0, self.tick_battery_decay, self)
+        synth.simulation.sim.inject_event_delta(synth.simulation.sim.hours(1), self.tick_hourly, self)
+        synth.simulation.sim.inject_event_delta(0, self.tick_product_usage, self)  # Immediately
 
     def external_event(self, event_name, arg):
         s = "Processing external event " + event_name + " for device " + str(self.properties["$id"])
@@ -155,15 +151,15 @@ class Device:
     def tick_product_usage(self, _):
         if self.get_property("battery") > 0:
             self.set_property("buttonPress", 1)
-            t = synth.device.simulation.helpers.timewave.next_usage_time(synth.device.simulation.sim.get_time(),
-                                                                         ["Mon", "Tue", "Wed", "Thu", "Fri"],
+            t = synth.simulation.helpers.timewave.next_usage_time(synth.simulation.sim.get_time(),
+                                                                  ["Mon", "Tue", "Wed", "Thu", "Fri"],
                                                                          "06:00-09:00")
-            synth.device.simulation.sim.inject_event(t, self.tick_product_usage, self)
+            synth.simulation.sim.inject_event(t, self.tick_product_usage, self)
 
-    def set_comms_reliability(self, up_down_period=synth.device.simulation.sim.days(1), reliability=1.0):
+    def set_comms_reliability(self, up_down_period=synth.simulation.sim.days(1), reliability=1.0):
         self.commsUpDownPeriod = up_down_period
         self.commsReliability = reliability
-        synth.device.simulation.sim.inject_event_delta(0, self.tick_comms_up_down, self)  # Immediately
+        synth.simulation.sim.inject_event_delta(0, self.tick_comms_up_down, self)  # Immediately
 
     def set_battery_life(self, mu, sigma, autoreplace=False):
         # Set battery life with a normal distribution which won't exceed 2 standard deviations
@@ -177,8 +173,8 @@ class Device:
         if isinstance(self.commsReliability, (int, float)):  # Simple probability
             self.commsOK = self.commsReliability > random.random()
         else:  # Probability spec, i.e. varies with time
-            rel_time = synth.device.simulation.sim.get_time() - synth.device.simulation.sim.startTime
-            prob = synth.device.simulation.helpers.timewave.interp(self.commsReliability, rel_time)
+            rel_time = synth.simulation.sim.get_time() - synth.simulation.sim.startTime
+            prob = synth.simulation.helpers.timewave.interp(self.commsReliability, rel_time)
             if self.property_exists("rssi"):  # Now affect comms according to RSSI
                 rssi = self.get_property("rssi")
                 radio_goodness = 1.0 - (rssi - GOOD_RSSI) / (BAD_RSSI - GOOD_RSSI)  # Map to 0..1
@@ -188,7 +184,7 @@ class Device:
 
         delta_time = random.expovariate(1 / self.commsUpDownPeriod)
         delta_time = min(delta_time, self.commsUpDownPeriod * 100)  # Limit long tail
-        synth.device.simulation.sim.inject_event_delta(delta_time, self.tick_comms_up_down, self)
+        synth.simulation.sim.inject_event_delta(delta_time, self.tick_comms_up_down, self)
 
     def do_comms(self, properties):
         if self.commsOK:
@@ -202,34 +198,34 @@ class Device:
         return prop_name in self.properties
 
     def set_property(self, prop_name, value):
-        new_props = {prop_name: value, "$ts": synth.device.simulation.sim.get_time_1000(),
+        new_props = {prop_name: value, "$ts": synth.simulation.sim.get_time_1000(),
                      "$id": self.properties["$id"]}
         self.properties.update(new_props)
         self.do_comms(new_props)
 
     def set_properties(self, new_props):
         self.properties.update(new_props)
-        self.properties.update({"$ts": synth.device.simulation.sim.get_time_1000(), "$id": self.properties["$id"]})
+        self.properties.update({"$ts": synth.simulation.sim.get_time_1000(), "$id": self.properties["$id"]})
         self.do_comms(new_props)
 
     def tick_battery_decay(self, _):
         v = self.get_property("battery")
         if v > 0:
             self.set_property("battery", v - 1)
-            synth.device.simulation.sim.inject_event_delta(self.batteryLife / 100.0, self.tick_battery_decay, self)
+            synth.simulation.sim.inject_event_delta(self.batteryLife / 100.0, self.tick_battery_decay, self)
         else:
             if self.batteryAutoreplace:
                 logging.info("Auto-replacing battery")
                 self.set_property("battery", 100)
-                synth.device.simulation.sim.inject_event_delta(self.batteryLife / 100.0, self.tick_battery_decay, self)
+                synth.simulation.sim.inject_event_delta(self.batteryLife / 100.0, self.tick_battery_decay, self)
 
     def tick_hourly(self, _):
         if self.get_property("battery") > 0:
-            self.set_property("light", solar_math.sun_bright(synth.device.simulation.sim.get_time(),
+            self.set_property("light", solar_math.sun_bright(synth.simulation.sim.get_time(),
                                                              (float(Device.get_property(self, "longitude")),
                                                               float(Device.get_property(self, "latitude")))
                                                              ))
-            synth.device.simulation.sim.inject_event_delta(synth.device.simulation.sim.hours(1), self.tick_hourly, self)
+            synth.simulation.sim.inject_event_delta(synth.simulation.sim.hours(1), self.tick_hourly, self)
 
 # Model for comms unreliability
 # -----------------------------

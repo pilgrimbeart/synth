@@ -1,6 +1,6 @@
 import requests_mock
 
-from synth.device.simulation.geo.google_maps import address_to_long_lat
+from synth.simulation.geo.google_maps import address_to_long_lat
 
 
 def test_address_to_long_lat():

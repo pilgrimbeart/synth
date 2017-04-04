@@ -27,7 +27,7 @@ import logging
 import threading
 import time
 
-from synth.device.simulation.helpers import ISO8601
+from synth.simulation.helpers import ISO8601
 
 simTime = 0  # Global "now" in epoch-seconds
 startTime = None

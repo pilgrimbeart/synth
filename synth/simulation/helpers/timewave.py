@@ -31,41 +31,8 @@ import random
 
 import numpy
 
-import utilities
 import ISO8601
-
-
-def next_usage_time(t, day_spec, hour_spec):
-    # Given a day spec e.g. ["Mon","Tue"] and an hour spec e.g. "08:00-10:00"
-    # work out a next time t which falls within that spec (picking randomly within the hour range)
-    # (if given a time already within spec, it moves to the NEXT such time)
-    (startHour, endHour) = to_hours(hour_spec)
-    (h, d) = (hour_in_day(t), day_of_week(t))
-    if (d in day_spec) and (h < endHour):  # If already in spec, move beyond
-        t += 60 * 60 * endHour - h
-
-    while True:  # Move to a valid day of the week
-        (h, d) = (hour_in_day(t), day_of_week(t))
-        if (d in day_spec) and (h < endHour):
-            break
-        t = start_of_next_day(t)
-    chosenHour = startHour + (endHour - startHour) * random.random()
-    ts = ISO8601.epoch_seconds_to_iso8601(t)
-    ts = ts[:11] + hour_to_hh_mm_ss(chosenHour) + ts[19:]
-    t = ISO8601.to_epoch_seconds(ts)
-    return t
-
-
-def interp(spec_str, t):
-    # <specStr> is a string containing a list of pairs e.g. "[[0,20],[30,65],[60,50],[90,75]]"
-    # The first element of each pair is DAYS. The second is a NUMBER.
-    # <t> is time in seconds
-    # Returns the current value of t using linear interpolation
-    specList = ast.literal_eval(spec_str)
-    X = [i[0] for i in specList]
-    Y = [i[1] for i in specList]
-    _day = t / (60 * 60 * 24.0)
-    return numpy.interp([_day], X, Y)[0]
+import utilities
 
 
 def to_hours(spec):
@@ -134,3 +101,35 @@ def jitter(t, x, amount_s):
     if sign:
         v = -v
     return v
+
+def next_usage_time(t, day_spec, hour_spec):
+    # Given a day spec e.g. ["Mon","Tue"] and an hour spec e.g. "08:00-10:00"
+    # work out a next time t which falls within that spec (picking randomly within the hour range)
+    # (if given a time already within spec, it moves to the NEXT such time)
+    (startHour, endHour) = to_hours(hour_spec)
+    (h, d) = (hour_in_day(t), day_of_week(t))
+    if (d in day_spec) and (h < endHour):  # If already in spec, move beyond
+        t += 60 * 60 * endHour - h
+
+    while True:  # Move to a valid day of the week
+        (h, d) = (hour_in_day(t), day_of_week(t))
+        if (d in day_spec) and (h < endHour):
+            break
+        t = start_of_next_day(t)
+    chosenHour = startHour + (endHour - startHour) * random.random()
+    ts = ISO8601.epoch_seconds_to_iso8601(t)
+    ts = ts[:11] + hour_to_hh_mm_ss(chosenHour) + ts[19:]
+    t = ISO8601.to_epoch_seconds(ts)
+    return t
+
+
+def interp(spec_str, t):
+    # <specStr> is a string containing a list of pairs e.g. "[[0,20],[30,65],[60,50],[90,75]]"
+    # The first element of each pair is DAYS. The second is a NUMBER.
+    # <t> is time in seconds
+    # Returns the current value of t using linear interpolation
+    specList = ast.literal_eval(spec_str)
+    X = [i[0] for i in specList]
+    Y = [i[1] for i in specList]
+    _day = t / (60 * 60 * 24.0)
+    return numpy.interp([_day], X, Y)[0]

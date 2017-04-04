@@ -1,4 +1,4 @@
-from synth.device.simulation.solar.solar_math import sun_bright
+from synth.simulation.solar.solar_math import sun_bright
 
 
 def check_bright(position, time, expected):
