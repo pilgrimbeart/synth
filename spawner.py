@@ -27,13 +27,12 @@ import zeromq_rx, time, subprocess, sys
 from datetime import datetime
 
 def spawnIt(params):
-    print datetime.now(), "Got",str(params)
     if not "action" in params:
-        print datetime.now(), "(ignoring)"
+        print datetime.now(), "Got",str(params),"(ignoring)"
         sys.stdout.flush()
         return
     if params["action"] != "spawn":
-        print datetime.now(), "(ignoring)"
+        print datetime.now(), "Got",str(params),"(ignoring)"
         sys.stdout.flush()
         return
     print datetime.now(), "Spawning "+str(params)
@@ -50,9 +49,11 @@ def spawnIt(params):
     except Exception as e:
         print "Error in spawn: "+str(e)
         print traceback.format_exc()
+
     sys.stdout.flush()
 
 if __name__ == "__main__":
+    print
     print datetime.now(),"Starting Spawner"
     sys.stdout.flush()
     zeromq_rx.init(spawnIt)

@@ -136,6 +136,7 @@ class api():
 
     def enterInteractive(self, anId):
         logging.info("DevicePilot client entering (interactive,1sec) mode")
+        self.flushPostQueue()
         self.recalcHistorical(anId)
         self.queueFlushCriterion = "interactive"
         self.queueFlushLimit = 1

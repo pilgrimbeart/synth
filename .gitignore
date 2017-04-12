@@ -4,3 +4,4 @@
 *.key
 pytz/
 requests/
+runAll

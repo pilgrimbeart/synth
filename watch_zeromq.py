@@ -21,10 +21,11 @@
 # SOFTWARE.
 
 import time
+from datetime import datetime
 import zeromq_rx
 
 def printIt(params):
-    print str(params)
+    print datetime.now(),str(params)
 
 if __name__ == "__main__":
     zeromq_rx.init(printIt)
