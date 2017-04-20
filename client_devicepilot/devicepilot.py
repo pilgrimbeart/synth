@@ -108,13 +108,13 @@ class api():
     def postDeviceQ(self, device):
 
         if isinstance(device,list):
-            for d in device:
-                if d["$id"]=="device0":
-                    pass # logging.info(str(d))
+##            for d in device:
+##                if d["$id"]=="device0":
+##                    pass # logging.info(str(d))
             self.postQueue.extend(device.copy())
         else:
-            if device["$id"]=="device0":
-                pass # logging.info(str(device))
+##            if device["$id"]=="device0":
+##                pass # logging.info(str(device))
             self.postQueue.append(device.copy())
 
         self.flushPostQueueIfReady()
@@ -149,7 +149,7 @@ class api():
     def deleteDevicesWhere(self, whereStr): 
         logging.info("Deleting all devices where "+whereStr)
         devs = self.getDevicesWhere(whereStr)
-        logging.info(str(len(devs))+" devices")
+        logging.info("    "+str(len(devs))+" devices to delete")
         for dev in devs:
             logging.info("Deleting "+str(dev["$urn"]))
             resp = requests.delete(self.url + dev["$urn"], headers=set_headers(self.key))
@@ -161,7 +161,7 @@ class api():
         r = self.url + '/devices'
         resp = requests.get(r, headers=set_headers(self.key))
         devices = json.loads(resp.text)
-        logging.info("Loaded "+str(len(devices))+" devices")
+        logging.info("    Loaded "+str(len(devices))+" devices")
         # Remove all DevicePilot-internal properties
         for device in devices:
             for propName in dict(device):
