@@ -28,6 +28,7 @@ import random   # Might want to replace this with something we control
 from geo import geo
 from client_devicepilot import devicepilot
 from client_aws import aws_client
+from wind import whitelees
 import peopleNames
 import sim
 import ISO8601
@@ -39,7 +40,7 @@ params = {}
 # Default params. Override these by specifying one or more JSON files on the command line.
 params.update({
     "instance_name" : "default",    # Used for naming log files
-    "initial_action" : "loadExisting",
+    "initial_action" : None,
     "device_count" : 10,
     "start_time" : "now",
     "end_time" : None,
@@ -141,13 +142,13 @@ def main():
     if "devicepilot_api" in params:
         dp = devicepilot.api(url=params["devicepilot_api"], key=params["devicepilot_key"])
         dp.setQueueFlush(params["queue_criterion"], params["queue_limit"])
-        device.init(dp.postDeviceQ, params["instance_name"])
+        device.init(updatecallback=dp.postDeviceQ, logfileName=params["instance_name"])
     elif ("on_aws" in params) or ("aws_access_key_id" in params):
         k,s = None,None
         if "aws_access_key_id" in params:
             k,s,r = params["aws_access_key_id"], params["aws_secret_access_key"], params["aws_region"]
         aws = aws_client.api(k,s,r)
-        device.init(aws.postDevice, params["instance_name"])
+        device.init(updatecallback=aws.postDevice, logfileName=params["instance_name"])
     else:
         logging.info("No device client specified")
 
@@ -163,10 +164,6 @@ def main():
 
     # Set up the world
     
-    if params["setup_demo_filters"]==True:
-        if dp:
-            dp.setupDemoFilters()
-
     if dp:
         if params["initial_action"]=="deleteExisting":      # Recreate world from scratch
             dp.deleteAllDevices()   # !!! TODO: Delete properties too.
@@ -180,9 +177,19 @@ def main():
             aws.deleteDemoDevices()
         # Loading device state from AWS not yet supported
 
-    if params["initial_action"] != "loadExisting":
-        sim.injectEvents(randList(sim.getTime(), params["install_timespan"], params["device_count"]), createDevice)
-
+    if "device_setup" in params:
+        if params["device_setup"]=="whitelees":
+            whitelees.deviceSetup()
+        else:
+            print "Unrecognised device_setup:",params["device_setup"]
+            exit(-1)
+    else:
+        # Default device setup
+        if params["setup_demo_filters"]==True:
+            if dp:
+                dp.setupDemoFilters()
+        if params["initial_action"] != "loadExisting":
+            sim.injectEvents(randList(sim.getTime(), params["install_timespan"], params["device_count"]), createDevice)
 
     logging.info("Simulation starts")
     while sim.eventsToCome():
