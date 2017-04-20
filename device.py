@@ -54,6 +54,14 @@ def numDevices():
     n = len(devices)
     return n
 
+def getDeviceByProperty(prop,value):
+    global devices
+    for d in devices:
+        if prop in d.properties:
+            if d.properties[prop]==value:
+                return d
+    return None
+
 def logEntry(properties):
     logfile.write(sim.getTimeStr()+" ")
     for k in sorted(properties.keys()):
@@ -74,6 +82,7 @@ def logString(s):
     logfile.write(sim.getTimeStr()+" "+s+"\n")
 
 def flush():
+    logging.info("Ending device logging ("+str(len(devices))+" devices were emulated)")
     logfile.close()
 
 def externalEvent(params):
@@ -98,20 +107,27 @@ def externalEvent(params):
         logging.error(traceback.format_exc())
         
 class device():
-    def __init__(self,props):
+    def __init__(self,props,autoTick=True): # <props> MUST include a "$id" field so we can de-duplicate
         global devices
-        self.properties = props
-        devices.append(self)
-        self.commsReliability = 1.0 # Either a fraction, or a string containing a specification of the trajectory
-        self.commsUpDownPeriod = sim.days(1)
-        self.batteryLife = DEFAULT_BATTERY_LIFE_S
-        self.batteryAutoreplace = False
-        self.commsOK = True
-        self.doComms(self.properties)
-        self.startTicks()
+        assert "$id" in props,"The $id property must be defined when creating a device"
+        if getDeviceByProperty("$id",props["$id"]) != None:
+            logging.error("FATAL: Attempt to create duplicate device "+str(props["$id"]))
+            exit(-1)
+        else:
+            self.properties = props
+            devices.append(self)
+            self.commsReliability = 1.0 # Either a fraction, or a string containing a specification of the trajectory
+            self.commsUpDownPeriod = sim.days(1)
+            self.batteryLife = DEFAULT_BATTERY_LIFE_S
+            self.batteryAutoreplace = False
+            self.commsOK = True
+            self.doComms(self.properties)
+            if autoTick:
+                self.startTicks()
 
     def startTicks(self):
-        sim.injectEventDelta(self.batteryLife / 100.0, self.tickBatteryDecay, self)
+        if self.propertyExists("battery"):
+            sim.injectEventDelta(self.batteryLife / 100.0, self.tickBatteryDecay, self)
         sim.injectEventDelta(sim.hours(1), self.tickHourly, self)
         sim.injectEventDelta(0, self.tickProductUsage, self)    # Immediately
 
@@ -136,7 +152,7 @@ class device():
             self.setProperty("firmware", self.getProperty("factoryFirmware"))
 
     def tickProductUsage(self, _):
-        if self.getProperty("battery") > 0:
+        if self.propertyAbsent("battery") or self.getProperty("battery") > 0:
             self.setProperty("buttonPress", 1)
             t = timewave.nextUsageTime(sim.getTime(), ["Mon","Tue","Wed","Thu","Fri"], "06:00-09:00")
             sim.injectEvent(t, self.tickProductUsage, self)
@@ -146,6 +162,12 @@ class device():
         self.commsReliability = reliability
         sim.injectEventDelta(0, self.tickCommsUpDown, self) # Immediately
 
+    def getCommsOK(self):
+        return self.commsOK
+    
+    def setCommsOK(self, flag):
+        self.commsOK = flag
+        
     def setBatteryLife(self, mu, sigma, autoreplace=False):
         # Set battery life with a normal distribution which won't exceed 2 standard deviations
         life = random.normalvariate(mu, sigma)
@@ -167,8 +189,8 @@ class device():
                 prob *= radioGoodness
             self.commsOK = prob > random.random()
 
-        deltaTime = random.expovariate(1 / self.commsUpDownPeriod)
-        deltaTime = min(deltaTime, self.commsUpDownPeriod * 100) # Limit long tail
+        deltaTime = random.expovariate(1.0 / self.commsUpDownPeriod)
+        deltaTime = min(deltaTime, self.commsUpDownPeriod * 100.0) # Limit long tail
         sim.injectEventDelta(deltaTime, self.tickCommsUpDown, self)
 
     def doComms(self, properties):
@@ -182,14 +204,17 @@ class device():
     def propertyExists(self, propName):
         return propName in self.properties
     
+    def propertyAbsent(self, propName):
+        return not self.propertyExists(propName)
+    
     def setProperty(self, propName, value):
         newProps = { propName : value, "$ts" : sim.getTime1000(), "$id" : self.properties["$id"] }
         self.properties.update(newProps)
         self.doComms(newProps)
 
     def setProperties(self, newProps):
+        newProps.update({ "$ts" : sim.getTime1000(), "$id" : self.properties["$id"] })  # Force ID and timestamp to be correct
         self.properties.update(newProps)
-        self.properties.update({ "$ts" : sim.getTime1000(), "$id" : self.properties["$id"] })
         self.doComms(newProps)
 
     def tickBatteryDecay(self, _):
@@ -204,7 +229,7 @@ class device():
                 sim.injectEventDelta(self.batteryLife / 100.0, self.tickBatteryDecay, self)
 
     def tickHourly(self, _):
-        if self.getProperty("battery") > 0:
+        if self.propertyAbsent("battery") or (self.getProperty("battery") > 0):
             self.setProperty("light", solar.sunBright(sim.getTime(),
                                                     (float(device.getProperty(self,"longitude")),float(device.getProperty(self,"latitude")))
                                                     ))
