@@ -100,6 +100,8 @@ def setEndTimeStr(timeString):
     global endTime
     if timeString in[None,"now"]:
         endTime = timeString
+    elif timeString.startswith("-"):    # A day in the past specified with "-N", e.g. "-180"
+        endTime = time.time()+int(timeString)*60*60*24
     else:
         endTime = ISO8601.toEpochSeconds(timeString)
 
@@ -125,8 +127,7 @@ def eventsToCome():
     simLock.acquire()       # <--
     try:
         if endTime==None:
-            if len(events) > 0:
-                if events[0][0] >= time.time():
+            if (len(events)==0) or (events[0][0] >= time.time()):
                     if not caughtUp:
                         logging.info("Caught-up with real time")
                         caughtUpCallback()  # Mustn't create new events, or deadlock will occur
