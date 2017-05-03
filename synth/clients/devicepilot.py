@@ -82,7 +82,7 @@ class Api:
         self.queue_limit = limit
 
     def post_device(self, devices):
-        """Updates a device state (or collection of) on DevicePilot.
+        """Updates a devices state (or collection of) on DevicePilot.
         
         Requests to DevicePilot are throttled, see `set_queue_flush` for options.
         
@@ -94,7 +94,7 @@ class Api:
         """
         if isinstance(devices, list):
             for device in devices:
-                if device["$id"] == "device0":  # skip magic device id.
+                if device["$id"] == "device0":  # skip magic devices id.
                     pass
                 self.post_queue.append(device.copy())
         else:
@@ -105,7 +105,7 @@ class Api:
         self.flush_post_queue_if_ready()
 
     def __post_device(self, device, historical=False):  # Private to enforce throttling of api.
-        """Update a device state (or collection of) on DevicePilot.
+        """Update a devices state (or collection of) on DevicePilot.
         
         Args:
             device (dict[]): Either a single, or array, of JSON objects representing the devices to update.
@@ -186,7 +186,7 @@ class Api:
         triggers DevicePilot to update all its event calculations [we just need any valid id]
         
         Args:
-            an_id (str): An existing device id.
+            an_id (str): An existing devices id.
         """
         logging.info("DevicePilot client finalising historical updates")
         self.__post_device({"$id": an_id}, historical=False)
@@ -199,7 +199,7 @@ class Api:
         """Switch API throttling settings to interactive mode.
         
         Args:
-            an_id (str, optional): An existing device id (required to update after a historial/batch post).
+            an_id (str, optional): An existing devices id (required to update after a historial/batch post).
         """
         logging.info("DevicePilot client entering (interactive,1sec) mode")
         if an_id:
@@ -244,10 +244,10 @@ class Api:
         return devices
 
     def get_device_history(self, device_urn, start, end, fields):
-        """Get the history of field changes for a device across an interval.
-        
+        """Get the history of field changes for a devices across an interval.
+        1350 + 50 + 35
         Args:
-            device_urn (str): DevicePilot URN of the device to fetch history of.
+            device_urn (str): DevicePilot URN of the devices to fetch history of.
             start (str): ISO formatted start of interval.
             end (str): ISO formatted end of interval.
             fields ([str]): List of fields to report back.
@@ -294,7 +294,7 @@ class Api:
         return True
 
     def create_filter(self, name, spec):
-        """Create a device filter.
+        """Create a devices filter.
         
         Args:
             name (str): Name of filter to create.

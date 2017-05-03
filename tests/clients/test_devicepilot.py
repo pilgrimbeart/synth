@@ -115,11 +115,11 @@ class TestApi:
     def test_delete_devices_where(self, api):
         with requests_mock.Mocker() as m:
             m.get(DEVICEPILOT_URL + '/devices?$profile=/profiles/$view', json=[
-                {"$urn": "/device/delete"},
-                {"$urn": "/device/backspace"},
+                {"$urn": "/devices/delete"},
+                {"$urn": "/devices/backspace"},
             ])
-            m.delete(DEVICEPILOT_URL + "/device/delete")
-            m.delete(DEVICEPILOT_URL + "/device/backspace")
+            m.delete(DEVICEPILOT_URL + "/devices/delete")
+            m.delete(DEVICEPILOT_URL + "/devices/backspace")
             where = 'where_clause'
             assert api.delete_devices_where(where)
             assert 'where' in m.request_history[0].qs

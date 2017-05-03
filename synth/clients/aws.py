@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# A device-emulating client for AWS-IoT
+# A devices-emulating client for AWS-IoT
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #
@@ -68,14 +68,14 @@ class Api:
             self.iot_data = boto3.client('iot-data')
 
     def create_device_type(self, type_name=DEFAULT_TYPENAME,
-                           description="A Thing created by the DevicePilot Synth virtual device simulator"):
-        """Creates a new type (lit. classification) of device.
+                           description="A Thing created by the DevicePilot Synth virtual devices simulator"):
+        """Creates a new type (lit. classification) of devices.
         
         Args:
             type_name (str, optional):
-                Name of the device type to be created.
+                Name of the devices type to be created.
                 Creates a consistent synth default if not specified.
-            description (str, optional): Description of the device type.
+            description (str, optional): Description of the devices type.
         Returns:
             str: AWS ARN of the thing type created (or already existing with that `type_name`).
         
@@ -87,16 +87,16 @@ class Api:
         return response['thingTypeArn']
 
     def create_device(self, name, type_name=DEFAULT_TYPENAME):
-        """Create a new device.
+        """Create a new devices.
         
         Args:
-            name (str): Name of the device to create.
+            name (str): Name of the devices to create.
             type_name (str, optional):
-                Name of the device type to create a new device of (created if non-existant).
+                Name of the devices type to create a new devices of (created if non-existant).
                 Defaults to the consistent synth default type.
                 
         Returns:
-            str: AWS ARN of the created device (or already existing with that `name` and `type_name`).
+            str: AWS ARN of the created devices (or already existing with that `name` and `type_name`).
             
         """
         logging.info("Creating AWS Thing " + name)
@@ -105,13 +105,13 @@ class Api:
         return response['thingArn']
 
     def get_device(self, name):
-        """Gets the specified device.
+        """Gets the specified devices.
         
         Args:
-            name (str): Name of device to get.
+            name (str): Name of devices to get.
 
         Returns:
-            dict: JSON'esq dictionary of the specified device from AWS IoT.
+            dict: JSON'esq dictionary of the specified devices from AWS IoT.
 
         """
         response = self.iot_data.get_thing_shadow(thingName=name)
@@ -126,7 +126,7 @@ class Api:
         return self.iot_client.list_things()['things']
 
     def post_device(self, device):
-        """Posts the updated state of the specified device.
+        """Posts the updated state of the specified devices.
         
         Args:
             device (:obj:`Device`): Device to update. 
@@ -138,26 +138,26 @@ class Api:
         self.post(device["$id"], device)
 
     def post(self, name, payload):
-        """Post an update to the thing shadow of the named device.
+        """Post an update to the thing shadow of the named devices.
         
         Args:
-            name (str): Name of device to update shadow of.
-            payload (dict): State of device to report.
+            name (str): Name of devices to update shadow of.
+            payload (dict): State of devices to report.
         
         Raises:
             AssertionError: Post failed.
             
         """
-        logging.info("Updating AWS device " + name + " : " + str(payload))
+        logging.info("Updating AWS devices " + name + " : " + str(payload))
         data = {"state": {"reported": payload}}
         response = self.iot_data.update_thing_shadow(thingName=name, payload=json.dumps(data))
         assert 200 <= int(response['ResponseMetadata']['HTTPStatusCode']) < 300
 
     def delete_device(self, name):
-        """Deletes a device (and coresponding shadow, if created).
+        """Deletes a devices (and coresponding shadow, if created).
         
         Args:
-            name (str): Name of device to delete.
+            name (str): Name of devices to delete.
         
         Returns:
             bool: True if delete was successful.

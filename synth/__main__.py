@@ -31,11 +31,11 @@ import re
 import sys
 import time
 
-from synth.device.simulation import sim
-from synth.device.simulation.geo import point_picker
+from synth.devices.simulation import sim
+from synth.devices.simulation.geo import point_picker
 
 from synth.clients import devicepilot, aws
-from synth.device import device
+from synth.devices import mobile_battery
 from synth.server import zeromq_rx
 from synth.simulation.helpers import namify
 
@@ -79,7 +79,7 @@ def read_paramfile(filename):
 
 def main():
     def create_device(_):
-        deviceNum = device.num_devices()
+        deviceNum = mobile_battery.num_devices()
         (lon, lat) = pp.pick_point()
         (firstName, lastName) = (namify.first_name(deviceNum), namify.last_name(deviceNum))
         firmware = random.choice(["0.51", "0.52", "0.6", "0.6", "0.6", "0.7", "0.7", "0.7", "0.7"])
@@ -101,13 +101,13 @@ def main():
                  "factoryFirmware": firmware,
                  "firmware": firmware,
                  "operator": operator,
-                 "rssi": ((1 - radioGoodness) * (device.BAD_RSSI - device.GOOD_RSSI) + device.GOOD_RSSI),
+                 "rssi": ((1 - radioGoodness) * (mobile_battery.BAD_RSSI - mobile_battery.GOOD_RSSI) + mobile_battery.GOOD_RSSI),
                  "battery": 100
                  }
-        # To create a device in DevicePilot, just start posting it. But in AWS we have to explicitly create it.
+        # To create a devices in DevicePilot, just start posting it. But in AWS we have to explicitly create it.
         if aws_api:
             aws_api.create_device(props["$id"])
-        _d = device.Device(props)
+        _d = mobile_battery.Device(props)
         if "comms_reliability" in params:
             # d.setCommsReliability(upDownPeriod=sim.days(0.5), reliability=1.0-math.pow(random.random(), 2))
             # pow(r,2) skews distribution towards reliable end
@@ -120,12 +120,12 @@ def main():
                 if web_params["headers"]["Instancename"] == params["instance_name"]:
                     mini = float(params["web_response_min"])
                     maxi = float(params["web_response_max"])
-                    sim.inject_event_delta(mini + random.random() * maxi, device.external_event, web_params)
+                    sim.inject_event_delta(mini + random.random() * maxi, mobile_battery.external_event, web_params)
 
     def enter_interactive():
         if dp:
             dp.enter_interactive(
-                device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
+                mobile_battery.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
 
     logging.info("*** Synth starting ***")
 
@@ -152,15 +152,15 @@ def main():
     if "devicepilot_api" in params:
         dp = devicepilot.Api(api_key=params["devicepilot_key"], url=params["devicepilot_api"])
         dp.set_queue_flush(params["queue_criterion"], params["queue_limit"])
-        device.init(dp.post_device, params["instance_name"])
+        mobile_battery.init(dp.post_device, params["instance_name"])
     elif ("on_aws" in params) or ("aws_access_key_id" in params):
         k, s, r = None, None, None
         if "aws_access_key_id" in params:
             k, s, r = params["aws_access_key_id"], params["aws_secret_access_key"], params["aws_region"]
         aws_api = aws.Api(k, s, r)
-        device.init(aws_api.post_device, params["instance_name"])
+        mobile_battery.init(aws_api.post_device, params["instance_name"])
     else:
-        logging.info("No device client specified")
+        logging.info("No devices client specified")
 
         zeromq_rx.init(post_web_event)
 
@@ -187,11 +187,11 @@ def main():
             dp.delete_devices_where('(is_demo_device == true)')
         if params["initial_action"] == "loadExisting":  # Load existing world
             for d in dp.get_devices():
-                device.Device(d)
+                mobile_battery.Device(d)
     if aws_api:
         if params["initial_action"] in ["deleteExisting", "deleteDemo"]:
             aws_api.delete_default_devices()
-            # Loading device state from AWS not yet supported
+            # Loading devices state from AWS not yet supported
 
     if params["initial_action"] != "loadExisting":
         sim.inject_events(rand_list(sim.get_time(), params["install_timespan"], params["device_count"]), create_device)
@@ -201,11 +201,11 @@ def main():
         sim.next_event()
         if dp:
             dp.flush_post_queue_if_ready()
-        device.flush()
+        mobile_battery.flush()
     if dp:
         dp.flush_post_queue()
         dp.recalc_historical(
-            device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
+            mobile_battery.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
     logging.info("Simulation ends")
 
     if dp:

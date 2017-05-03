@@ -26,8 +26,8 @@ import math
 import random
 import traceback
 
-import synth.device.simulation.helpers.timewave
-from synth.device.simulation import sim
+import synth.devices.simulation.helpers.timewave
+from synth.devices.simulation import sim
 
 from synth.simulation.solar import solar_math
 
@@ -102,7 +102,7 @@ def external_event(params):
                     arg = body["arg"]
                 d.external_event(body["eventName"], arg)
                 return
-        e = "No such device"  # + str(deviceID) + " for incoming event " + str(eventName)
+        e = "No such devices"  # + str(deviceID) + " for incoming event " + str(eventName)
         log_string(e)
     except Exception as e:
         log_string("Error processing external event")
@@ -129,13 +129,13 @@ class Device:
         synth.simulation.sim.inject_event_delta(0, self.tick_product_usage, self)  # Immediately
 
     def external_event(self, event_name, arg):
-        s = "Processing external event " + event_name + " for device " + str(self.properties["$id"])
+        s = "Processing external event " + event_name + " for devices " + str(self.properties["$id"])
         log_string(s)
         if event_name == "replaceBattery":
             self.set_property("battery", 100)
             self.start_ticks()
 
-        # All other commands require device to be functional!
+        # All other commands require devices to be functional!
         if self.get_property("battery") <= 0:
             log_string("...ignored because battery flat")
             return
