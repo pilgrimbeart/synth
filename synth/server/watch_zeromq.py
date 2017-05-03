@@ -20,13 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from datetime import datetime
 import time
-
 import zeromq_rx
 
-
-def print_it(params):
-    print str(params)
+def printIt(params):
+    print datetime.now(),str(params)
 
 if __name__ == "__main__":
     zeromq_rx.init(print_it)

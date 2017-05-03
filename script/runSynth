@@ -1,4 +1,6 @@
+# Runs a new synth instance, with logging, having first killed any already-running instance
+# ASSUMES that the first argument is the instance name (which is the convention)
 command="python synth.py $@"
 echo $command
-pkill -f "$command"
+pkill -f "$1"
 nohup $command >> ../synth_logs/$1.out 2>&1 &

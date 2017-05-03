@@ -7,6 +7,7 @@ fi
 
 ./runSpawner
 
+./runSynth OnUSCustomer1 RealisticProcessUS100
 ./runSynth OnProductionSynthPilgrim RealisticProcess100
 ./runSynth OnStagingSynthPilgrim RealisticProcess100
 ./runSynth OnDevelopmentSynthPilgrim RealisticProcess100

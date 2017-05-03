@@ -23,32 +23,38 @@
 # SOFTWARE.
 
 
+<<<<<<< HEAD:synth/server/spawner.py
 import subprocess
 import time
 import traceback
+=======
+import zeromq_rx, time, subprocess, sys
+>>>>>>> 60686512731fc02824217555eac422e222efc148:spawner.py
 from datetime import datetime
 from synth.server import zeromq_rx
 
 
-def spawn_it(params):
+def spawnIt(params):
     print datetime.now(), "Got", str(params)
-    if "action" not in params:
-        print datetime.now(), "(ignoring)"
+    if not "action" in params:
+        print datetime.now(), "Got",str(params),"(ignoring)"
+        sys.stdout.flush()
         return
     if params["action"] != "spawn":
-        print datetime.now(), "(ignoring)"
+        print datetime.now(), "Got",str(params),"(ignoring)"
+        sys.stdout.flush()
         return
-    print datetime.now(), "Spawning " + str(params)
-    (dpKey, dpApi) = (params["key"], params["api"])
-
-    result = None
+    print datetime.now(), "Spawning "+str(params)
+    sys.stdout.flush()
+    (dpKey, dpApi) = (params["key"],params["api"])
+    
     try:
-        command = "./runSynth devicepilot_key=" + dpKey + " devicepilot_api=" + dpApi +\
-                  " instance_name=devicepilot_key=" + dpKey + " UserDemo"
-        print datetime.now(), "Command:", command
+        command = "./runSynth devicepilot_key="+dpKey+" devicepilot_api="+dpApi+" instance_name=devicepilot_key="+dpKey+" UserDemo"
+        print datetime.now(), "Command:",command
+        sys.stdout.flush()
         result = subprocess.call(command, shell=True)
-        # CAUTION: shell=True makes us vulnerable to injection attacks,
-        # so we trust that the ZeroMQ publisher has sanitised inputs
+        # CAUTION: shell=True makes us vulnerable to injection attacks, so we trust that the ZeroMQ publisher has sanitised inputs
+        print "Result:", result
     except Exception as e:
         print "Error in spawn: " + str(e)
         print traceback.format_exc()
@@ -58,5 +64,6 @@ def spawn_it(params):
 if __name__ == "__main__":
     print datetime.now(), "Starting Spawner"
     zeromq_rx.init(spawn_it)
+    sys.stdout.flush()
     while True:
         time.sleep(1)

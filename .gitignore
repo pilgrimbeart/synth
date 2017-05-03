@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 ### Python template
 # Byte-compiled / optimized / DLL files
@@ -186,3 +187,7 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
+# Keys
+*.crt
+*.csr
+*.key

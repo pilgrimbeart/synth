@@ -121,8 +121,10 @@ def set_time_str(time_string, is_start_time=False):
 
 def set_end_time_str(time_string):
     global endTime
-    if time_string in [None, "now"]:
-        endTime = time_string
+    if timeString in[None,"now"]:
+        endTime = timeString
+    elif timeString.startswith("-"):    # A day in the past specified with "-N", e.g. "-180"
+        endTime = time.time()+int(timeString)*60*60*24
     else:
         endTime = ISO8601.to_epoch_seconds(time_string)
 
@@ -152,13 +154,12 @@ def events_to_come():
     global caughtUp
     simLock.acquire()  # <--
     try:
-        if endTime is None:
-            if len(events) > 0:
-                if events[0][0] >= time.time():
-                    if not caughtUp:
-                        logging.info("Caught-up with real time")
-                        caught_up_callback()  # Mustn't create new events, or deadlock will occur
-                    caughtUp = True
+        if endTime==None:
+            if (len(events)==0) or (events[0][0] >= time.time()):
+                if not caughtUp:
+                    logging.info("Caught-up with real time")
+                    caught_up_callback()  # Mustn't create new events, or deadlock will occur
+                caughtUp = True
             return True
         if endTime == "now":  # Terminate when we've caught-up with real-time
             if len(events) < 1:
