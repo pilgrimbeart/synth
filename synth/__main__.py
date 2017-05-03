@@ -31,8 +31,8 @@ import re
 import sys
 import time
 
-from synth.devices.simulation import sim
-from synth.devices.simulation.geo import point_picker
+import synth.devices.simulation
+import synth.devices.simulation.geo
 
 from synth.clients import devicepilot, aws
 from synth.devices import mobile_battery
@@ -77,7 +77,7 @@ def read_paramfile(filename):
     return s
 
 
-def main():
+def old_main():
     def create_device(_):
         deviceNum = mobile_battery.num_devices()
         (lon, lat) = pp.pick_point()
@@ -211,6 +211,10 @@ def main():
     if dp:
         logging.info("A total of " + str(dp.post_count) + " items were posted to DevicePilot")
     logging.info("Elapsed real time: " + str(int(time.time() - tstart)) + " seconds")
+
+
+def main():
+
 
 
 if __name__ == "__main__":

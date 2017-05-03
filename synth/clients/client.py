@@ -3,9 +3,9 @@ from abc import ABCMeta, abstractmethod
 
 class Client:
     @abstractmethod
-    def foo(self):
+    def add_device(self):
         pass
 
-    @abstractmethod
-    def bar(self):
-        pass
+# constructor
+# delete
+# update device
