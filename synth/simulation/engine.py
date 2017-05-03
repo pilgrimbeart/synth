@@ -1,8 +1,11 @@
 # abc for a simulation engine.
 from abc import ABCMeta, abstractmethod
 
-class Engine:
-    # create
+class Engine(object):
+    def start_event_loop(self):
+        pass
+
+# create
 
 # add event
 # add event at time
