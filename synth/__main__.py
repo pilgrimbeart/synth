@@ -27,7 +27,7 @@ import logging
 
 from synth.simulation.engine import Engine
 from synth.clients.client import Client
-from synth.devices.device import Device
+from synth.devices.simple import Simple
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,12 +38,15 @@ def main():
     # get configuration.
     engine_configuration = {}
     clients_configuration = [{}]
-    estate_configuration = [{}]
+    estate_configuration = [
+        {'delay': 0, 'initial': 1, 'increment': 2, 'interval': 3},
+        {'delay': 4, 'initial': 5, 'increment': 6, 'interval': 7},
+    ]
 
     # build stack.
-    engine = Engine(engine_configuration)
-    client_stack = Client(clients_configuration)
-    Device.build_estate(estate_configuration, engine, client_stack)
+    engine = Engine() # engine_configuration)
+    client_stack = Client() # clients_configuration)
+    Simple.build_estate(estate_configuration, engine, client_stack)
 
     # start simulation.
     logger.info("Starting simulation.")

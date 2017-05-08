@@ -2,10 +2,6 @@
 from abc import ABCMeta, abstractmethod
 
 class Device:
-    @abstractmethod
-    def add_device(self):
-        pass
-
 
 # constructor
 # serialiser
