@@ -20,7 +20,26 @@ class Simple(Device):
         self.delay = conf['delay']
         self.increment = conf['increment']
         self.interval = conf['interval']
+        self.id = conf['id']
 
-        logger.info("Created new device with {initial} + {increment} @ {delay} / {interval}".format(
-            initial = self.value, increment = self.increment, interval = self.interval, delay = self.delay)
+        logger.info("Created new device {id} with {initial} + {increment} @ {delay} / {interval}".format(
+            id = self.id,
+            initial = self.value,
+            increment = self.increment,
+            interval = self.interval,
+            delay = self.delay),
         )
+
+        self.create()
+
+    def get_state(self):
+        return { 'id': self.id, 'value': self.value }
+
+    def create(self):
+        logger.info("Added device {id}".format(id = self.id))
+        self.client.add_device(self)
+
+    def tick(self):
+        self.value += self.increment
+        logger.info("Ticking device {id} to {value}".format(id = self.id, value = self.value))
+        self.client.update_device(self)
