@@ -8,6 +8,10 @@ class Client:
     def add_device(self, device):
         pass
 
+    @abstractmethod
+    def update_device(self, device):
+        pass
+
 # constructor
 # delete
 # update device

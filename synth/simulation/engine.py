@@ -2,7 +2,7 @@
 from abc import ABCMeta, abstractmethod
 
 class Engine(object):
-    # __metaclass__ = ABCMeta
+    __metaclass__ = ABCMeta
 
     @abstractmethod
     def start_event_loop(self):

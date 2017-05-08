@@ -36,4 +36,3 @@ class Pause(Engine):
 
     def register_event_in(self, event, delta):
         self.register_event_at(event, self.index + delta)
-
