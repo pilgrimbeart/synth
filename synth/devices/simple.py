@@ -30,7 +30,7 @@ class Simple(Device):
             delay = self.delay),
         )
 
-        self.create()
+        self.engine.register_event_at(self.create, self.delay)
 
     def get_state(self):
         return { 'id': self.id, 'value': self.value }
@@ -38,8 +38,10 @@ class Simple(Device):
     def create(self):
         logger.info("Added device {id}".format(id = self.id))
         self.client.add_device(self)
+        self.engine.register_event_in(self.tick, self.interval)
 
     def tick(self):
         self.value += self.increment
         logger.info("Ticking device {id} to {value}".format(id = self.id, value = self.value))
         self.client.update_device(self)
+        self.engine.register_event_in(self.tick, self.interval)
