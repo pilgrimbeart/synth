@@ -35,26 +35,28 @@ def main():
     logger.info("Synth instance started.")
 
     # get configuration.
-    engine_configuration = {'type': 'pause', 'max': 100}
-    clients_configuration = {
+    engine_configuration = {'type': 'step', 'max': 100}
+    client_configuration = {
         'type': 'stack',
         'clients': [
             {'type': 'console', 'name': 'first'},
-            {'type': 'console', 'name': 'second'}
         ]
     }
-    estate_configuration = [
-        {'type': 'simple', 'id': 'A', 'delay': 0, 'initial': 1, 'increment': 2, 'interval': 3},
-        {'type': 'simple', 'id': 'B', 'delay': 4, 'initial': 5, 'increment': 6, 'interval': 7},
-    ]
+    device_configuration = {
+        'type': 'delay',
+        'devices': [
+            {'delay': 0, 'device': {'type': 'simple', 'id': 'A', 'initial': 1, 'increment': 2, 'interval': 3}},
+            {'delay': 4, 'device': {'type': 'simple', 'id': 'B', 'initial': 5, 'increment': 6, 'interval': 7}},
+        ]
+    }
 
     # build stack.
     engine = importer \
-        .get_class('engine', engine_configuration.get('type', 'step'))(engine_configuration)
+        .get_class('engine', engine_configuration['type'])(engine_configuration)
     client = importer \
-        .get_class('client', 'stack')(clients_configuration)
-    importer.get_class('device', 'simple') \
-        .build_estate(estate_configuration, engine, client)
+        .get_class('client', client_configuration['type'])(client_configuration)
+    importer\
+        .get_class('device', device_configuration['type'])(device_configuration, engine, client)
 
     # start simulation.
     logger.info("Starting simulation.")

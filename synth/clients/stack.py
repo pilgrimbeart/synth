@@ -1,5 +1,4 @@
 from synth.clients.client import Client
-
 from synth.common import importer
 
 import logging
