@@ -1,6 +1,8 @@
+import pendulum
 import logging
 
 from synth.common import importer
+from synth.common.conftime import get_interval
 from synth.devices.device import Device
 
 logging.basicConfig(level=logging.INFO)
@@ -17,10 +19,10 @@ class Delay(Device):
         self.client = client
 
         for device in conf.get('devices', []):
-            delay = device.get('delay', 0)
+            delay = get_interval(device, 'delay', pendulum.interval())
             device_conf = device['device']
             logger.info("Delaying creation of device until {delay}.".format(delay=delay))
-            self.engine.register_event_at(self.__build_create(device_conf), delay)
+            self.engine.register_event_in(self.__build_create(device_conf), delay)
 
     def create(self, conf):
         logger.info("Delayed creation of new device: {conf}".format(conf=conf))

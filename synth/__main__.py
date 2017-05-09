@@ -43,12 +43,11 @@ def main():
         ]
     }
     device_configuration = {
-        'type': 'simple', 'id': 'S', 'initial': 1, 'increment': 2, 'interval': 'PT1H'
-        # 'type': 'delay',
-        # 'devices': [
-        #     {'delay': 0, 'device': {'type': 'simple', 'id': 'A', 'initial': 1, 'increment': 2, 'interval': 3}},
-        #     {'delay': 4, 'device': {'type': 'simple', 'id': 'B', 'initial': 5, 'increment': 6, 'interval': 7}},
-        # ]
+        'type': 'delay',
+        'devices': [
+            {'device': {'type': 'simple', 'id': 'A', 'initial': 1, 'increment': 2, 'interval': 'PT3H'}},
+            {'delay': 'PT4H', 'device': {'type': 'simple', 'id': 'B', 'initial': 5, 'increment': 6, 'interval': 'PT7H'}},
+        ]
     }
 
     # build stack.

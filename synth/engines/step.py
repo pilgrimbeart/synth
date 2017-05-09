@@ -25,7 +25,7 @@ class Step(Engine):
         logger.info("Started loop.")
         while self.now <= self.end:
             index = self.__time_as_index(self.now)
-            if index >= 1 and index < len(self.events):
+            if index >= 0 and index < len(self.events):
                 while len(self.events[index]) > 0:
                     self.events[index].pop(0)()
 
@@ -34,10 +34,10 @@ class Step(Engine):
     def register_event_at(self, event, time):
         index = self.__time_as_index(time.end_of('second'))
         if index >= 0:
-            if len(self.events) <= index:
-                self.events.extend([[]] * (1 + index - len(self.events)))
+            while len(self.events) <= index:
+                self.events.append([])
             self.events[index].append(event)
-            logger.info("Registered event at {time}".format(time=time))
+            logger.info("Registered event at {time} / {index}".format(time=time, index=index))
         else:
             logger.warn("Dropped event registered in the past.")
 
