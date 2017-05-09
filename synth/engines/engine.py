@@ -10,9 +10,9 @@ class Engine(object):
         pass
 
     @abstractmethod
-    def register_event_at(self, event, index):
+    def register_event_at(self, event, time):
         pass
 
     @abstractmethod
-    def register_event_in(self, event, delta):
+    def register_event_in(self, event, interval):
         pass

@@ -35,7 +35,7 @@ def main():
     logger.info("Synth instance started.")
 
     # get configuration.
-    engine_configuration = {'type': 'step', 'max': 100}
+    engine_configuration = {'type': 'step'}
     client_configuration = {
         'type': 'stack',
         'clients': [
@@ -43,11 +43,12 @@ def main():
         ]
     }
     device_configuration = {
-        'type': 'delay',
-        'devices': [
-            {'delay': 0, 'device': {'type': 'simple', 'id': 'A', 'initial': 1, 'increment': 2, 'interval': 3}},
-            {'delay': 4, 'device': {'type': 'simple', 'id': 'B', 'initial': 5, 'increment': 6, 'interval': 7}},
-        ]
+        'type': 'simple', 'id': 'S', 'initial': 1, 'increment': 2, 'interval': 'PT1H'
+        # 'type': 'delay',
+        # 'devices': [
+        #     {'delay': 0, 'device': {'type': 'simple', 'id': 'A', 'initial': 1, 'increment': 2, 'interval': 3}},
+        #     {'delay': 4, 'device': {'type': 'simple', 'id': 'B', 'initial': 5, 'increment': 6, 'interval': 7}},
+        # ]
     }
 
     # build stack.

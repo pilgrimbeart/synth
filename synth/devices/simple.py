@@ -1,4 +1,5 @@
 from synth.devices.device import Device
+from synth.common.conftime import get_interval
 
 import logging
 
@@ -14,7 +15,7 @@ class Simple(Device):
 
         self.value = conf['initial']
         self.increment = conf['increment']
-        self.interval = conf['interval']
+        self.interval = get_interval(conf, 'interval', None)
         self.id = conf['id']
         logger.info("Created new device {id} with {initial} + {increment} @ {interval}".format(
             id=self.id,
