@@ -40,7 +40,7 @@ def sun_angle(epoch_secs, (longitude, latitude)):
     """
     at = time.gmtime(epoch_secs)
     (azimuth, elevation) = sun_position(at.tm_year, at.tm_mon, at.tm_mday, at.tm_hour, at.tm_min,
-                                         at.tm_sec, latitude, longitude)
+                                        at.tm_sec, latitude, longitude)
     return azimuth, elevation
 
 

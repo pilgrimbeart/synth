@@ -12,6 +12,7 @@ class Step(Engine):
     def __init__(self, conf):
         self.now = get_time(conf, 'start', pendulum.now()).start_of('second')
         self.start_index = self.now.int_timestamp
+        # noinspection PyArgumentList
         runtime = get_interval(conf, 'runtime', pendulum.interval(days=1))
         self.end = (self.now + runtime).start_of('second')
         logger.info("Created stepper engine from {start} to {end}.".format(start=self.now, end=self.end))
@@ -25,10 +26,11 @@ class Step(Engine):
         logger.info("Started loop.")
         while self.now <= self.end:
             index = self.__time_as_index(self.now)
-            if index >= 0 and index < len(self.events):
+            if 0 <= index < len(self.events):
                 while len(self.events[index]) > 0:
                     self.events[index].pop(0)(self.now)
 
+            # noinspection PyArgumentList
             self.now += pendulum.interval(seconds=1)
 
     def register_event_at(self, event, time):

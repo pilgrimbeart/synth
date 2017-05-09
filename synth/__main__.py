@@ -46,7 +46,8 @@ def main():
     #     'type': 'delay',
     #     'devices': [
     #         {'device': {'type': 'simple', 'id': 'A', 'initial': 1, 'increment': 2, 'interval': 'PT3H'}},
-    #         {'delay': 'PT4H', 'device': {'type': 'simple', 'id': 'B', 'initial': 5, 'increment': 6, 'interval': 'PT7H'}},
+    #         {'delay': 'PT4H',
+    # 'device': {'type': 'simple', 'id': 'B', 'initial': 5, 'increment': 6, 'interval': 'PT7H'}},
     #     ]
     # }
     device_configuration = {

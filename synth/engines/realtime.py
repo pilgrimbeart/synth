@@ -7,6 +7,9 @@ logger = logging.getLogger(__name__)
 
 
 class Realtime(Engine):
+    def get_now(self):
+        pass
+
     # noinspection PyUnusedLocal
     def __init__(self, conf):
         logger.info("Created realtime engine.")

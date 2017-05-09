@@ -24,16 +24,16 @@ class Blb(Device):
         # setup battery
         self.battery = 100
         if 'batteryLifeMu' in conf and 'batteryLifeSigma' in conf:
-            battery_life_mu = get_interval(conf, 'batteryLifeMu', None)
-            battery_life_sigma = get_interval(conf, 'batteryLifeSigma', None)
+            battery_life_mu = get_interval(conf, 'batteryLifeMu', None).total_seconds()
+            battery_life_sigma = get_interval(conf, 'batteryLifeSigma', None).total_seconds()
             battery_life_min = battery_life_mu - (2 * battery_life_sigma)
             battery_life_max = battery_life_mu + (2 * battery_life_sigma)
-            battery_life = pendulum.interval(
-                seconds=random.normalvariate(battery_life_mu.total_seconds(), battery_life_sigma.total_seconds())
-            )
-            self.battery_life = max(min(battery_life, battery_life_min), battery_life_max)
+            battery_life = random.normalvariate(battery_life_mu, battery_life_sigma)
+            # noinspection PyArgumentList
+            self.battery_life = pendulum.interval(seconds=max(min(battery_life, battery_life_min), battery_life_max))
         else:
-            self.battery_life = get_interval(conf, 'batteryLife', pendulum.interval(hours=24))
+            # noinspection PyArgumentList
+            self.battery_life = get_interval(conf, 'batteryLife', pendulum.interval(minutes=5))
         self.battery_auto_replace = conf.get('batteryAutoReplace', False)
         self.engine.register_event_in(self.battery_decay, self.battery_life / 100)
 
@@ -45,6 +45,7 @@ class Blb(Device):
         self.longitude = conf.get('longitude', 0)
         self.latitude = conf.get('latitude', 0)
         self.light = 0.0
+        # noinspection PyArgumentList
         self.engine.register_event_in(self.measure_light, pendulum.interval(hours=1))
 
         self.client.add_device(self.id, engine.get_now(), {
@@ -57,6 +58,7 @@ class Blb(Device):
         if self.battery > 0:
             self.button_press_count += 1
             self.client.update_device(self.id, time, {'buttonPress': self.button_press_count})
+            # noinspection PyArgumentList
             next_press_interval = pendulum.interval(hours=1)  # TODO: timewave?
             # timewave
             # .next_usage_time
@@ -89,4 +91,5 @@ class Blb(Device):
             #   float(Device.get_property(self, "latitude")))
             #  ))
             self.client.update_device(self.id, time, {'light': self.light})
+            # noinspection PyArgumentList
             self.engine.register_event_in(self.measure_light, pendulum.interval(hours=1))
