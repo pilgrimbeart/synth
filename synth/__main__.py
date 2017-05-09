@@ -25,12 +25,7 @@
 
 import logging
 
-# from synth.simulation.engine import Engine
-from synth.simulation.step import Step
-# from synth.clients.client import Client
-from synth.clients.stack import Stack
-# from synth.devices.device import Device
-from synth.devices.simple import Simple
+from synth.common import importer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,17 +34,28 @@ def main():
     logger.info("Synth instance started.")
 
     # get configuration.
-    engine_configuration = {}
-    clients_configuration = [{'name': 'first'}, {'name': 'second'}]
+    engine_configuration = { 'type': 'pause', 'max': 100 }
+    clients_configuration = {
+        'type': 'stack',
+        'clients': [
+            {'type': 'console', 'name': 'first'},
+            {'type': 'console', 'name': 'second'}
+        ]
+    }
     estate_configuration = [
-        {'id': 'A', 'delay': 0, 'initial': 1, 'increment': 2, 'interval': 3},
-        {'id': 'B', 'delay': 4, 'initial': 5, 'increment': 6, 'interval': 7},
+        {'type': 'simple', 'id': 'A', 'delay': 0, 'initial': 1, 'increment': 2, 'interval': 3},
+        {'type': 'simple', 'id': 'B', 'delay': 4, 'initial': 5, 'increment': 6, 'interval': 7},
     ]
 
     # build stack.
-    engine = Step(engine_configuration)
-    client_stack = Stack(clients_configuration)
-    Simple.build_estate(estate_configuration, engine, client_stack)
+    engine = importer\
+        .get_class('engine', engine_configuration.get('type', 'step'))\
+        (engine_configuration)
+    client = importer\
+        .get_class('client', 'stack')\
+        (clients_configuration)
+    importer.get_class('device', 'simple')\
+        .build_estate(estate_configuration, engine, client)
 
     # start simulation.
     logger.info("Starting simulation.")
