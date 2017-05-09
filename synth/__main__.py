@@ -26,7 +26,7 @@
 import logging
 
 # from synth.simulation.engine import Engine
-from synth.simulation.pause import Pause
+from synth.simulation.step import Step
 # from synth.clients.client import Client
 from synth.clients.stack import Stack
 # from synth.devices.device import Device
@@ -47,7 +47,7 @@ def main():
     ]
 
     # build stack.
-    engine = Pause(engine_configuration)
+    engine = Step(engine_configuration)
     client_stack = Stack(clients_configuration)
     Simple.build_estate(estate_configuration, engine, client_stack)
 

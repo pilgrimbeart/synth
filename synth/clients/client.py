@@ -12,6 +12,11 @@ class Client:
     def update_device(self, device):
         pass
 
+    @staticmethod
+    def build(cls, conf):
+        type = conf.get('type', 'console')
+
+
 # constructor
 # delete
 # update device
