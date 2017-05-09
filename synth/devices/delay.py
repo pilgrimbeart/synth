@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class Delay(Device):
     def __build_create(self, conf):
-        return lambda: self.create(conf)
+        return lambda time: self.create(conf, time)
 
     def __init__(self, conf, engine, client):
         super(Delay, self).__init__(conf, engine, client)
@@ -24,8 +24,8 @@ class Delay(Device):
             logger.info("Delaying creation of device until {delay}.".format(delay=delay))
             self.engine.register_event_in(self.__build_create(device_conf), delay)
 
-    def create(self, conf):
-        logger.info("Delayed creation of new device: {conf}".format(conf=conf))
+    def create(self, conf, time):
+        logger.info("@{time}: Delayed creation of new device: {conf}".format(conf=conf, time=time))
         name = conf['type']
         cls = importer.get_class('device', name)
         cls(conf, self.engine, self.client)

@@ -27,7 +27,7 @@ class Step(Engine):
             index = self.__time_as_index(self.now)
             if index >= 0 and index < len(self.events):
                 while len(self.events[index]) > 0:
-                    self.events[index].pop(0)()
+                    self.events[index].pop(0)(self.now)
 
             self.now += pendulum.interval(seconds=1)
 

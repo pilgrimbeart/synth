@@ -30,8 +30,8 @@ class Simple(Device):
     def get_state(self):
         return {'id': self.id, 'value': self.value}
 
-    def tick(self):
+    def tick(self, time):
         self.value += self.increment
-        logger.info("Ticking device {id} to {value}".format(id=self.id, value=self.value))
+        logger.info("@{time}: Ticking device {id} to {value}".format(time=time, id=self.id, value=self.value))
         self.client.update_device(self)
         self.engine.register_event_in(self.tick, self.interval)

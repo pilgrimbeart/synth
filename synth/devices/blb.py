@@ -14,7 +14,7 @@ class Blb(Device):
     """ Battery (powered) light (measuring) button. """
 
     def get_state(self):
-        pass
+        return vars(self)
 
     def __init__(self, conf, engine, client):
         super(Device, self).__init__()
@@ -49,7 +49,7 @@ class Blb(Device):
 
         self.client.add_device(self)  # TODO: sim time; serial here.
 
-    def press_button(self):
+    def press_button(self, time):
         if self.battery > 0:
             self.button_press_count += 1
             self.client.update_device(self)  # TODO: sim time; serial here.
@@ -64,7 +64,7 @@ class Blb(Device):
             ))
             self.engine.register_event_in(self.press_button, next_press_interval)
 
-    def battery_decay(self):
+    def battery_decay(self, time):
         self.battery -= 1
 
         if self.battery <= 0 and self.battery_auto_replace:
@@ -77,7 +77,7 @@ class Blb(Device):
         if self.battery > 0:
             self.engine.register_event_in(self.battery_decay, self.battery_life / 100)
 
-    def measure_light(self):
+    def measure_light(self, time):
         if self.battery > 0:
             self.is_light = True  # TODO: all the light things.
 
