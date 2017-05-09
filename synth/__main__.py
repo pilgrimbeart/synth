@@ -30,11 +30,12 @@ from synth.common import importer
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def main():
     logger.info("Synth instance started.")
 
     # get configuration.
-    engine_configuration = { 'type': 'pause', 'max': 100 }
+    engine_configuration = {'type': 'pause', 'max': 100}
     clients_configuration = {
         'type': 'stack',
         'clients': [
@@ -48,18 +49,19 @@ def main():
     ]
 
     # build stack.
-    engine = importer\
-        .get_class('engine', engine_configuration.get('type', 'step'))\
+    engine = importer \
+        .get_class('engine', engine_configuration.get('type', 'step')) \
         (engine_configuration)
-    client = importer\
-        .get_class('client', 'stack')\
+    client = importer \
+        .get_class('client', 'stack') \
         (clients_configuration)
-    importer.get_class('device', 'simple')\
+    importer.get_class('device', 'simple') \
         .build_estate(estate_configuration, engine, client)
 
     # start simulation.
     logger.info("Starting simulation.")
     engine.start_event_loop()
+
 
 if __name__ == "__main__":
     main()

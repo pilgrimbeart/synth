@@ -12,19 +12,21 @@ modules = {}
 families = {'engine': Engine, 'client': Client, 'device': Device}
 root = 'synth'
 
-def __get_module(family, type):
-    module_name = '.' + type
-    package_name = "{root}.{family}s".format(root = root, family = family)
+
+def __get_module(family, name):
+    module_name = '.' + name
+    package_name = "{root}.{family}s".format(root=root, family=family)
     full_name = package_name + module_name
     if not modules.has_key(full_name):
         mod = importlib.import_module(module_name, package_name)
         modules[full_name] = mod
-        logger.info("Loaded {type} module: {name}".format(type = type, name = full_name))
+        logger.info("Loaded {type} module: {name}".format(type=name, name=full_name))
     return modules[full_name]
 
-def get_class(family, type):
-    mod = __get_module(family, type)
-    class_name = type.capitalize()
+
+def get_class(family, name):
+    mod = __get_module(family, name)
+    class_name = name.capitalize()
     cls = getattr(mod, class_name)
     assert issubclass(cls, families[family])
     return cls

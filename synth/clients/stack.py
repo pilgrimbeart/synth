@@ -7,17 +7,17 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class Stack(Client):
 
+class Stack(Client):
     @staticmethod
     def __build_client(conf):
-        type = conf.get('type', 'console')
-        cls = importer.get_class('client', type)
+        name = conf.get('type', 'console')
+        cls = importer.get_class('client', name)
         return cls(conf)
 
     def __init__(self, confs):
         client_confs = confs.get('clients', [])
-        logger.info("Adding clients as stack {confs}".format(confs = client_confs))
+        logger.info("Adding clients as stack {confs}".format(confs=client_confs))
         self.clients = map(Stack.__build_client, client_confs)
 
     def add_device(self, device):
