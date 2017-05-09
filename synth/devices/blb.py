@@ -5,6 +5,7 @@ import pendulum
 from synth.common.ordinal import as_ordinal
 from synth.common.conftime import get_interval
 from synth.devices.device import Device
+from synth.devices.blb_helpers.solar_math import sun_bright
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class Blb(Device):
             )
             self.battery_life = max(min(battery_life, battery_life_min), battery_life_max)
         else:
-            self.battery_life = get_interval(conf, 'batteryLife', pendulum.interval(minutes=5))
+            self.battery_life = get_interval(conf, 'batteryLife', pendulum.interval(hours=24))
         self.battery_auto_replace = conf.get('batteryAutoReplace', False)
         self.engine.register_event_in(self.battery_decay, self.battery_life / 100)
 
@@ -43,7 +44,7 @@ class Blb(Device):
         # setup light measurement
         self.longitude = conf.get('longitude', 0)
         self.latitude = conf.get('latitude', 0)
-        self.is_light = False
+        self.light = 0.0
         self.engine.register_event_in(self.measure_light, pendulum.interval(hours=1))
 
         self.client.add_device(self.id, engine.get_now(), {
@@ -56,7 +57,7 @@ class Blb(Device):
         if self.battery > 0:
             self.button_press_count += 1
             self.client.update_device(self.id, time, {'buttonPress': self.button_press_count})
-            next_press_interval = pendulum.interval(minutes=1)  # TODO: timewave?
+            next_press_interval = pendulum.interval(hours=1)  # TODO: timewave?
             # timewave
             # .next_usage_time
             # synth.simulation.sim.get_time(),
@@ -82,10 +83,10 @@ class Blb(Device):
 
     def measure_light(self, time):
         if self.battery > 0:
-            self.is_light = True  # TODO: all the light things.
+            self.light = sun_bright(time.int_timestamp, (self.longitude, self.latitude))
             # sun_bright(synth.simulation.sim.get_time(),
             #  (float(Device.get_property(self, "longitude")),
             #   float(Device.get_property(self, "latitude")))
             #  ))
-            self.client.update_device(self.id, time, {'light': self.is_light})
+            self.client.update_device(self.id, time, {'light': self.light})
             self.engine.register_event_in(self.measure_light, pendulum.interval(hours=1))
