@@ -1,8 +1,9 @@
 import time
+
 import pytest
 import requests_mock
 
-from synth.clients import devicepilot
+from synth.clients.old import devicepilot
 
 DEVICEPILOT_URL = "mock://devicepilot.com"
 

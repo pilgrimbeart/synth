@@ -31,11 +31,8 @@ import re
 import sys
 import time
 
-import synth.devices.simulation
-import synth.devices.simulation.geo
-
-from synth.clients import devicepilot, aws
-from synth.devices import mobile_battery
+from synth.clients.old import aws, devicepilot
+from synth.devices.old import mobile_battery
 from synth.server import zeromq_rx
 from synth.simulation.helpers import namify
 
@@ -101,7 +98,8 @@ def old_main():
                  "factoryFirmware": firmware,
                  "firmware": firmware,
                  "operator": operator,
-                 "rssi": ((1 - radioGoodness) * (mobile_battery.BAD_RSSI - mobile_battery.GOOD_RSSI) + mobile_battery.GOOD_RSSI),
+                 "rssi": ((1 - radioGoodness) * (
+                 mobile_battery.BAD_RSSI - mobile_battery.GOOD_RSSI) + mobile_battery.GOOD_RSSI),
                  "battery": 100
                  }
         # To create a devices in DevicePilot, just start posting it. But in AWS we have to explicitly create it.

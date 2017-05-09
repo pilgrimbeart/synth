@@ -24,7 +24,10 @@
 # SOFTWARE.
 
 import random
-import device, sim
+
+import device
+import sim
+
 import wind
 
 WPerTurbine = 1600000 # Whitelees produces about 500MW peak from about 300 turbines

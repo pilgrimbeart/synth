@@ -1,7 +1,8 @@
-import pytest
 import json
 
-from synth.clients import aws
+import pytest
+
+from synth.clients.old import aws
 
 DEMO_THINGS = [
     {"thingTypeName": aws.DEFAULT_TYPENAME, "thingName": "highwind"},
