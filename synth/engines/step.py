@@ -43,3 +43,6 @@ class Step(Engine):
 
     def register_event_in(self, event, interval):
         self.register_event_at(event, self.now + interval)
+
+    def get_now(self):
+        return self.now

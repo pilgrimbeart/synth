@@ -6,11 +6,11 @@ class Client:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def add_device(self, device):
+    def add_device(self, id, time, properties):
         pass
 
     @abstractmethod
-    def update_device(self, device):
+    def update_device(self, id, time, properties):
         pass
 
 # constructor

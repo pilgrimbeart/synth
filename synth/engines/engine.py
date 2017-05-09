@@ -16,3 +16,7 @@ class Engine(object):
     @abstractmethod
     def register_event_in(self, event, interval):
         pass
+
+    @abstractmethod
+    def get_now(self):
+        pass

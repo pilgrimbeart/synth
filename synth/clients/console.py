@@ -11,14 +11,18 @@ class Console(Client):
         self.name = conf.get('name', 'console')
         logger.info("[{name}]:Started console client.".format(name=self.name))
 
-    def add_device(self, device):
-        print("[{name}]:Added new device: {state}".format(
+    def add_device(self, id, time, properties):
+        print("[{name}]:{time}:{id} > Added new device: {properties}".format(
             name=self.name,
-            state=device.get_state())
-        )
+            time=time,
+            id=id,
+            properties=properties,
+        ))
 
-    def update_device(self, device):
-        print("[{name}]:Updated device: {state}".format(
+    def update_device(self, id, time, properties):
+        print("[{name}]:{time}:{id} > Updated device: {properties}".format(
             name=self.name,
-            state=device.get_state())
-        )
+            time=time,
+            id=id,
+            properties=properties,
+        ))

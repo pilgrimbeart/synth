@@ -29,6 +29,3 @@ class Delay(Device):
         name = conf['type']
         cls = importer.get_class('device', name)
         cls(conf, self.engine, self.client)
-
-    def get_state(self):
-        pass

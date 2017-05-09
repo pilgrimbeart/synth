@@ -19,10 +19,10 @@ class Stack(Client):
         logger.info("Adding clients as stack {confs}".format(confs=client_confs))
         self.clients = map(Stack.__build_client, client_confs)
 
-    def add_device(self, device):
+    def add_device(self, id, time, properties):
         for client in self.clients:
-            client.add_device(device)
+            client.add_device(id, time, properties)
 
-    def update_device(self, device):
+    def update_device(self, id, time, properties):
         for client in self.clients:
-            client.update_device(device)
+            client.update_device(id, time, properties)

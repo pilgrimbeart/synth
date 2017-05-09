@@ -9,7 +9,3 @@ class Device(object):
     @abstractmethod
     def __init__(self, conf, engine, client):
         pass
-
-    @abstractmethod
-    def get_state(self):
-        pass
