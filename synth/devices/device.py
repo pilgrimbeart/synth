@@ -5,18 +5,11 @@ from abc import ABCMeta, abstractmethod
 class Device(object):
     __metaclass__ = ABCMeta
 
-    # constructor
-    # serialiser
-    # action (webhook)
-    # init
-
-    # needs sim injected.
-    # needs client injected.
-
     @classmethod
     def build_estate(cls, estate_configuration, engine, client_stack):
         pass
 
+    # noinspection PyUnusedLocal
     @abstractmethod
     def __init__(self, conf, engine, client):
         pass

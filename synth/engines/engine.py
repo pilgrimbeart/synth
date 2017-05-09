@@ -16,14 +16,3 @@ class Engine(object):
     @abstractmethod
     def register_event_in(self, event, delta):
         pass
-
-# create
-
-# add event
-# add event at time
-# add event at delta
-# run events
-# has evemts
-# pause
-# stop
-# status

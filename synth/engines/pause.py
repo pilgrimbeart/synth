@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class Pause(Engine):
+    # noinspection PyUnusedLocal
     def __init__(self, conf):
         logger.info("Created 'next key to continue' engine.")
 

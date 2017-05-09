@@ -50,11 +50,9 @@ def main():
 
     # build stack.
     engine = importer \
-        .get_class('engine', engine_configuration.get('type', 'step')) \
-        (engine_configuration)
+        .get_class('engine', engine_configuration.get('type', 'step'))(engine_configuration)
     client = importer \
-        .get_class('client', 'stack') \
-        (clients_configuration)
+        .get_class('client', 'stack')(clients_configuration)
     importer.get_class('device', 'simple') \
         .build_estate(estate_configuration, engine, client)
 

@@ -17,7 +17,7 @@ def __get_module(family, name):
     module_name = '.' + name
     package_name = "{root}.{family}s".format(root=root, family=family)
     full_name = package_name + module_name
-    if not modules.has_key(full_name):
+    if full_name not in modules:
         mod = importlib.import_module(module_name, package_name)
         modules[full_name] = mod
         logger.info("Loaded {type} module: {name}".format(type=name, name=full_name))

@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class Simple(Device):
     @staticmethod
-    def build_estate(estate_configuration, engine, client_stack):
+    def build_estate(estate_configuration, engine, client_stack, **kwargs):
         for device_configuration in estate_configuration:
             Simple(device_configuration, engine, client_stack)
 
