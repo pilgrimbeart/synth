@@ -51,28 +51,23 @@ def readParamfile(filename):
 def main():
     def createDevice(_):
         deviceNum = device.numDevices()
+
         (lon,lat) = pp.pickPoint()
         (firstName, lastName) = (peopleNames.firstName(deviceNum), peopleNames.lastName(deviceNum))
-        firmware = random.choice(["0.51","0.52","0.6","0.6","0.6","0.7","0.7","0.7","0.7"])
-        operator = random.choice(["O2","O2","O2","EE","EE","EE","EE","EE"])
+
         if operator=="O2":
             radioGoodness = 1.0-math.pow(random.random(), 2)    # Skewed towards 1
         else:
             radioGoodness = math.pow(random.random(), 2)        # Skewed towards 0
-        props = {   "$id" : "-".join([format(random.randrange(0,255),'02x') for i in range(6)]), # A 6-byte MAC address 01-23-45-67-89-ab
+        props = {   "$id" : , 
                     "$ts" : sim.getTime1000(),
-                    "is_demo_device" : True,    # A flag which lets us selectively delete later
                     "label" : "Thing "+str(deviceNum),
                     "longitude" : lon,
                     "latitude" : lat,
                     "first_name" : firstName,
                     "last_name" : lastName,
                     "full_name" : firstName + " " + lastName,
-                    "factoryFirmware" : firmware,
-                    "firmware" : firmware,
-                    "operator" : operator,
                     "rssi" : ((1-radioGoodness)*(device.BAD_RSSI-device.GOOD_RSSI)+device.GOOD_RSSI),
-                    "battery" : 100
                 }
         # To create a device in DevicePilot, just start posting it. But in AWS we have to explicitly create it.
         if aws:

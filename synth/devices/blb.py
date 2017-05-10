@@ -19,7 +19,15 @@ class Blb(Device):
         self.engine = engine
         self.client = client
 
-        self.id = conf['id']
+        # generate identifiers
+        self.id = "-".join([format(random.randrange(0, 255), '02x') for i in range(6)]) # i.e. a MAC address
+        self.is_demo_device = conf.get('isDemoDevice', True) # identifier for later deletion.
+        self.label = conf.get('name', 'Thing ' + self.id)
+
+        self.firmware = random.choice(["0.51","0.52","0.6","0.6","0.6","0.7","0.7","0.7","0.7"])
+        self.factory_firmware = self.firmware
+
+        self.operator = random.choice(["O2","O2","O2","EE","EE","EE","EE","EE"])
 
         # setup battery
         self.battery = 100
@@ -46,7 +54,7 @@ class Blb(Device):
         self.latitude = conf.get('latitude', 0)
         self.light = 0.0
         # noinspection PyArgumentList
-        self.engine.register_event_in(self.measure_light, pendulum.interval(hours=1))
+        self.engine.register_event_in(self.measure_light, pendulum.interval(hours=12))
 
         self.client.add_device(self.id, engine.get_now(), {
             'battery': self.battery,
