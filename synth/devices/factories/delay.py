@@ -11,18 +11,18 @@ logger = logging.getLogger(__name__)
 
 class Delay(Device):
     def __build_create(self, conf):
-        return lambda time: self.create(conf, time)
+        this_conf = dict.copy(conf)
+        return lambda time: self.create(dict.copy(this_conf), time)
 
     def __init__(self, conf, engine, client):
         super(Delay, self).__init__(conf, engine, client)
         self.engine = engine
         self.client = client
 
-        for device in conf.get('devices', []):
-            delay = get_interval(device, 'delay', pendulum.interval())
-            device_conf = device['device']
-            logger.info("Delaying creation of device until {delay}.".format(delay=delay))
-            self.engine.register_event_in(self.__build_create(device_conf), delay)
+        delay = get_interval(conf, 'delay', pendulum.interval())
+        device_conf = conf['device']
+        logger.info("Delaying creation of device {conf} until {delay}.".format(conf=conf, delay=delay))
+        self.engine.register_event_in(self.__build_create(device_conf), delay)
 
     def create(self, conf, time):
         logger.info("@{time}: Delayed creation of new device: {conf}".format(conf=conf, time=time))

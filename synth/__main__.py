@@ -56,12 +56,17 @@ def main():
     # }
     device_configuration = {
         'type': 'factories.generate',
-        'count': 5,
+        'count': 2,
+        'idKey': 'device.id',
         'template': {
-            'type': 'simple',
-            'initial': 1,
-            'increment': 2,
-            'interval': 'PT3H'
+            'type': 'factories.delay',
+            'delay': 'PT4H',
+            'device': {
+                'type': 'simple',
+                'initial': 1,
+                'increment': 2,
+                'interval': 'PT3H'
+            },
         },
     }
 
