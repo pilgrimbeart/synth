@@ -26,7 +26,7 @@ def __get_module(family, name):
 
 def get_class(family, name):
     mod = __get_module(family, name)
-    class_name = name.capitalize()
+    class_name = name.split('.')[-1].capitalize()
     cls = getattr(mod, class_name)
     assert issubclass(cls, families[family])
     return cls

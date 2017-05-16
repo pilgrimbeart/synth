@@ -50,9 +50,19 @@ def main():
     # 'device': {'type': 'simple', 'id': 'B', 'initial': 5, 'increment': 6, 'interval': 'PT7H'}},
     #     ]
     # }
+    # device_configuration = {
+    #     'type': 'blb',
+    #     'id': 'blb_test'
+    # }
     device_configuration = {
-        'type': 'blb',
-        'id': 'blb_test'
+        'type': 'factories.generate',
+        'count': 5,
+        'template': {
+            'type': 'simple',
+            'initial': 1,
+            'increment': 2,
+            'interval': 'PT3H'
+        },
     }
 
     # build stack.
