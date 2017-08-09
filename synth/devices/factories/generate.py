@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class Generate(Device):
     @staticmethod
-    def set_nested_key(conf, key, value):
+    def __set_nested_key(conf, key, value):
         nested_conf = conf
         for nested_key in key.split('.')[:-1]:
             if nested_key not in nested_conf:
@@ -27,7 +27,7 @@ class Generate(Device):
         for id in range(1, count + 1):
             device_id = id_scheme.format(id=id)
             device_conf = dict.copy(template)
-            Generate.set_nested_key(device_conf, id_key, device_id)
+            Generate.__set_nested_key(device_conf, id_key, device_id)
 
             logger.info("Generating device {device_id} as {device_conf}".format(
                 device_id=device_id,
