@@ -1,0 +1,6 @@
+# Runs a new synth instance, with logging, having first killed any already-running instance
+# NOTE: The pkill should really check only against the first argument (which by convention is the instance name) - so that if you run another scenario on the same instance, the previous instance is killed first
+command="python synth $@"
+echo $command
+pkill -f "$command"
+nohup $command >> ../synth_logs/$1.out 2>&1 &

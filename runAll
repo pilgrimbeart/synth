@@ -1,0 +1,6 @@
+sudo ./runWeb	# Must be run with elevated priveleges to open a web socket
+
+./runSpawner
+
+./runSynth OnProductionSynthPilgrim RealisticProcess100now
+./runSynth OnAWS World100Live
