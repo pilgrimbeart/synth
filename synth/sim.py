@@ -138,10 +138,6 @@ def eventsToCome():
             return True
         if events[0][0] > endTime:
             logging.info("Reached simulation end time")
-            print endTime
-            print events[0][0]
-            print events[0]
-            print events
             return False
         return True
     finally:
