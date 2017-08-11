@@ -1,11 +1,10 @@
 import importlib
 import logging
 
-from synth.clients.client import Client
-from synth.devices.device import Device
-from synth.engines.engine import Engine
+from clients.client import Client
+from devices.device import Device
+from engines.engine import Engine
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 modules = {}
@@ -15,8 +14,9 @@ root = 'synth'
 
 def __get_module(family, name):
     module_name = '.' + name
-    package_name = "{root}.{family}s".format(root=root, family=family)
+    package_name = "{family}s".format(family=family)
     full_name = package_name + module_name
+    logging.info("Loading "+package_name+module_name)
     if full_name not in modules:
         mod = importlib.import_module(module_name, package_name)
         modules[full_name] = mod
