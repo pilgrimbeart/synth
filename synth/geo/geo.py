@@ -47,7 +47,8 @@ MAXX = -100000
 MINY = 100000
 MAXY = -100000
 
-class pointPicker():    # It uses a huge amount of memory. So strongly recommend 
+class pointPicker():
+    """This uses a huge amount of memory. So strongly recommend deleting after use.""" 
     def __init__(self, populationMap=DEFAULT_POP_MAP):
         # Load map
         moduleLocalDir = os.path.dirname(__file__)
@@ -79,7 +80,7 @@ class pointPicker():    # It uses a huge amount of memory. So strongly recommend
 
         
     def xyToLonLat(self,(x,y)):
-        # Normalise axes to +/-1
+        """Normalise axes to +/-1"""
         y = (2*y/self.ylimit)-1.0
         x = (2*x/self.xlimit)-1.0
 
@@ -92,7 +93,7 @@ class pointPicker():    # It uses a huge amount of memory. So strongly recommend
         return (longitude, latitude)
 
     def lonLatToXY(self, (longitude, latitude)):
-        # Reduce to +/-1
+        """Reduce to +/-1"""
         x = longitude / 180.0
         y = latitude / -90.0
 

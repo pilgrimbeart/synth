@@ -61,9 +61,7 @@ class Aws(Client):
             self.iotData = boto3.client('iot-data')
 
     def add_device(self, device_id, time, properties):
-        # Returns ARN
-        # OK if thing already exists
-        # Ignores <time>
+        """Add device, returning ARN. OK if thing already exists. Ignores <time>."""
         logging.info("Creating AWS Thing "+device_id)
         self.createDeviceType(DEFAULT_TYPENAME)  # Ensure type exists (inefficient!)
         response = self.iotClient.create_thing(thingName=device_id, thingTypeName=DEFAULT_TYPENAME)
@@ -72,6 +70,7 @@ class Aws(Client):
         return arn
 
     def update_device(self, device_id, time, properties):
+        """Update device."""
         # topic = "$aws/things/"+name+"/shadow/update"
         # iotData.publish(topic=topic, qos=1, payload=properties)
         # Publish seems to return 200 OK regardless of whether it actually succeeds!
@@ -118,8 +117,7 @@ class Aws(Client):
                 self.deleteDevice(t['thingName'])
 
     def createDeviceType(self,name=DEFAULT_TYPENAME,description="A Thing created by the DevicePilot Synth virtual device simulator"):
-        # Returns ARN
-        # OK if thing type already exists
+        """Create a new type of device and return its ARN. OK if thing type already exists."""
         logging.info("Creating AWS ThingType "+name)
         response = self.iotClient.create_thing_type(thingTypeName=name,
                                             thingTypeProperties={'thingTypeDescription' : description, 'searchableAttributes' : []})

@@ -30,21 +30,21 @@ import numpy
 import utils
 
 def toHours(spec):
-    # Spec is of the form "08:00-10:00"
+    """spec is of the form '08:00-10:00' """
     return (int(spec[0:2])+int(spec[3:5])/60.0, int(spec[6:8])+int(spec[9:11])/60.0)
 
 def hourInDay(t):
-    # Returns hour in day (as a float, to nearest second, e.g. 07:30 is 7.5)
+    """Returns hour in day (as a float, to nearest second, e.g. 07:30 is 7.5)"""
     dt = ISO8601.epochSecondsToDatetime(t)
     return int(dt.strftime("%H")) + int(dt.strftime("%M"))/60.0 + int(dt.strftime("%S"))/3600.0    
 
 def dayOfWeek(t):
-    # Returns e.g. "Mon"
+    """Returns e.g. 'Mon'"""
     dt = ISO8601.epochSecondsToDatetime(t)
     return dt.strftime("%a")
 
 def startOfNextDay(t):
-    # Given a time, returns time of next midnight
+    """Given a time, returns time of next midnight."""
     s = ISO8601.epochSecondsToISO8601(t)    # e.g. "2007-10-23T23:32:10Z
     dt = ISO8601.epochSecondsToDatetime(t)
     dt += datetime.timedelta(days=1)
@@ -52,7 +52,7 @@ def startOfNextDay(t):
     return ISO8601.toEpochSeconds(s)
 
 def hourToHHMMSS(h):
-    # Given a floating hour time, return a string in HH:MM:SS format (e.g. 14.5 becomes "14:30:00")
+    """Given a floating hour time, return a string in HH:MM:SS format (e.g. 14.5 becomes '14:30:00')"""
     assert h<24
     hours = int(h)
     minsF = (h-int(h))*60.0
@@ -68,16 +68,16 @@ def hourWave(t,spec):
     return 0.0
 
 def dayWave(t,spec):
-    # spec is a list e.g. ["Mon", "Tue", "Wed"]
+    """spec is a list e.g. ['Mon', 'Tue', 'Wed']"""
     if dayOfWeek(t) in spec:
         return 1.0
     return 0.0
 
 
 def jitter(t, X, amountS):
-    # Returns a random number (intended as a time offset, i.e. jitter) within the range +/-amountS
-    # The jitter is different (but constant) for any given day in t (epoch secs)
-    # and for any value X (which might be e.g. deviceID)
+    """Return a random number (intended as a time offset, i.e. jitter) within the range +/-amountS
+       The jitter is different (but constant) for any given day in t (epoch secs)
+       and for any value X (which might be e.g. deviceID)"""
     dt = ISO8601.epochSecondsToDatetime(t)
     dayOfYear = int(dt.strftime("%j"))
     year = int(dt.strftime("%Y"))
@@ -91,9 +91,9 @@ def jitter(t, X, amountS):
 
 
 def nextUsageTime(t, daySpec, hourSpec):
-    # Given a daySpec e.g. ["Mon","Tue"] and an hourspec e.g. "08:00-10:00"
-    # work out a next time t which falls within that spec (picking randomly within the hour range)
-    # (if given a time already within spec, it moves to the NEXT such time)
+    """Given a daySpec e.g. ["Mon","Tue"] and an hourspec e.g. '08:00-10:00'
+       work out a next time t which falls within that spec (picking randomly within the hour range)
+       if given a time already within spec, move to the NEXT such time)"""
     (startHour, endHour) = toHours(hourSpec)
     (h,d) = (hourInDay(t), dayOfWeek(t))
     if (d in daySpec) and (h<endHour):  # If already in spec, move beyond
@@ -111,10 +111,11 @@ def nextUsageTime(t, daySpec, hourSpec):
     return t
 
 def interp(specStr, t):
-    # <specStr> is a string containing a list of pairs e.g. "[[0,20],[30,65],[60,50],[90,75]]"
-    # The first element of each pair is DAYS. The second is a NUMBER.
-    # <t> is time in seconds
-    # Returns the current value of t using linear interpolation
+    """Return the current value of t using linear interpolation.
+
+       <specStr> is a string containing a list of pairs e.g. '[[0,20],[30,65],[60,50],[90,75]]'
+       The first element of each pair is DAYS. The second is a NUMBER.
+       <t> is time in seconds"""
     specList = ast.literal_eval(specStr)
     X = [i[0] for i in specList]
     Y = [i[1] for i in specList]

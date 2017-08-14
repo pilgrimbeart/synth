@@ -46,7 +46,8 @@ def windspeedToPower(windSpeed):
     proportion = min(1.0, proportion)
     return proportion * WPerTurbine
 
-def windAndPower(epochSecs, hashObject=0):  # hashObject can be anything, to add a bit of uniqueness to the reading a bit unique, e.g. device ID or location
+def windAndPower(epochSecs, hashObject=0):
+    """hashObject can be anything, to add a bit of uniqueness to the reading a bit unique, e.g. device ID or location"""
     timeDither = abs(hash(hashObject)) % 300 # Add up to 5 minutes time dither
     strengthDither = 0.8 + 0.2 * (abs(hash(hashObject)) % 1000) / 1000.0    # Dither strength by 20%
     windSpeed = wind.windStrength(epochSecs + timeDither) * windScaling * strengthDither
@@ -55,7 +56,7 @@ def windAndPower(epochSecs, hashObject=0):  # hashObject can be anything, to add
 
 
 def deviceSetup():
-    # Set up devices
+    """Set up devices."""
     for i in range(len(turbineCoordinates)):
         (longitude, latitude, _) = turbineCoordinates[i]
         props = {
@@ -86,7 +87,7 @@ def deviceSetup():
         sim.injectEventDelta(sim.hours(1), tickGatewayHourly, d)
 
 def tickDeviceHourly(d):
-    # Propagate this device's gateway comms state to this device (i.e. if gateway is offline, then this device is offline)
+    """Propagate this device's gateway comms state to this device (i.e. if gateway is offline, then this device is offline)."""
     g = d.getProperty("parent")
     commsOK = device.getDeviceByProperty("label",g).getCommsOK()
     d.setCommsOK(commsOK)

@@ -33,7 +33,7 @@ def secondOfDay(epochSecs):
     return ISO8601.toEpochSeconds(s)    
 
 def diurnalCycle(epochSecs):
-    # Varies from 0 at midnight to 1 at midday and back again
+    """Varies from 0 at midnight to 1 at midday and back again."""
     e = secondOfDay(epochSecs)
     frac = e / float(days(1))  # Fraction of a day
     return 0.5 + sin(3*pi/2 + frac*pi*2)/2

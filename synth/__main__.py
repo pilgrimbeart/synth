@@ -54,7 +54,7 @@ params.update({
     })
     
 def randList(start, delta, n):
-    # Create a sorted list of <n> whole numbers ranging between <start> and <delta>
+    """Create a sorted list of <n> whole numbers ranging between <start> and <delta>."""
     L = [start + random.random()*delta for x in range(n)]
     return sorted(L)
 

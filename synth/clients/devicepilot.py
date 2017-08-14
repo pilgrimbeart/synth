@@ -198,8 +198,9 @@ class Devicepilot(Client):
         return json.loads(resp.text)
 
     def createFilter(self, name, spec, monitor=False):
-        # spec could be "$ts < ago(86400)"
-        # Returns the $id value of the new filter
+        """Create a DevicePilot filter and return the $id of the new filter.
+
+           spec could be e.g. '$ts < ago(86400)'"""
         url = self.url + "/savedSearches"
         body = json.dumps({ "$description" : name, "where" : spec })
         logging.info("createFilter "+str(body))
@@ -223,6 +224,7 @@ class Devicepilot(Client):
         logging.info("Created incidentConfig with id "+str(theID))
         return theID
 
-    def setupDemoFilters(self): # Very specific set of filters and processes, to support zero-touch onboarding
+    def setupDemoFilters(self):
+        """Very specific set of filters and processes, to support zero-touch onboarding."""
         fID = self.createFilter("Down (demo)", "$ts < ago(86400)", True)
         iID = self.createIncidentConfig(fID)   # Add monitoring to this filter

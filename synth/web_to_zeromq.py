@@ -51,7 +51,8 @@ def createSocket():
     zeromqSocket.bind("tcp://*:%s" % ZEROMQ_PORT)
 
 @app.route("/event", methods=['POST','GET'])
-def event(): # Accept an incoming event and route it to a Synth instance
+def event():
+    """Accept an incoming event and route it to a Synth instance."""
     global zeromqSocket
     if zeromqSocket == None:
         createSocket()
@@ -87,7 +88,7 @@ def getAndCheckKey(req):
     return dpKey
 
 def getAndCheckApi(req):
-    # Stop people passing-in any old URL!
+    """Stop external users passing-in any old URL."""
     if not "devicepilot_api" in req.args:
         dpApi = "api"
     else:
@@ -100,7 +101,8 @@ def getAndCheckApi(req):
     return "https://"+dpApi+".devicepilot.com"
     
 @app.route("/spawn", methods=['GET'])
-def spawn():    # Start a new Synth instance
+def spawn():
+    """Start a new Synth instance."""
     global zeromqSocket
     if zeromqSocket == None:
         createSocket()
@@ -133,7 +135,7 @@ def isRunning():
 
 @app.route("/")
 def whatIsRunning():
-    # This is the route that we expect Pingdom to ping regularly to reset the heartbeat
+    """We expect Pingdom to regularly ping this route to reset the heartbeat."""
     global lastPingTime
     global zeromqSocket
     if zeromqSocket == None:
@@ -153,11 +155,11 @@ def whatIsRunning():
     return "<pre>"+x.replace("\n","<br>")+"</pre>"
         
 def startWebServer():
+    """Doing app.run() with "threaded=True" starts a new thread for each incoming request, improving crash resilience
+       By default Flask serves to 127.0.0.1 which is local loopback (not externally-visible), so use 0.0.0.0 for externally-visible
+       We run entire Flask server as a distinct process so we can terminate it if it fails (can't terminate threads in Python)"""
     logging.info("Starting Flask web server process, listening on port "+str(WEB_PORT))    # If port < 1000 then this process must be run with elevated privileges
     p = multiprocessing.Process(target=app.run, kwargs={"threaded":True, "host":"0.0.0.0", "port":WEB_PORT, "ssl_context":('../synth_certs/ssl.crt', '../synth_certs/ssl.key')})
-    # Doing app.run() with "threaded=True" starts a new thread for each incoming request, improving crash resilience
-    # By default Flask serves to 127.0.0.1 which is local loopback (not externally-visible), so use 0.0.0.0 for externally-visible
-    # We run entire Flask server as a distinct process so we can terminate it if it fails (can't terminate threads in Python)
     p.daemon = True
     p.start()
     return p

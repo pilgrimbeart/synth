@@ -144,9 +144,11 @@ def eventsToCome():
         simLock.release()   # -->
         
 def nextEvent():
-    # If we have to wait for real time to catch up, then
-    # new external events can appear asychronously whilst we wait.
-    # So we wait only a short period and then release so can reassess from scratch again soon (and so any other heartbeats can happen)
+    """Execute next event
+
+       If we have to wait for real time to catch up, then
+       new external events can appear asychronously whilst we wait.
+       So we wait only a short period and then release so can reassess from scratch again soon (and so any other heartbeats can happen)."""
     global events
     simLock.acquire()           # <---
     if len(events) < 1:

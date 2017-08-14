@@ -38,11 +38,11 @@ import pytz
 import re
 
 def makeTimezone(tzname):
-    # s is Olsen name of a timezone, e.g. "America/Los_Angeles"
+    """s is Olsen name of a timezone, e.g. 'America/Los_Angeles'"""
     return pytz.timezone(tzname)
 
 def epochSecondsToDatetime(secs, tz=pytz.utc):
-    # get time in UTC
+    """get time in UTC"""
     utc_dt = datetime.utcfromtimestamp(secs).replace(tzinfo=pytz.utc)
     # convert it to tz
     return tz.normalize(utc_dt.astimezone(tz))
@@ -51,7 +51,9 @@ def epochSecondsToISO8601(secs, tz=pytz.utc):
     return epochSecondsToDatetime(secs,tz).strftime('%Y-%m-%dT%H:%M:%S%z')
 
 def toEpochSeconds(iso8601, tz=pytz.utc):   # Default UTC timezone has no DST
-    # (from pytz docs) Note: Unfortunately using the tzinfo argument of the standard datetime constructors does not work with pytz for many timezones
+    """Convert ISO8601 string to Epoch-seconds.
+
+       (from pytz docs) Note: Unfortunately using the tzinfo argument of the standard datetime constructors does not work with pytz for many timezones."""
     dt = parse_date(iso8601)
     tt = dt.timetuple()
     loc_dt = tz.localize(datetime(tt[0],tt[1],tt[2],tt[3],tt[4],tt[5],00))

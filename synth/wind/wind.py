@@ -52,7 +52,8 @@ def sinSum(epochSecs, table):
         ampSum += amplitude
     return value / ampSum
 
-def windStrength(epochSecs):    # Signed, -1.0..1.0.
+def windStrength(epochSecs):
+    """Returns signed value -1.0..1.0."""
     diurnal = sinSum(epochSecs, diurnalPeriods)
     seasonal = sinSum(epochSecs, seasonalPeriods)
     return diurnal * seasonal

@@ -27,8 +27,9 @@ import json, httplib, urllib
 GOOGLE_MAPS_API_KEY = open("../synth_certs/googlemapskey","rt").read().strip()
 
 def set_headers():
-    """ Sets the headers for sending to the DM server. We assume that the
-        user has a token that allows them to login. """
+    """Sets the headers for sending to the DM server.
+
+       We assume that the user has a token that allows them to login. """
     headers = {}
     headers["Content-Type"] = "application/json"
     return headers

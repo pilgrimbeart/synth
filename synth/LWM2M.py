@@ -1259,7 +1259,8 @@ def doIndex(obj, num):
         return obj[s]
     return None
 
-def lookupName(objectID, resourceID=None):  # LWM2M ids are triples e.g. 1/0/0, but the middle one is the instance number. So it's objectID/instanceNum/resourceID
+def lookupName(objectID, resourceID=None):
+    """LWM2M ids are triples e.g. 1/0/0, but the middle one is the instance number. So it's objectID/instanceNum/resourceID"""
     r1 = doIndex(objects, objectID)
     if not r1:
         return "UNKNOWN_LWM2M_OBJECT_ID"

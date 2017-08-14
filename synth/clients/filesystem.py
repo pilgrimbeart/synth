@@ -43,7 +43,6 @@ class Filesystem(Client):
         self.update_device(device_id, time, properties)
 
     def update_device(self, device_id, time, properties):
-        # logging.info("postDevice "+str(device))
         newProps = []
 
         # Construct list of (prop,value)
@@ -80,6 +79,7 @@ class Filesystem(Client):
         pass
     
     def flush(self):
+        """To be called before exiting."""
         # Collect all property names
         props = []
         for k in self.postQueue.keys():

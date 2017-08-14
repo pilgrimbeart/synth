@@ -86,8 +86,8 @@ def flush():
     logfile.close()
 
 def externalEvent(params):
-    # Accept events from outside world
-    # (these have already been synchronised via the event queue so we don't need to worry about thread-safety here)
+    """Accept events from outside world.
+    (these have already been synchronised via the event queue so we don't need to worry about thread-safety here)"""
     global devices
     body = params["body"]
     try:
@@ -169,7 +169,7 @@ class device():
         self.commsOK = flag
         
     def setBatteryLife(self, mu, sigma, autoreplace=False):
-        # Set battery life with a normal distribution which won't exceed 2 standard deviations
+        """Set battery life with a normal distribution which won't exceed 2 standard deviations."""
         life = random.normalvariate(mu, sigma)
         life = min(life, mu+2*sigma)
         life = max(life, mu-2*sigma)
