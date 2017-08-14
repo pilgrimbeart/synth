@@ -24,4 +24,6 @@ To test that Synth is installed correctly:
 3) Now on the command line run:
    python synth OnFStest 10secs
 
-This will run for 10 seconds and create the file ../synth_logs/OnFStest.csv
+This will run for 10 seconds and create two files:
+    ../synth_logs/OnFStest.evt  - a log of all generated events
+    ../synth_logs/OnFStest.csv  - the output from the 'filesystem' client
