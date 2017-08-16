@@ -1,4 +1,8 @@
 {
+    "engine" :
+    {
+        "type" : "sim"
+    },
     "initial_action" : "deleteExisting",    # { "deleteExisting" deletes all existing devices from DP | "loadExisting" loads from DP | "" }
     "device_count" : 100,
     "start_time" : "now",  # ISO8601 datetime e.g. 2017-01-01T00:00:00, or "now", or if a -ve number "-N" then "N days before now"

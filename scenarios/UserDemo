@@ -1,13 +1,13 @@
 {
+    "engine" :
+    {
+        "type" : "sim"
+    },
     "initial_action" : "deleteDemo",
     "device_count" : 100,
-    "start_time" : "-120",  # ISO8601 datetime e.g. 2017-01-01T00:00:00, or "now", or if a -ve number "-N" then "N days before now"
+    "start_time" : "-P3M",  # ISO8601 datetime e.g. 2017-01-01T00:00:00, or "now", or ISO8601 relative duration, e.g. "-P3M" is 3 months ago
     "end_time" : "now",     # ISO8601 datetime, "now", or null to never terminate (enters interactive mode when it catches-up with now)
     "install_timespan" : 259200,    # How many seconds it takes at start of simulation to install all devices
-    "queue_criterion" : "messages",     # Send updates to DevicePilot every N "messages" | "time" N secs of sim time | "interactive" N secs of real time
-    "queue_limit" : 1000,               # N for above
-#    "area_centre" : "Manchester, UK",   # Centre of a circle of possible positions
-#    "area_radius" : "London, UK",       # Edge of circle
     "battery_life_mu" : 31536000,       # Average battery life
     "battery_life_sigma" : 0,           # Variation in battery life
     "comms_reliability" : "[[0,0.20],[30,0.65],[60,0.50],[90,0.95],[120,0.98]]",    # Either a fractional number 0.0..1.0 or a trajectory specification "[[day,fraction],[day,fraction],...]"

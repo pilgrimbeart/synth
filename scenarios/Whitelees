@@ -1,8 +1,12 @@
 {
+    "engine" :
+	{
+		"type" : "sim"
+	},
     # "initial_action" : "deleteDemo",
     "device_setup" : "whitelees",
-    "start_time" : "-2",
-    "end_time" : "-1",
+    "start_time" : "-P2D",
+    "end_time" : "-P1D",
     "install_timespan" : 60,
     "queue_criterion" : "messages",
     "queue_limit" : 1000

@@ -1,4 +1,8 @@
 {
+    "engine" :
+	{
+		"type" : "sim"
+	},
     "device_count" : 10,
     "start_time" : "now",
     "end_time" : "PT10S",

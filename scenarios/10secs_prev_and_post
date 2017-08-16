@@ -4,7 +4,7 @@
 		"type" : "sim"
 	},
     "device_count" : 10,
-    "start_time" : "-PT10H",
-    "end_time" : "now",
+    "start_time" : "-PT10S",
+    "end_time" : "PT10S",
     "install_timespan" : 10
 }

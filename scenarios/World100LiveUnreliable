@@ -3,7 +3,6 @@
     {
         "type" : "sim"
     },
-    "initial_action" : "deleteExisting",
     "device_count" : 100,
     "start_time" : "now",
     "end_time" : null,
@@ -13,5 +12,5 @@
     "battery_life_mu" : 86400,  # A day's battery life, so a battery % event every 14 minutes per device, which is averaging one every 8 secs for all devices
     "battery_life_sigma" : 3600,
     "battery_autoreplace" : true,
-    "comms_reliability" : 1.0
+    "comms_reliability" : 0.5
 }

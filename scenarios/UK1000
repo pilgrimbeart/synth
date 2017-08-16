@@ -1,8 +1,12 @@
 {
+    "engine" :
+    {
+        "type" : "sim"
+    },
     "initial_action" : "deleteExisting",
     "device_count" : 1000,
-    "start_time" : "2017-01-17T00:00:00",
-    "end_time" : "2017-01-18T00:00:00",
+    "start_time" : "-P1D",
+    "end_time" : "now",
     "install_timespan" : 86400,
     "queue_criterion" : "messages",
     "queue_limit" : 500,

@@ -26,18 +26,18 @@
 # SOFTWARE.
 
 import random, math
-import sim
 import timewave
 from solar import solar
 import datetime
 import threading
 import logging, traceback
+import pendulum
 
 devices = []
 
 updateCallback = None
 logfile = None
-DEFAULT_BATTERY_LIFE_S = sim.minutes(5)   # For interactive process demo
+DEFAULT_BATTERY_LIFE_S = 5*60   # For interactive process demo
 
 GOOD_RSSI = -50.0
 BAD_RSSI = -120.0
@@ -62,8 +62,8 @@ def getDeviceByProperty(prop, value):
                 return d
     return None
 
-def logEntry(properties):
-    logfile.write(sim.getTimeStr()+" ")
+def logEntry(time, properties):
+    logfile.write(pendulum.from_timestamp(time).to_datetime_string()+" ")
     for k in sorted(properties.keys()):
         s = str(k) + ","
         if isinstance(properties[k], basestring):
@@ -77,9 +77,13 @@ def logEntry(properties):
         logfile.write(s) # Property might contain unicode
     logfile.write("\n")
 
-def logString(s):
+def logString(s, time=None):
     logging.info(s)
-    logfile.write(sim.getTimeStr()+" "+s+"\n")
+    if time:
+        ts = pendulum.from_timestamp(time).to_datetime_string() + " "
+    else:
+        ts = ""
+    logfile.write(ts+s+"\n")
 
 def flush():
     logging.info("Ending device logging ("+str(len(devices))+" devices were emulated)")
@@ -107,7 +111,7 @@ def externalEvent(params):
         logging.error(traceback.format_exc())
         
 class device():
-    def __init__(self, device_id, time, properties, autoTick=True):
+    def __init__(self, device_id, time, properties, engine, autoTick=True):
         global devices
         if getDeviceByProperty("$id",device_id) != None:
             logging.error("FATAL: Attempt to create duplicate device "+str(device_id))
@@ -115,9 +119,10 @@ class device():
         else:
             self.device_id = device_id
             self.properties = properties
+            self.engine = engine
             devices.append(self)
             self.commsReliability = 1.0 # Either a fraction, or a string containing a specification of the trajectory
-            self.commsUpDownPeriod = sim.days(1)
+            self.commsUpDownPeriod = 1*60*60*24
             self.batteryLife = DEFAULT_BATTERY_LIFE_S
             self.batteryAutoreplace = False
             self.commsOK = True
@@ -127,15 +132,15 @@ class device():
 
     def startTicks(self):
         if self.propertyExists("battery"):
-            sim.injectEventDelta(self.batteryLife / 100.0, self.tickBatteryDecay, self)
-        sim.injectEventDelta(sim.hours(1), self.tickHourly, self)
-        sim.injectEventDelta(0, self.tickProductUsage, self)    # Immediately
+            self.engine.register_event_in(self.batteryLife / 100.0, self.tickBatteryDecay, self)
+        self.engine.register_event_in(1*60*60, self.tickHourly, self)
+        self.engine.register_event_in(0, self.tickProductUsage, self)    # Immediately
 
     def externalEvent(self, eventName, arg):
         s = "Processing external event "+eventName+" for device "+str(self.properties["$id"])
         logString(s)
         if eventName=="replaceBattery":
-            self.setProperty(sim.getTime(), "battery", 100)
+            self.setProperty(self.engine.get_now(), "battery", 100)
             self.startTicks()
 
         # All other commands require device to be functional!
@@ -147,20 +152,20 @@ class device():
             return
         
         if eventName=="upgradeFirmware":
-            self.setProperty(sim.getTime(), "firmware", arg)
+            self.setProperty(self.engine.get_now(), "firmware", arg)
         if eventName=="factoryReset":
-            self.setProperty(sim.getTime(), "firmware", self.getProperty("factoryFirmware"))
+            self.setProperty(self.engine.get_now(), "firmware", self.getProperty("factoryFirmware"))
 
     def tickProductUsage(self, _):
         if self.propertyAbsent("battery") or self.getProperty("battery") > 0:
-            self.setProperty(sim.getTime(), "buttonPress", 1)
-            t = timewave.nextUsageTime(sim.getTime(), ["Mon","Tue","Wed","Thu","Fri"], "06:00-09:00")
-            sim.injectEvent(t, self.tickProductUsage, self)
+            self.setProperty(self.engine.get_now(), "buttonPress", 1)
+            t = timewave.nextUsageTime(self.engine.get_now(), ["Mon","Tue","Wed","Thu","Fri"], "06:00-09:00")
+            self.engine.register_event_at(t, self.tickProductUsage, self)
 
-    def setCommsReliability(self, upDownPeriod=sim.days(1), reliability=1.0):
+    def setCommsReliability(self, upDownPeriod=1*60*60*24, reliability=1.0):
         self.commsUpDownPeriod = upDownPeriod
         self.commsReliability = reliability
-        sim.injectEventDelta(0, self.tickCommsUpDown, self) # Immediately
+        self.engine.register_event_in(0, self.tickCommsUpDown, self) # Immediately
 
     def getCommsOK(self):
         return self.commsOK
@@ -180,7 +185,7 @@ class device():
         if isinstance(self.commsReliability, (int,float)):   # Simple probability
             self.commsOK = self.commsReliability > random.random()
         else:   # Probability spec, i.e. varies with time
-            relTime = sim.getTime() - sim.startTime
+            relTime = self.engine.get_now() - self.engine.get_start_time()
             prob = timewave.interp(self.commsReliability, relTime)
             if self.propertyExists("rssi"): # Now affect comms according to RSSI
                 rssi = self.getProperty("rssi")
@@ -191,7 +196,7 @@ class device():
 
         deltaTime = random.expovariate(1.0 / self.commsUpDownPeriod)
         deltaTime = min(deltaTime, self.commsUpDownPeriod * 100.0) # Limit long tail
-        sim.injectEventDelta(deltaTime, self.tickCommsUpDown, self)
+        self.engine.register_event_in(deltaTime, self.tickCommsUpDown, self)
 
     def doComms(self, time, properties):
         if self.commsOK:
@@ -199,7 +204,7 @@ class device():
                 updateCallback(self.device_id, time, properties)
             else:
                 logging.warning("No callback installed to update device properties")
-            logEntry(properties)
+            logEntry(time, properties)
 
     def getProperty(self, propName):
         return self.properties[propName]
@@ -223,20 +228,20 @@ class device():
     def tickBatteryDecay(self, _):
         v = self.getProperty("battery")
         if v > 0:
-            self.setProperty(sim.getTime(), "battery", v-1)
-            sim.injectEventDelta(self.batteryLife / 100.0, self.tickBatteryDecay, self)
+            self.setProperty(self.engine.get_now(), "battery", v-1)
+            self.engine.register_event_in(self.batteryLife / 100.0, self.tickBatteryDecay, self)
         else:
             if self.batteryAutoreplace:
                 logging.info("Auto-replacing battery")
-                self.setProperty(sim.getTime(), "battery",100)
-                sim.injectEventDelta(self.batteryLife / 100.0, self.tickBatteryDecay, self)
+                self.setProperty(self.engine.get_now(), "battery",100)
+                self.engine.register_event_in(self.batteryLife / 100.0, self.tickBatteryDecay, self)
 
     def tickHourly(self, _):
         if self.propertyAbsent("battery") or (self.getProperty("battery") > 0):
-            self.setProperty(sim.getTime(), "light", solar.sunBright(sim.getTime(),
+            self.setProperty(self.engine.get_now(), "light", solar.sunBright(self.engine.get_now(),
                                                     (float(device.getProperty(self,"longitude")),float(device.getProperty(self,"latitude")))
                                                     ))
-            sim.injectEventDelta(sim.hours(1), self.tickHourly, self)
+            self.engine.register_event_in(sim.hours(1), self.tickHourly, self)
 
 
 # Model for comms unreliability

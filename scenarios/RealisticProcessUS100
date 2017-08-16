@@ -1,7 +1,11 @@
 {
+    "engine" :
+    {
+        "type" : "sim"
+    },
     "initial_action" : "deleteDemo",
     "device_count" : 100,
-    "start_time" : "-120",  # starting 4 months before now
+    "start_time" : "-P3M",
     "end_time" : null,     # never end
     "install_timespan" : 2592000,    # Install all devices in first month
     "queue_criterion" : "messages",     # Send updates to DevicePilot every N "messages"

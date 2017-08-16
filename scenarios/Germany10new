@@ -1,4 +1,8 @@
 {
+    "engine" :
+    {
+        "type" : "sim"
+    },
     "initial_action" : "deleteExisting",
     "device_count" : 10,
     "start_time" : "now",

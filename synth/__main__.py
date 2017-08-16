@@ -28,12 +28,33 @@ import logging, math, time, sys, json, threading, subprocess, re, traceback
 import random   # Might want to replace this with something we control
 from datetime import datetime
 from geo import geo
-from wind import whitelees
 import peopleNames
-import sim
 import ISO8601
 import device
 import zeromq_rx
+
+
+getSimTime = None   # TODO: Find a more elegant way for logging to discover simulation time
+
+# Set up Python logger to report simulated time
+def inSimulatedTime(self,secs=None):
+    if getSimTime:
+        t = getSimTime()
+    else:
+        t = 0
+    return ISO8601.epochSecondsToDatetime(t).timetuple()  # Logging might be emitted within sections where simLock is acquired, so we accept a small chance of duff time values in log messages, in order to allow diagnostics without deadlock
+
+def initLogging():
+    logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s %(message)s',
+                    datefmt='%Y-%m-%dT%H:%M:%S'
+                    )
+    logging.Formatter.converter=inSimulatedTime # Make logger use simulated time
+
+initLogging()
+
+
+
 
 params = {}
 
@@ -44,9 +65,9 @@ params.update({
     "device_count" : 10,
     "start_time" : "now",
     "end_time" : None,
-    "install_timespan" : sim.minutes(1),
-    "battery_life_mu" : sim.minutes(5),
-    "battery_life_sigma" : sim.minutes(1),
+    "install_timespan" : 1*60,
+    "battery_life_mu" : 50*60,
+    "battery_life_sigma" : 1*60,
     "comms_reliability" : 1.0,  # Either a fractional number, or a specification string
     "web_key" : 12345,
     "web_response_min" : 3,  # (s) Range of delay to respond to an incoming web request
@@ -66,7 +87,9 @@ def readParamfile(filename):
     return s
 
 def main():
-    def createDevice(_):
+    global getSimTime
+    
+    def createDevice(engine):
         deviceNum = device.numDevices()
         (lon,lat) = pp.pickPoint()
         (firstName, lastName) = (peopleNames.firstName(deviceNum), peopleNames.lastName(deviceNum))
@@ -77,7 +100,7 @@ def main():
         else:
             radioGoodness = math.pow(random.random(), 2)        # Skewed towards 0
         props = {   "$id" : "-".join([format(random.randrange(0,255),'02x') for i in range(6)]), # A 6-byte MAC address 01-23-45-67-89-ab
-                    "$ts" : sim.getTime1000(),
+                    "$ts" : engine.get_now_1000(),
                     "is_demo_device" : True,    # A flag which lets us selectively delete later
                     "label" : "Thing "+str(deviceNum),
                     "longitude" : lon,
@@ -91,11 +114,11 @@ def main():
                     "rssi" : ((1-radioGoodness)*(device.BAD_RSSI-device.GOOD_RSSI)+device.GOOD_RSSI),
                     "battery" : 100
                 }
-        client.add_device(props["$id"], props["$ts"], props)
-        d = device.device(props["$id"], props["$ts"], props)
+        client.add_device(props["$id"], engine.get_now(), props)
+        d = device.device(props["$id"], engine.get_now(), props, engine)
         if "comms_reliability" in params:
-#            d.setCommsReliability(upDownPeriod=sim.days(0.5), reliability=1.0-math.pow(random.random(), 2)) # pow(r,2) skews distribution towards reliable end
-            d.setCommsReliability(upDownPeriod=sim.days(0.5), reliability=params["comms_reliability"])
+#            d.setCommsReliability(upDownPeriod=0.5*60*60*24, reliability=1.0-math.pow(random.random(), 2)) # pow(r,2) skews distribution towards reliable end
+            d.setCommsReliability(upDownPeriod=0.5*60*60*24, reliability=params["comms_reliability"])
         d.setBatteryLife(params["battery_life_mu"], params["battery_life_sigma"], "battery_autoreplace" in params)
 
     def postWebEvent(webParams):    # CAUTION: Called asynchronously from the web server thread
@@ -104,7 +127,7 @@ def main():
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
                     mini = float(params["web_response_min"])
                     maxi = float(params["web_response_max"])
-                    sim.injectEventDelta(mini + random.random()*maxi, device.externalEvent, webParams)
+                    engine.theInstance.register_event_in(mini + random.random()*maxi, device.externalEvent, webParams)
 
     def enterInteractive():
         client.enter_interactive()
@@ -137,13 +160,17 @@ def main():
         return
     client = importer.get_class('client', params['client']['type'])(params['client'])
 
+    if not "engine" in params:
+        logging.error("No simulation engine defined")
+        return
+    engine = importer.get_class('engine', params['engine']['type'])(enterInteractive)
+    getSimTime = engine.get_now_no_lock
+    engine.set_start_time_str(params.get("start_time", None))
+    engine.set_end_time_str(params.get("end_time", None))
+
     device.init(updatecallback=client.update_device, logfileName=params["instance_name"])
 
     zeromq_rx.init(postWebEvent)
-
-    sim.init(enterInteractive)
-    sim.setTimeStr(params.get("start_time", None), isStartTime=True)
-    sim.setEndTimeStr(params.get("end_time", None))
 
     pp = geo.pointPicker()
     if "area_centre" in params:
@@ -172,12 +199,13 @@ def main():
 ##            exit(-1)
 ##    else:
 ##        if params["initial_action"] != "loadExisting":
-    sim.injectEvents(randList(sim.getTime(), params["install_timespan"], params["device_count"]), createDevice)
+    times = randList(engine.get_now(), params["install_timespan"], params["device_count"])
+    engine.register_events_at(times, createDevice, engine)
 
     logging.info("Simulation starts")
     try:
-        while sim.eventsToCome():
-            sim.nextEvent()
+        while engine.events_to_come():
+            engine.next_event()
             client.tick()
     except:
         logging.error(traceback.format_exc()) # Report any exception, but continue to clean-up anyway
