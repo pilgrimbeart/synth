@@ -4,7 +4,6 @@ import pendulum
 from synth.common.conftime import get_interval, get_time
 from synth.engines.engine import Engine
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

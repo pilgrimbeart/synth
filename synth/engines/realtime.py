@@ -2,7 +2,6 @@ import logging
 
 from synth.engines.engine import Engine
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

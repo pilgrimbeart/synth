@@ -5,6 +5,9 @@
     	"start_time" : "now",
     	"end_time" : "PT10S"
 	},
-    "device_count" : 10,
-    "install_timespan" : 10
+	"devices" :
+	{
+    	"device_count" : 10,
+    	"install_timespan" : 10
+    }
 }

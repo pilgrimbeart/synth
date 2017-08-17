@@ -3,7 +3,6 @@ import logging
 from synth.devices.device import Device
 from synth.common import importer
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class Generate(Device):

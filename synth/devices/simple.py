@@ -3,7 +3,6 @@ from synth.common.conftime import get_interval
 
 import logging
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

@@ -7,7 +7,6 @@ from synth.common.conftime import get_interval
 from synth.devices.device import Device
 from synth.devices.blb_helpers.solar_math import sun_bright
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

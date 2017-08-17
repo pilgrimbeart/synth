@@ -23,14 +23,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
+import ISO8601
 from common import importer
-import logging, math, time, sys, json, threading, subprocess, re, traceback
+import math, time, sys, json, threading, subprocess, re, traceback
 import random   # Might want to replace this with something we control
 from datetime import datetime
-from geo import geo
-import peopleNames
-import ISO8601
-import device
+import device_factory
 import zeromq_rx
 
 
@@ -53,9 +52,6 @@ def initLogging():
 
 initLogging()
 
-
-
-
 def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge/7205107#7205107
     """Deep merge dict <b> into dict <a>, overwriting a with b for any overlaps"""
     if path is None: path = []
@@ -69,13 +65,6 @@ def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/d
             a[key] = b[key]
     return a
 
-
-    
-def randList(start, delta, n):
-    """Create a sorted list of <n> whole numbers ranging between <start> and <delta>."""
-    L = [start + random.random()*delta for x in range(n)]
-    return sorted(L)
-
 def readParamfile(filename):
     try:
         s = open("scenarios/"+filename,"rt").read()
@@ -86,49 +75,18 @@ def readParamfile(filename):
 def main():
     global getSimTime
     
-    def createDevice(engine):
-        deviceNum = device.numDevices()
-        (lon,lat) = pp.pickPoint()
-        (firstName, lastName) = (peopleNames.firstName(deviceNum), peopleNames.lastName(deviceNum))
-        firmware = random.choice(["0.51","0.52","0.6","0.6","0.6","0.7","0.7","0.7","0.7"])
-        operator = random.choice(["O2","O2","O2","EE","EE","EE","EE","EE"])
-        if operator=="O2":
-            radioGoodness = 1.0-math.pow(random.random(), 2)    # Skewed towards 1
-        else:
-            radioGoodness = math.pow(random.random(), 2)        # Skewed towards 0
-        props = {   "$id" : "-".join([format(random.randrange(0,255),'02x') for i in range(6)]), # A 6-byte MAC address 01-23-45-67-89-ab
-                    "$ts" : engine.get_now_1000(),
-                    "is_demo_device" : True,    # A flag which lets us selectively delete later
-                    "label" : "Thing "+str(deviceNum),
-                    "longitude" : lon,
-                    "latitude" : lat,
-                    "first_name" : firstName,
-                    "last_name" : lastName,
-                    "full_name" : firstName + " " + lastName,
-                    "factoryFirmware" : firmware,
-                    "firmware" : firmware,
-                    "operator" : operator,
-                    "rssi" : ((1-radioGoodness)*(device.BAD_RSSI-device.GOOD_RSSI)+device.GOOD_RSSI),
-                    "battery" : 100
-                }
-        client.add_device(props["$id"], engine.get_now(), props)
-        d = device.device(props["$id"], engine.get_now(), props, engine)
-        if "comms_reliability" in params:
-#            d.setCommsReliability(upDownPeriod=0.5*60*60*24, reliability=1.0-math.pow(random.random(), 2)) # pow(r,2) skews distribution towards reliable end
-            d.setCommsReliability(upDownPeriod=0.5*60*60*24, reliability=params["comms_reliability"])
-        d.setBatteryLife(params["battery_life_mu"], params["battery_life_sigma"], "battery_autoreplace" in params)
-
     def postWebEvent(webParams):    # CAUTION: Called asynchronously from the web server thread
         if "action" in webParams:
             if webParams["action"] == "event":
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
                     mini = float(params["web_response_min"])
                     maxi = float(params["web_response_max"])
-                    engine.theInstance.register_event_in(mini + random.random()*maxi, device.externalEvent, webParams)
+                    engine.theInstance.register_event_in(mini + random.random()*maxi, device_factory.externalEvent, webParams)
 
     params = {}
 
     # Default params. Override these by specifying one or more JSON files on the command line.
+    # TODO: Outdated, delete once completely unused
     params = merge(params, {
         "instance_name" : "default",    # Used for naming log files
         "initial_action" : None,
@@ -175,13 +133,17 @@ def main():
     engine = importer.get_class('engine', params['engine']['type'])(params['engine'], client.enter_interactive)
     getSimTime = engine.get_now_no_lock
 
-    device.init(updatecallback=client.update_device, logfileName=params["instance_name"])
+    if not "devices" in params:
+        logging.error("No devices defined")
+        return
+    device_factory.init(client,
+                        engine,
+                        params["devices"],
+                        updatecallback=client.update_device,
+                        logfileName=params["instance_name"])
 
     zeromq_rx.init(postWebEvent)
 
-    pp = geo.pointPicker()
-    if "area_centre" in params:
-        pp.setArea([params["area_centre"], params["area_radius"]])
 
     # Set up the world
     
@@ -192,7 +154,7 @@ def main():
 ##            dp.deleteDevicesWhere('(is_demo_device == true)')
 ##        if params["initial_action"]=="loadExisting":       # Load existing world
 ##            for d in dp.getDevices():
-##                device.device(d)
+##                device_factory.device(d)
 ##    if aws:
 ##        if params["initial_action"] in ["deleteExisting", "deleteDemo"]:
 ##            aws.deleteDemoDevices()
@@ -206,8 +168,6 @@ def main():
 ##            exit(-1)
 ##    else:
 ##        if params["initial_action"] != "loadExisting":
-    times = randList(engine.get_now(), params["install_timespan"], params["device_count"])
-    engine.register_events_at(times, createDevice, engine)
 
     logging.info("Simulation starts")
     try:
@@ -217,7 +177,7 @@ def main():
     except:
         logging.error(traceback.format_exc()) # Report any exception, but continue to clean-up anyway
 
-    device.flush()
+    device_factory.flush()
     client.flush()
     logging.info("Simulation ends")
 

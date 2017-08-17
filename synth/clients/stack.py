@@ -3,7 +3,6 @@ from synth.common import importer
 
 import logging
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

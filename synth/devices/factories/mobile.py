@@ -6,7 +6,6 @@ import pendulum
 from synth.devices.device import Device
 from synth.clients.client import Client
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

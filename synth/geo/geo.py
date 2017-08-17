@@ -29,6 +29,7 @@ DEFAULT_POP_MAP = "dnb_land_ocean_ice.2012.13500x6750_grey.jpg"
 # DEFAULT_POP_MAP = "britain.jpg"
 # DEFAULT_POP_MAP = "usa.jpg"
 
+import logging
 import os, sys
 from PIL import Image # To get this on Linux, suggest using "sudo apt-get install python-imaging"
 Image.MAX_IMAGE_PIXELS = 1000000000 # We're dealing with large images, so prevent DecompressionBomb errors
@@ -36,7 +37,7 @@ import numpy
 from random import randint, random
 import math
 from google_maps import addressToLongLat
-import logging
+
 
 MINLONG = 100000
 MAXLONG = -10000
@@ -61,7 +62,7 @@ class pointPicker():
         # Set area to choose from
         self.area = None
 
-        logging.warning("Image size is "+str(self.arr.nbytes / (1024*1024))+" MB")
+        # logging.info("Image size is "+str(self.arr.nbytes / (1024*1024))+" MB")
 
         
     def setArea(self, area):

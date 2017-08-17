@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 #
-# DEVICE
-# A generic device class
-# A global set of all known devices
-# Some simple behaviours
+# DEVICE_FACTORY
+# A device factory
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #
@@ -28,6 +26,8 @@
 import random, math
 import timewave
 from solar import solar
+from geo import geo
+import peopleNames
 import datetime
 import threading
 import logging, traceback
@@ -42,12 +42,60 @@ DEFAULT_BATTERY_LIFE_S = 5*60   # For interactive process demo
 GOOD_RSSI = -50.0
 BAD_RSSI = -120.0
 
-def init(updatecallback, logfileName):
+pp = geo.pointPicker()  # Very expensive, so do only once
+##    if "area_centre" in params:
+##        pp.setArea([params["area_centre"], params["area_radius"]])
+
+def randList(start, delta, n):
+    """Create a sorted list of <n> whole numbers ranging between <start> and <delta>."""
+    L = [start + random.random()*delta for x in range(n)]
+    return sorted(L)
+
+def createDevice((client, engine, params)):
+    deviceNum = numDevices()
+    (lon,lat) = pp.pickPoint()
+    (firstName, lastName) = (peopleNames.firstName(deviceNum), peopleNames.lastName(deviceNum))
+    firmware = random.choice(["0.51","0.52","0.6","0.6","0.6","0.7","0.7","0.7","0.7"])
+    operator = random.choice(["O2","O2","O2","EE","EE","EE","EE","EE"])
+    if operator=="O2":
+        radioGoodness = 1.0-math.pow(random.random(), 2)    # Skewed towards 1
+    else:
+        radioGoodness = math.pow(random.random(), 2)        # Skewed towards 0
+    props = {   "$id" : "-".join([format(random.randrange(0,255),'02x') for i in range(6)]), # A 6-byte MAC address 01-23-45-67-89-ab
+                "$ts" : engine.get_now_1000(),
+                "is_demo_device" : True,    # A flag which lets us selectively delete later
+                "label" : "Thing "+str(deviceNum),
+                "longitude" : lon,
+                "latitude" : lat,
+                "first_name" : firstName,
+                "last_name" : lastName,
+                "full_name" : firstName + " " + lastName,
+                "factoryFirmware" : firmware,
+                "firmware" : firmware,
+                "operator" : operator,
+                "rssi" : ((1-radioGoodness)*(BAD_RSSI-GOOD_RSSI)+GOOD_RSSI),
+                "battery" : 100
+            }
+    client.add_device(props["$id"], engine.get_now(), props)
+    d = device(props["$id"], engine.get_now(), props, engine)
+    if "comms_reliability" in params:
+#            d.setCommsReliability(upDownPeriod=0.5*60*60*24, reliability=1.0-math.pow(random.random(), 2)) # pow(r,2) skews distribution towards reliable end
+        d.setCommsReliability(upDownPeriod=0.5*60*60*24, reliability=params["comms_reliability"])
+    if "battery_life_mu" in params:
+        d.setBatteryLife(params["battery_life_mu"], params["battery_life_sigma"], "battery_autoreplace" in params)
+
+
+def init(client, engine, params, updatecallback, logfileName):
     global updateCallback
     global logfile
     updateCallback = updatecallback
     logfile = open("../synth_logs/"+logfileName+".evt","at",0)    # Unbuffered
     logfile.write("*** New simulation starting at real time "+datetime.datetime.now().ctime()+"\n")
+
+    device_count = params.get("device_count",0)
+    install_timespan = params.get("install_timespan",0)
+    times = randList(engine.get_now(), params["install_timespan"], params["device_count"])
+    engine.register_events_at(times, createDevice, (client,engine,params))
 
 def numDevices():
     global devices

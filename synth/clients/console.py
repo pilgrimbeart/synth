@@ -2,7 +2,6 @@ from synth.clients.client import Client
 
 import logging
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

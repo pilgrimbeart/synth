@@ -5,7 +5,6 @@ from synth.common import importer
 from synth.common.conftime import get_interval
 from synth.devices.device import Device
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
