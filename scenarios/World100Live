@@ -1,12 +1,12 @@
 {
     "engine" :
     {
-        "type" : "sim"
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : null
     },
     "initial_action" : "deleteExisting",
     "device_count" : 100,
-    "start_time" : "now",
-    "end_time" : null,
     "install_timespan" : 3000,  # Install every 30 secs
     "queue_criterion" : "interactive",
     "queue_limit" : 1,

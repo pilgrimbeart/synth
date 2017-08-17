@@ -56,23 +56,20 @@ initLogging()
 
 
 
-params = {}
+def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge/7205107#7205107
+    """Deep merge dict <b> into dict <a>, overwriting a with b for any overlaps"""
+    if path is None: path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge(a[key], b[key], path + [str(key)])
+            else:
+                a[key] = b[key]
+        else:
+            a[key] = b[key]
+    return a
 
-# Default params. Override these by specifying one or more JSON files on the command line.
-params.update({
-    "instance_name" : "default",    # Used for naming log files
-    "initial_action" : None,
-    "device_count" : 10,
-    "start_time" : "now",
-    "end_time" : None,
-    "install_timespan" : 1*60,
-    "battery_life_mu" : 50*60,
-    "battery_life_sigma" : 1*60,
-    "comms_reliability" : 1.0,  # Either a fractional number, or a specification string
-    "web_key" : 12345,
-    "web_response_min" : 3,  # (s) Range of delay to respond to an incoming web request
-    "web_response_max" : 10
-    })
+
     
 def randList(start, delta, n):
     """Create a sorted list of <n> whole numbers ranging between <start> and <delta>."""
@@ -129,44 +126,54 @@ def main():
                     maxi = float(params["web_response_max"])
                     engine.theInstance.register_event_in(mini + random.random()*maxi, device.externalEvent, webParams)
 
-    def enterInteractive():
-        client.enter_interactive()
+    params = {}
+
+    # Default params. Override these by specifying one or more JSON files on the command line.
+    params = merge(params, {
+        "instance_name" : "default",    # Used for naming log files
+        "initial_action" : None,
+        "device_count" : 10,
+        "install_timespan" : 1*60,
+        "battery_life_mu" : 50*60,
+        "battery_life_sigma" : 1*60,
+        "comms_reliability" : 1.0,  # Either a fractional number, or a specification string
+        "web_key" : 12345,
+        "web_response_min" : 3,  # (s) Range of delay to respond to an incoming web request
+        "web_response_max" : 10
+        })
+
 
     logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
     
     for arg in sys.argv[1:]:
         if arg.startswith("{"):
             logging.info("Setting parameters "+arg)
-            params.update(json.loads(arg))
+            params = merge(params, json.loads(arg))
         elif "=" in arg:    # RHS always interpreted as a string
             logging.info("Setting parameter "+arg)
             (key,value) = arg.split("=",1)  # split(,1) so that "a=b=c" means "a = b=c"
-            params.update({ key : value })
+            params = merge(params, { key : value })
         else:
             logging.info("Loading parameter file "+arg)
             s = readParamfile(arg)
             s = re.sub("#.*$","",s,flags=re.MULTILINE) # Remove Python-style comments
-            params.update(json.loads(s))
+            params = merge(params, json.loads(s))
     
-    logging.info("Parameters:")
-    for p in sorted(params):
-        logging.info("    " + str(p) + " : " + str(params[p]))
+    logging.info("Parameters:\n"+json.dumps(params, sort_keys=True, indent=4, separators=(',', ': ')))
 
     Tstart = time.time()
     random.seed(12345)  # Ensure reproduceability
 
     if not "client" in params:
-        logging.error("No client defined")
+        logging.error("No client defined to receive simulation results")
         return
     client = importer.get_class('client', params['client']['type'])(params['client'])
 
     if not "engine" in params:
         logging.error("No simulation engine defined")
         return
-    engine = importer.get_class('engine', params['engine']['type'])(enterInteractive)
+    engine = importer.get_class('engine', params['engine']['type'])(params['engine'], client.enter_interactive)
     getSimTime = engine.get_now_no_lock
-    engine.set_start_time_str(params.get("start_time", None))
-    engine.set_end_time_str(params.get("end_time", None))
 
     device.init(updatecallback=client.update_device, logfileName=params["instance_name"])
 

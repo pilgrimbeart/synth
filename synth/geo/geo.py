@@ -79,10 +79,10 @@ class pointPicker():
         self.areaRadiusPixels = math.sqrt(math.pow(self.areaCentreXY[0]-self.areaEdgeXY[0], 2) + math.pow(self.areaCentreXY[1]-self.areaEdgeXY[1],2))
 
         
-    def xyToLonLat(self,(x,y)):
+    def xyToLonLat(self, coords):
         """Normalise axes to +/-1"""
-        y = (2*y/self.ylimit)-1.0
-        x = (2*x/self.xlimit)-1.0
+        y = (2*coords[1]/self.ylimit)-1.0
+        x = (2*coords[0]/self.xlimit)-1.0
 
         # Longitude ranges from -180 degrees (East) to 180 degrees (West)
         # Latitude ranges from +90 degrees (North pole) to -90 degrees (South pole)
@@ -92,10 +92,10 @@ class pointPicker():
 
         return (longitude, latitude)
 
-    def lonLatToXY(self, (longitude, latitude)):
+    def lonLatToXY(self, coords):
         """Reduce to +/-1"""
-        x = longitude / 180.0
-        y = latitude / -90.0
+        x = coords[0] / 180.0
+        y = coords[1] / -90.0
 
         x = ((x+1.0)/2.0) * self.xlimit
         y = ((y+1.0)/2.0) * self.ylimit

@@ -39,14 +39,13 @@ class Sim(Engine):
     """Capable of both historical and real-time simulation,
        and of moving smoothly between the two"""
 
-    def __init__(self, cb = None):
+    def __init__(self, params, cb = None):
         global theInstance
         theInstance = self
+        self.set_start_time_str(params.get("start_time", "now"))
+        self.set_end_time_str(params.get("end_time", None))
         self.caughtUpCallback = cb
         self.caughtUp = False
-        self.simTime = 0     # Global "now" in epoch-seconds
-        self.startTime = None
-        self.endTime = None
         self.events = []     # A sorted list of simulation callbacks: [(epochTime,function,arg), ...]
 
     def set_now(self,epochSecs):

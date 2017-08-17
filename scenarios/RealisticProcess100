@@ -1,12 +1,12 @@
 {
     "engine" :
     {
-        "type" : "sim"
+        "type" : "sim",
+        "start_time" : "-P3M",
+        "end_time" : null
     },
     "initial_action" : "deleteExisting",    # { "deleteExisting" deletes all existing devices from DP | "loadExisting" loads from DP | "" }
     "device_count" : 100,
-    "start_time" : "-P3M",
-    "end_time" : null,
     "install_timespan" : 60,    # How many seconds it takes at start of simulation to install all devices
     "queue_criterion" : "messages",     # Send updates to DevicePilot every N "messages" | "time" N secs of sim time | "interactive" N secs of real time
     "queue_limit" : 1000,               # N for above

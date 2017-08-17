@@ -6,7 +6,7 @@ class Engine(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, cb):
+    def __init__(self, params, cb):
         """If defined, <cb> callback will be called when (if) simulator moves from historical to real-time.
            This callback must NOT create new events, or deadlock will occur"""
         pass

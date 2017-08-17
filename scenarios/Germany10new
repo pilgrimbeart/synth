@@ -1,12 +1,12 @@
 {
     "engine" :
     {
-        "type" : "sim"
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : null
     },
     "initial_action" : "deleteExisting",
     "device_count" : 10,
-    "start_time" : "now",
-    "end_time" : null,
     "install_timespan" : 60,
     "queue_criterion" : "interactive",
     "queue_limit" : 1,

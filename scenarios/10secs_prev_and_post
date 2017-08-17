@@ -1,10 +1,10 @@
 {
     "engine" :
 	{
-		"type" : "sim"
+		"type" : "sim",
+    	"start_time" : "-PT10S",
+    	"end_time" : "PT10S"
 	},
     "device_count" : 10,
-    "start_time" : "-PT10S",
-    "end_time" : "PT10S",
     "install_timespan" : 10
 }

@@ -1,12 +1,12 @@
 {
     "engine" :
     {
-        "type" : "sim"
+        "type" : "sim",
+        "start_time" : "-P3M",
+        "end_time" : "now"
     },
     "initial_action" : "deleteDemo",
     "device_count" : 100,
-    "start_time" : "-P3M",  # ISO8601 datetime e.g. 2017-01-01T00:00:00, or "now", or ISO8601 relative duration, e.g. "-P3M" is 3 months ago
-    "end_time" : "now",     # ISO8601 datetime, "now", or null to never terminate (enters interactive mode when it catches-up with now)
     "install_timespan" : 259200,    # How many seconds it takes at start of simulation to install all devices
     "battery_life_mu" : 31536000,       # Average battery life
     "battery_life_sigma" : 0,           # Variation in battery life
