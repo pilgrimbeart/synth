@@ -11,8 +11,8 @@
         "restart_log" : true,
         "functions" : {
             "battery" : {
-                "life_mu" : "PT5M",
-                "life_sigma" : "PT1M",
+                "life_mu" : "P1D",
+                "life_sigma" : "PT1H",
                 "autoreplace" : true
             },
             "names" : {},

@@ -1,21 +1,23 @@
 from device import Device
 """A basic device implementation"""
 import random
+import logging
 
 class Basic(Device):
+    deviceNumber = 0
     def __init__(self, time, engine, updateCallback, params):
         self.engine = engine
         self.updateCallback = updateCallback
         self.properties = {}
         self.properties["$id"] = "-".join([format(random.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
         self.properties["is_demo_device"] = True
-        self.properties["label"] = "Thing "+self.properties["$id"]
+        self.properties["label"] = "Thing "+str(Basic.deviceNumber)
         self.commsOK = True
         self.doComms(self.properties) # Communicate ALL properties on boot
-
+        Basic.deviceNumber = Basic.deviceNumber + 1
+        
     def externalEvent(self, eventName, arg):
-        s = "Received external event "+eventName+" for device "+str(self.properties["$id"])
-        logString(s)
+        logging.info("Received external event "+eventName+" for device "+str(self.properties["$id"]))
 
 ##      TODO: Reinstate this functionality
 ##        # All other commands require device to be functional!

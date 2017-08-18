@@ -5,12 +5,23 @@
         "start_time" : "now",
         "end_time" : null
     },
-    "device_count" : 100,
-    "install_timespan" : 3000,  # Install every 30 secs
-    "queue_criterion" : "interactive",
-    "queue_limit" : 1,
-    "battery_life_mu" : 86400,  # A day's battery life, so a battery % event every 14 minutes per device, which is averaging one every 8 secs for all devices
-    "battery_life_sigma" : 3600,
-    "battery_autoreplace" : true,
-    "comms_reliability" : 0.5
+    "devices" : {
+        "device_count" : 100,
+        "install_timespan" : "PT50M",
+        "restart_log" : true,
+        "functions" : {
+            "battery" : {
+                "life_mu" : "P1D",
+                "life_sigma" : "PT1H",
+                "autoreplace" : true
+            },
+            "names" : {},
+            "firmware" : {},
+            "latlong" : {},
+            "comms" : {
+                "reliability" : 0.5,
+                "period" : "PT1H"
+            }
+        }
+    }
 }

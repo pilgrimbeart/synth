@@ -1,5 +1,6 @@
 from device import Device
 import random
+import logging
 
 class Firmware(Device):
     def __init__(self, time, engine, updateCallback, params):
@@ -10,6 +11,8 @@ class Firmware(Device):
     def externalEvent(self, eventName, arg):
         super(Firmware,self).externalEvent(eventName, arg)
         if eventName=="upgradeFirmware":
+            logging.info("Upgrading firmware on device "+self.properties["$id"]+" to "+str(arg))
             self.setProperty("firmware", arg)
         if eventName=="factoryReset":
+            logging.info("Factory-resetting firmware on device "+self.properties["$id"])
             self.setProperty("firmware", self.getProperty("factoryFirmware"))

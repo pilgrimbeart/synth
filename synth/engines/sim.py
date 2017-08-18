@@ -31,17 +31,14 @@ from common.conftime import richTime
 
 from engines.engine import Engine
 
-theInstance = None # Context to allow spontaneous external calls to work
 simLock = threading.Lock() # Protects events[] and simTime to make sim thread-safe, as event-injection can happen asynchronously (we can't use Queues because we need peeking)
-# TODO: Get rid of these globals
+# TODO: Get rid of this global
 
 class Sim(Engine):
     """Capable of both historical and real-time simulation,
        and of moving smoothly between the two"""
 
     def __init__(self, params, cb = None):
-        global theInstance
-        theInstance = self
         self.set_start_time_str(params.get("start_time", "now"))
         self.set_end_time_str(params.get("end_time", None))
         self.caughtUpCallback = cb
@@ -99,7 +96,7 @@ class Sim(Engine):
             
         simLock.acquire()       # <--
         try:
-            if self.simTime >= time.time():
+            if self.simTime >= time.time() - 1.0:   # Allow a bit of slack because otherwise we might never quite catch-up, because we always wait to ensure we don't
                 caughtUp()
 
             if self.endTime == None:

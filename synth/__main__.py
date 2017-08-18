@@ -81,7 +81,7 @@ def main():
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
                     mini = float(params["web_response_min"])
                     maxi = float(params["web_response_max"])
-                    engine.theInstance.register_event_in(mini + random.random()*maxi, device_factory.externalEvent, webParams)
+                    engine.register_event_in(mini + random.random()*maxi, device_factory.externalEvent, webParams)
 
     params = {}
 
