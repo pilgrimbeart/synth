@@ -6,19 +6,23 @@
 	},
 	"devices" : {
     	"device_count" : 10,
-    	"install_timespan" : 10,
+    	"install_timespan" : "PT10S",
     	"restart_log" : true,
     	"functions" : {
     		"battery" : {
-    			"life_mu" : 300,
-    			"life_sigma" : 60,
+    			"life_mu" : "PT5M",
+    			"life_sigma" : "PT1M",
     			"autoreplace" : true
     		},
     		"names" : {},
     		"firmware" : {},
-    		"geo" : {
+    		"latlong" : {
     			"area_centre" : "London, UK",
     			"area_radius" : "Berlin, Germany"
+    		},
+    		"comms" : {
+    			"reliability" : 1.0,
+    			"period" : "PT1H"
     		}
     	}
     }

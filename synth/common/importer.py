@@ -16,7 +16,8 @@ def __get_module(family, name):
     module_name = '.' + name
     package_name = "{family}s".format(family=family)
     full_name = package_name + module_name
-    logging.info("Loading "+package_name+module_name)
+    if family != "device":
+        logging.info("Loading "+package_name+module_name)
     if full_name not in modules:
         mod = importlib.import_module(module_name, package_name)
         modules[full_name] = mod

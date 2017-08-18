@@ -86,8 +86,14 @@ class Devicepilot(Client):
 
     def tick(self):
         self.flushPostQueueIfReady()
-        
 
+    # Optional methods
+    
+    def deleteDemoDevices(self):
+        self.deleteDevicesWhere('(is_demo_device == true)')        
+
+    # Internal methods
+    
     def postDevice(self, device, historical=False):
         # DevicePilot API accepts either a single JSON object, or an array of such
         # If <historical> is true, DevicePilot doesn't calculate any dependent events (so e.g. won't send alerts)
@@ -170,7 +176,7 @@ class Devicepilot(Client):
             resp = requests.delete(self.url + dev["$urn"], headers=set_headers(self.key))
             if not resp.ok:
                 logging.error(str(resp.reason) + ":" + str(resp.text))
-        
+
     def getDevices(self):
         logging.info("Loading all devices")
         r = self.url + '/devices'

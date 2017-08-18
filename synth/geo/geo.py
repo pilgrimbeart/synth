@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-#
-# Generates global device co-ordinates which have statistics roughly matching technological population density
+"""Generate global device co-ordinates which have statistics roughly matching technological population density."""
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #
@@ -106,11 +105,15 @@ class pointPicker():
 
         return (x,y)
         
-    def pickPoint(self):
+    def pickPoint(self, area=None):
         """Returns a (latitude,longitude) point, on population map, within area"""
-
         global MINLONG,MAXLONG,MINLAT,MAXLAT,MINX,MAXX,MINY,MAXY
 
+        if area==None:
+            self.area = None
+        else:
+            self.setArea(area)
+        
         while True:
             if self.area:
                 radius = randint(0,int(self.areaRadiusPixels+0.5))

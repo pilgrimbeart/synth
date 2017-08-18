@@ -1,13 +1,13 @@
 from device import Device
 import random
+import isodate
 
 class Battery(Device):
     def __init__(self, time, engine, updateCallback, params):
         """Set battery life with a normal distribution which won't exceed 2 standard deviations."""
         super(Battery,self).__init__(time, engine, updateCallback, params)
-        print "Battery __init__"
-        mu = params["battery"].get("life_mu", 5*60)
-        sigma = params["battery"].get("life_sigma", 0)
+        mu = isodate.parse_duration(params["battery"].get("life_mu", "PT5M")).total_seconds()
+        sigma = isodate.parse_duration(params["battery"].get("life_sigma", "PT0S")).total_seconds()
         life = random.normalvariate(mu, sigma)
         life = min(life, mu+2*sigma)
         life = max(life, mu-2*sigma)

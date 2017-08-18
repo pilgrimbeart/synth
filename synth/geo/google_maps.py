@@ -23,6 +23,7 @@
 # SOFTWARE.
 
 import json, httplib, urllib
+import logging
 
 GOOGLE_MAPS_API_KEY = open("../synth_certs/googlemapskey","rt").read().strip()
 
@@ -44,6 +45,7 @@ def addressToLongLat(address):
 
     (lng,lat) = (None, None)
 
+    logging.info("Looking up "+str(address)+" in Google Maps")
     #try:
     conn = httplib.HTTPSConnection("maps.google.com")   # Must now use SSL
     URL = '/maps/api/geocode/json' + '?' + urllib.urlencode({'key':GOOGLE_MAPS_API_KEY}) + '&' + urllib.urlencode({'address':address})

@@ -1,5 +1,6 @@
 from device import Device
 import random
+import isodate
 import timewave
 
 GOOD_RSSI = -50.0
@@ -9,7 +10,7 @@ class Comms(Device):
     def __init__(self, time, engine, updateCallback, params):
         super(Comms,self).__init__(time, engine, updateCallback, params)
         self.commsReliability = params["comms"].get("reliability", 1.0) # Either a fraction, or a string containing a specification of the trajectory
-        self.commsUpDownPeriod = params["comms"].get("period", 1*60*60*24)
+        self.commsUpDownPeriod = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
         engine.register_event_in(0, self.tickCommsUpDown, self)
 
     def externalEvent(self, eventName, arg):
@@ -17,7 +18,7 @@ class Comms(Device):
         pass
     
     # Private methods
-    
+
     def tickCommsUpDown(self, _):
         if isinstance(self.commsReliability, (int,float)):   # Simple probability
             self.commsOK = self.commsReliability > random.random()

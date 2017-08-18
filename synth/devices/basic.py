@@ -4,7 +4,6 @@ import random
 
 class Basic(Device):
     def __init__(self, time, engine, updateCallback, params):
-        print "Basic __init__"
         self.engine = engine
         self.updateCallback = updateCallback
         self.properties = {}

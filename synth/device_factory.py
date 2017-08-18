@@ -27,7 +27,7 @@ import random, math
 from common import importer
 import datetime
 import logging, traceback
-import pendulum
+import pendulum, isodate
 from devices.basic import Basic
 
 devices = []
@@ -73,11 +73,15 @@ def init(client, engine, updateCallback, logfileName, params):
     if ("restart_log" in params) and (params["restart_log"]==True):
         mode = "wt"
     logfile = open("../synth_logs/"+logfileName+".evt", mode, 0)    # Unbuffered
-    logfile.write("*** New simulation starting at real time "+datetime.datetime.now().ctime()+"\n")
+    logfile.write("*** New simulation starting at real time "+datetime.datetime.now().ctime()+" (local)\n")
 
+    if ("delete_demo_devices" in params) and (params["delete_demo_devices"]==True):
+        if "deleteDemoDevices" in dir(client):
+            client.deleteDemoDevices()
+            
     device_count = params.get("device_count",0)
-    install_timespan = params.get("install_timespan",0)
-    times = randList(engine.get_now(), params["install_timespan"], params["device_count"])
+    install_timespan = isodate.parse_duration(params.get("install_timespan", "PT0S")).total_seconds()
+    times = randList(engine.get_now(), install_timespan, params["device_count"])
     engine.register_events_at(times, createDevice, (client,engine,params,updateCallback))
 
 def numDevices():
