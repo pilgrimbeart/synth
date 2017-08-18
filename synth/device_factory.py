@@ -24,78 +24,61 @@
 # SOFTWARE.
 
 import random, math
-import timewave
-from solar import solar
-from geo import geo
-import peopleNames
+from common import importer
 import datetime
-import threading
 import logging, traceback
 import pendulum
+from devices.basic import Basic
 
 devices = []
 
-updateCallback = None
 logfile = None
-DEFAULT_BATTERY_LIFE_S = 5*60   # For interactive process demo
-
-GOOD_RSSI = -50.0
-BAD_RSSI = -120.0
-
-pp = geo.pointPicker()  # Very expensive, so do only once
-##    if "area_centre" in params:
-##        pp.setArea([params["area_centre"], params["area_radius"]])
 
 def randList(start, delta, n):
     """Create a sorted list of <n> whole numbers ranging between <start> and <delta>."""
     L = [start + random.random()*delta for x in range(n)]
     return sorted(L)
 
-def createDevice((client, engine, params)):
+def composeClass(classNames):
+    """Create a composite class from a list of class names."""
+    classes = []
+    for className in classNames:
+        classes.append(importer.get_class('device', className))
+    classes.append(Basic)   # Class at END of the list is the root of inheritance
+    return type("compositeDeviceClass",tuple(classes),{})
+
+def createDevice((client, engine, params, updateCallback)):
+    def callback(device_id, time, properties):
+        logEntry(time, properties)
+        updateCallback(device_id, time, properties)
+
+    global devices
     deviceNum = numDevices()
-    (lon,lat) = pp.pickPoint()
-    (firstName, lastName) = (peopleNames.firstName(deviceNum), peopleNames.lastName(deviceNum))
-    firmware = random.choice(["0.51","0.52","0.6","0.6","0.6","0.7","0.7","0.7","0.7"])
-    operator = random.choice(["O2","O2","O2","EE","EE","EE","EE","EE"])
-    if operator=="O2":
-        radioGoodness = 1.0-math.pow(random.random(), 2)    # Skewed towards 1
+
+    if "functions" in params:
+        C = composeClass(params["functions"].keys())        # Create a composite device class from all the given class names
+        d = C(engine.get_now(), engine, callback, params["functions"])   # Instantiate it
     else:
-        radioGoodness = math.pow(random.random(), 2)        # Skewed towards 0
-    props = {   "$id" : "-".join([format(random.randrange(0,255),'02x') for i in range(6)]), # A 6-byte MAC address 01-23-45-67-89-ab
-                "$ts" : engine.get_now_1000(),
-                "is_demo_device" : True,    # A flag which lets us selectively delete later
-                "label" : "Thing "+str(deviceNum),
-                "longitude" : lon,
-                "latitude" : lat,
-                "first_name" : firstName,
-                "last_name" : lastName,
-                "full_name" : firstName + " " + lastName,
-                "factoryFirmware" : firmware,
-                "firmware" : firmware,
-                "operator" : operator,
-                "rssi" : ((1-radioGoodness)*(BAD_RSSI-GOOD_RSSI)+GOOD_RSSI),
-                "battery" : 100
-            }
-    client.add_device(props["$id"], engine.get_now(), props)
-    d = device(props["$id"], engine.get_now(), props, engine)
-    if "comms_reliability" in params:
-#            d.setCommsReliability(upDownPeriod=0.5*60*60*24, reliability=1.0-math.pow(random.random(), 2)) # pow(r,2) skews distribution towards reliable end
-        d.setCommsReliability(upDownPeriod=0.5*60*60*24, reliability=params["comms_reliability"])
-    if "battery_life_mu" in params:
-        d.setBatteryLife(params["battery_life_mu"], params["battery_life_sigma"], "battery_autoreplace" in params)
+        d = Basic(engine.get_now(), engine, callback, params)
+    client.add_device(d.properties["$id"], engine.get_now(), d.properties)
 
+    if getDeviceByProperty("$id",d.properties["$id"]) != None:
+        logging.error("FATAL: Attempt to create duplicate device "+str(d.properties["$id"]))
+        exit(-1)
+    devices.append(d)
 
-def init(client, engine, params, updatecallback, logfileName):
-    global updateCallback
+def init(client, engine, updateCallback, logfileName, params):
     global logfile
-    updateCallback = updatecallback
-    logfile = open("../synth_logs/"+logfileName+".evt","at",0)    # Unbuffered
+    mode = "at"
+    if ("restart_log" in params) and (params["restart_log"]==True):
+        mode = "wt"
+    logfile = open("../synth_logs/"+logfileName+".evt", mode, 0)    # Unbuffered
     logfile.write("*** New simulation starting at real time "+datetime.datetime.now().ctime()+"\n")
 
     device_count = params.get("device_count",0)
     install_timespan = params.get("install_timespan",0)
     times = randList(engine.get_now(), params["install_timespan"], params["device_count"])
-    engine.register_events_at(times, createDevice, (client,engine,params))
+    engine.register_events_at(times, createDevice, (client,engine,params,updateCallback))
 
 def numDevices():
     global devices
@@ -158,147 +141,3 @@ def externalEvent(params):
         logging.error("Error processing externalEvent: "+str(e))
         logging.error(traceback.format_exc())
         
-class device():
-    def __init__(self, device_id, time, properties, engine, autoTick=True):
-        global devices
-        if getDeviceByProperty("$id",device_id) != None:
-            logging.error("FATAL: Attempt to create duplicate device "+str(device_id))
-            exit(-1)
-        else:
-            self.device_id = device_id
-            self.properties = properties
-            self.engine = engine
-            devices.append(self)
-            self.commsReliability = 1.0 # Either a fraction, or a string containing a specification of the trajectory
-            self.commsUpDownPeriod = 1*60*60*24
-            self.batteryLife = DEFAULT_BATTERY_LIFE_S
-            self.batteryAutoreplace = False
-            self.commsOK = True
-            self.doComms(time, self.properties) # Communicate ALL properties on boot
-            if autoTick:
-                self.startTicks()
-
-    def startTicks(self):
-        if self.propertyExists("battery"):
-            self.engine.register_event_in(self.batteryLife / 100.0, self.tickBatteryDecay, self)
-        self.engine.register_event_in(1*60*60, self.tickHourly, self)
-        self.engine.register_event_in(0, self.tickProductUsage, self)    # Immediately
-
-    def externalEvent(self, eventName, arg):
-        s = "Processing external event "+eventName+" for device "+str(self.properties["$id"])
-        logString(s)
-        if eventName=="replaceBattery":
-            self.setProperty(self.engine.get_now(), "battery", 100)
-            self.startTicks()
-
-        # All other commands require device to be functional!
-        if self.getProperty("battery") <= 0:
-            logString("...ignored because battery flat")
-            return
-        if not self.commsOK:
-            logString("...ignored because comms down")
-            return
-        
-        if eventName=="upgradeFirmware":
-            self.setProperty(self.engine.get_now(), "firmware", arg)
-        if eventName=="factoryReset":
-            self.setProperty(self.engine.get_now(), "firmware", self.getProperty("factoryFirmware"))
-
-    def tickProductUsage(self, _):
-        if self.propertyAbsent("battery") or self.getProperty("battery") > 0:
-            self.setProperty(self.engine.get_now(), "buttonPress", 1)
-            t = timewave.nextUsageTime(self.engine.get_now(), ["Mon","Tue","Wed","Thu","Fri"], "06:00-09:00")
-            self.engine.register_event_at(t, self.tickProductUsage, self)
-
-    def setCommsReliability(self, upDownPeriod=1*60*60*24, reliability=1.0):
-        self.commsUpDownPeriod = upDownPeriod
-        self.commsReliability = reliability
-        self.engine.register_event_in(0, self.tickCommsUpDown, self) # Immediately
-
-    def getCommsOK(self):
-        return self.commsOK
-    
-    def setCommsOK(self, flag):
-        self.commsOK = flag
-        
-    def setBatteryLife(self, mu, sigma, autoreplace=False):
-        """Set battery life with a normal distribution which won't exceed 2 standard deviations."""
-        life = random.normalvariate(mu, sigma)
-        life = min(life, mu+2*sigma)
-        life = max(life, mu-2*sigma)
-        self.batteryLife = life
-        self.batteryAutoreplace = autoreplace
-        
-    def tickCommsUpDown(self, _):
-        if isinstance(self.commsReliability, (int,float)):   # Simple probability
-            self.commsOK = self.commsReliability > random.random()
-        else:   # Probability spec, i.e. varies with time
-            relTime = self.engine.get_now() - self.engine.get_start_time()
-            prob = timewave.interp(self.commsReliability, relTime)
-            if self.propertyExists("rssi"): # Now affect comms according to RSSI
-                rssi = self.getProperty("rssi")
-                radioGoodness = 1.0-(rssi-GOOD_RSSI)/(BAD_RSSI-GOOD_RSSI)   # Map to 0..1
-                radioGoodness = 1.0 - math.pow((1.0-radioGoodness), 4)      # Skew heavily towards "good"
-                prob *= radioGoodness
-            self.commsOK = prob > random.random()
-
-        deltaTime = random.expovariate(1.0 / self.commsUpDownPeriod)
-        deltaTime = min(deltaTime, self.commsUpDownPeriod * 100.0) # Limit long tail
-        self.engine.register_event_in(deltaTime, self.tickCommsUpDown, self)
-
-    def doComms(self, time, properties):
-        if self.commsOK:
-            if updateCallback:
-                updateCallback(self.device_id, time, properties)
-            else:
-                logging.warning("No callback installed to update device properties")
-            logEntry(time, properties)
-
-    def getProperty(self, propName):
-        return self.properties[propName]
-
-    def propertyExists(self, propName):
-        return propName in self.properties
-    
-    def propertyAbsent(self, propName):
-        return not self.propertyExists(propName)
-    
-    def setProperty(self, time, propName, value):
-        newProps = { propName : value, "$id" : self.device_id, "$ts" : time }
-        self.properties.update(newProps)
-        self.doComms(time, newProps)
-
-    def setProperties(self, time, newProps):
-        newProps.update({ "$id" : self.device_id, "$ts" : time })  # Force ID and timestamp to be correct
-        self.properties.update(newProps)
-        self.doComms(time, newProps)
-
-    def tickBatteryDecay(self, _):
-        v = self.getProperty("battery")
-        if v > 0:
-            self.setProperty(self.engine.get_now(), "battery", v-1)
-            self.engine.register_event_in(self.batteryLife / 100.0, self.tickBatteryDecay, self)
-        else:
-            if self.batteryAutoreplace:
-                logging.info("Auto-replacing battery")
-                self.setProperty(self.engine.get_now(), "battery",100)
-                self.engine.register_event_in(self.batteryLife / 100.0, self.tickBatteryDecay, self)
-
-    def tickHourly(self, _):
-        if self.propertyAbsent("battery") or (self.getProperty("battery") > 0):
-            self.setProperty(self.engine.get_now(), "light", solar.sunBright(self.engine.get_now(),
-                                                    (float(device.getProperty(self,"longitude")),float(device.getProperty(self,"latitude")))
-                                                    ))
-            self.engine.register_event_in(sim.hours(1), self.tickHourly, self)
-
-
-# Model for comms unreliability
-# -----------------------------
-# Two variables define comms (un)reliability:
-# a) updownPeriod: (secs) The typical period over which comms might change between working and failed state. We use an exponential distribution with this value as the mean.
-# b) reliability: (0..1) The chance of comms working at any moment in time
-# The comms state is then driven independently of other actions.
-# 
-# Chance of comms failing at any moment is [0..1]
-# Python function random.expovariate(lambd) returns values from 0 to infinity, with most common values in a hump in the middle
-# such that that mean value is 1.0/<lambd>

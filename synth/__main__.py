@@ -89,12 +89,6 @@ def main():
     # TODO: Outdated, delete once completely unused
     params = merge(params, {
         "instance_name" : "default",    # Used for naming log files
-        "initial_action" : None,
-        "device_count" : 10,
-        "install_timespan" : 1*60,
-        "battery_life_mu" : 50*60,
-        "battery_life_sigma" : 1*60,
-        "comms_reliability" : 1.0,  # Either a fractional number, or a specification string
         "web_key" : 12345,
         "web_response_min" : 3,  # (s) Range of delay to respond to an incoming web request
         "web_response_max" : 10
@@ -138,9 +132,9 @@ def main():
         return
     device_factory.init(client,
                         engine,
-                        params["devices"],
-                        updatecallback=client.update_device,
-                        logfileName=params["instance_name"])
+                        updateCallback=client.update_device,
+                        logfileName=params["instance_name"],
+                        params=params["devices"])
 
     zeromq_rx.init(postWebEvent)
 

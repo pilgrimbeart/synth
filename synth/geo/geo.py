@@ -29,7 +29,7 @@ DEFAULT_POP_MAP = "dnb_land_ocean_ice.2012.13500x6750_grey.jpg"
 # DEFAULT_POP_MAP = "britain.jpg"
 # DEFAULT_POP_MAP = "usa.jpg"
 
-import logging
+# import logging # Emitting any log messages in this module suppresses all other log output - I have NO idea why
 import os, sys
 from PIL import Image # To get this on Linux, suggest using "sudo apt-get install python-imaging"
 Image.MAX_IMAGE_PIXELS = 1000000000 # We're dealing with large images, so prevent DecompressionBomb errors

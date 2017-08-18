@@ -1,13 +1,25 @@
 {
-    "engine" :
-	{
+    "engine" : {
 		"type" : "sim",
     	"start_time" : "now",
     	"end_time" : "PT10S"
 	},
-	"devices" :
-	{
+	"devices" : {
     	"device_count" : 10,
-    	"install_timespan" : 10
+    	"install_timespan" : 10,
+    	"restart_log" : true,
+    	"functions" : {
+    		"battery" : {
+    			"life_mu" : 300,
+    			"life_sigma" : 60,
+    			"autoreplace" : true
+    		},
+    		"names" : {},
+    		"firmware" : {},
+    		"geo" : {
+    			"area_centre" : "London, UK",
+    			"area_radius" : "Berlin, Germany"
+    		}
+    	}
     }
 }
