@@ -90,7 +90,6 @@ class Sim(Engine):
 
     def events_to_come(self):
         """Return False if simulation has definitely ended"""
-        # print time.time(), self.simTime, self.endTime
         def caughtUp():
             if not self.caughtUp:
                 logging.info("Caught-up with real time")
@@ -104,7 +103,7 @@ class Sim(Engine):
                 caughtUp()
 
             if self.endTime == None:
-                return False
+                return True
                 
             if self.endTime=="now":    # Terminate when we've caught-up with real-time
                 if self.simTime >= time.time():

@@ -5,14 +5,26 @@
         "start_time" : "now",
         "end_time" : null
     },
-    "initial_action" : "deleteExisting",    # { "deleteExisting" deletes all existing devices from DP | "loadExisting" loads from DP | "" }
-    "device_count" : 100,
-    "install_timespan" : 0,    # How many seconds it takes at start of simulation to install all devices
-    "queue_criterion" : "messages",     # Send updates to DevicePilot every N "messages" | "time" N secs of sim time | "interactive" N secs of real time
-    "queue_limit" : 500,               	# N for above
-    "area_centre" : "Manchester, UK",   # Centre of a circle of possible positions
-    "area_radius" : "London, UK",       # Edge of circle
-    "battery_life_mu" : 31536000,       # Average battery life
-    "battery_life_sigma" : 0,           # Variation in battery life
-    "comms_reliability" : 1.0			# or e.g. "[[0,0.20],[30,0.65],[60,0.50],[90,0.95],[120,0.99]]" 
+    "devices" : {
+        "device_count" : 100,
+        "install_timespan" : "PT100S",
+        "restart_log" : true,
+        "functions" : {
+            "battery" : {
+                "life_mu" : "PT5M",
+                "life_sigma" : "PT1M",
+                "autoreplace" : true
+            },
+            "names" : {},
+            "firmware" : {},
+            "latlong" : {
+                "area_centre" : "Manchester, UK",
+                "area_radius" : "London, UK"
+            },
+            "comms" : {
+                "reliability" : 1.0,
+                "period" : "PT1H"
+            }
+        }
+    }
 }

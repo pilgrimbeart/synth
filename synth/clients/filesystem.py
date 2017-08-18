@@ -35,7 +35,6 @@ SEP = "!"
 
 class Filesystem(Client):
     def __init__(self, params):
-        logging.info("Starting filesystem client with params "+str(params))
         self.params = params
         self.postQueue = {} # A dict of events. Each contains a list of (prop,val) pairs
 
