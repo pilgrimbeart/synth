@@ -1,13 +1,16 @@
 from device import Device
-import peopleNames
+import people_names
 
 class Names(Device):
-    def __init__(self, time, engine, updateCallback, params):
-        super(Names,self).__init__(time, engine, updateCallback, params)
-        self.setProperties(
-            { 'first_name' : peopleNames.firstName(self.properties["$id"]),
-              'last_name' :  peopleNames.lastName(self.properties["$id"]) } )
+    def __init__(self, time, engine, update_callback, params):
+        super(Names,self).__init__(time, engine, update_callback, params)
+        self.set_properties(
+            { 'first_name' : people_names.first_name(self.properties["$id"]),
+              'last_name' :  people_names.last_name(self.properties["$id"]) } )
 
-    def externalEvent(self, eventName, arg):
-        super(Names,self).externalEvent(eventName, arg)
+    def comms_ok(self):
+        return super(Names,self).comms_ok()
+    
+    def external_event(self, event_name, arg):
+        super(Names,self).external_event(event_name, arg)
         pass

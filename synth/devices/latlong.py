@@ -1,19 +1,22 @@
 from device import Device
 from geo import geo
 
-pp = geo.pointPicker()  # Very expensive, so do only once
+pp = geo.point_picker()  # Very expensive, so do only once
 
 class Latlong(Device):
-    def __init__(self, time, engine, updateCallback, params):
-        super(Latlong,self).__init__(time, engine, updateCallback, params)
+    def __init__(self, time, engine, update_callback, params):
+        super(Latlong,self).__init__(time, engine, update_callback, params)
         self.area_centre = params["latlong"].get("area_centre", None)
         self.area_radius = params["latlong"].get("area_radius", None)
         area = None
         if self.area_centre != None:
             area = [self.area_centre, self.area_radius]
-        (lon,lat) = pp.pickPoint(area)
-        self.setProperties( { 'latitude' : lat, 'longitude' : lon } )
+        (lon,lat) = pp.pick_point(area)
+        self.set_properties( { 'latitude' : lat, 'longitude' : lon } )
 
-    def externalEvent(self, eventName, arg):
-        super(Latlong,self).externalEvent(eventName, arg)
+    def comms_ok(self):
+        return super(Latlong,self).comms_ok()
+
+    def external_event(self, event_name, arg):
+        super(Latlong,self).external_event(event_name, arg)
         pass

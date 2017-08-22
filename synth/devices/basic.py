@@ -4,74 +4,56 @@ import random
 import logging
 
 class Basic(Device):
-    deviceNumber = 0
-    def __init__(self, time, engine, updateCallback, params):
+    device_number = 0
+    def __init__(self, time, engine, update_callback, params):
         self.engine = engine
-        self.updateCallback = updateCallback
+        self.update_callback = update_callback
         self.properties = {}
         self.properties["$id"] = "-".join([format(random.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
         self.properties["is_demo_device"] = True
-        self.properties["label"] = "Thing "+str(Basic.deviceNumber)
-        self.commsOK = True
-        self.doComms(self.properties) # Communicate ALL properties on boot
-        Basic.deviceNumber = Basic.deviceNumber + 1
+        self.properties["label"] = "Thing "+str(Basic.device_number)
+        self.do_comms(self.properties) # Communicate ALL properties on boot
+        Basic.device_number = Basic.device_number + 1
         
-    def externalEvent(self, eventName, arg):
-        logging.info("Received external event "+eventName+" for device "+str(self.properties["$id"]))
+    def external_event(self, event_name, arg):
+        logging.info("Received external event "+event_name+" for device "+str(self.properties["$id"]))
 
-##      TODO: Reinstate this functionality
-##        # All other commands require device to be functional!
-##        if self.getProperty("battery") <= 0:
-##            logString("...ignored because battery flat")
-##            return
-##        if not self.commsOK:
-##            logString("...ignored because comms down")
-##            return
+    def comms_ok(self):
+        return True
 
-    def tickProductUsage(self, _):
+    def tick_product_usage(self, _):
         if self.propertyAbsent("battery") or self.getProperty("battery") > 0:
             self.setProperty("buttonPress", 1)
-            t = timewave.nextUsageTime(self.engine.get_now(), ["Mon","Tue","Wed","Thu","Fri"], "06:00-09:00")
-            self.engine.register_event_at(t, self.tickProductUsage, self)
-
-    def setCommsReliability(self, upDownPeriod=1*60*60*24, reliability=1.0):
-        self.commsUpDownPeriod = upDownPeriod
-        self.commsReliability = reliability
-        self.engine.register_event_in(0, self.tickCommsUpDown, self) # Immediately
-
-    def getCommsOK(self):
-        return self.commsOK
-    
-    def setCommsOK(self, flag):
-        self.commsOK = flag
+            t = timewave.next_usage_time(self.engine.get_now(), ["Mon","Tue","Wed","Thu","Fri"], "06:00-09:00")
+            self.engine.register_event_at(t, self.tick_product_usage, self)
         
-    def doComms(self, properties):
+    def do_comms(self, properties):
         t = self.engine.get_now()
-        if self.commsOK:
-            if self.updateCallback:
+        if self.comms_ok():
+            if self.update_callback:
                 if not "$ts" in properties: # Ensure there's a timestamp
                     properties["$ts"] = t
-                self.updateCallback(self.properties["$id"], t, properties)
+                self.update_callback(self.properties["$id"], t, properties)
             else:
                 logging.warning("No callback installed to update device properties")
 
-    def getProperty(self, propName):
-        return self.properties[propName]
+    def get_property(self, prop_name):
+        return self.properties[prop_name]
 
-    def propertyExists(self, propName):
-        return propName in self.properties
+    def property_exists(self, prop_name):
+        return prop_name in self.properties
+
+    def property_absent(self, prop_name):
+        return not self.property_exists(prop_name)
     
-    def propertyAbsent(self, propName):
-        return not self.propertyExists(propName)
-    
-    def setProperty(self, propName, value):
+    def set_property(self, prop_name, value):
         """Set device property and transmit an update"""
-        newProps = { propName : value, "$id" : self.properties["$id"], "$ts" : self.engine.get_now() }
-        self.properties.update(newProps)
-        self.doComms(newProps)
+        new_props = { prop_name : value, "$id" : self.properties["$id"], "$ts" : self.engine.get_now() }
+        self.properties.update(new_props)
+        self.do_comms(new_props)
 
-    def setProperties(self, newProps):
-        newProps.update({ "$id" : self.properties["$id"], "$ts" : self.engine.get_now() })  # Force ID and timestamp to be correct
-        self.properties.update(newProps)
-        self.doComms(newProps)
+    def set_properties(self, new_props):
+        new_props.update({ "$id" : self.properties["$id"], "$ts" : self.engine.get_now() })  # Force ID and timestamp to be correct
+        self.properties.update(new_props)
+        self.do_comms(new_props)
 

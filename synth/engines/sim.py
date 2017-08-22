@@ -153,6 +153,7 @@ class Sim(Engine):
         simLock.release()
 
     def register_event_in(self, deltaTime, func, arg=None):
+        assert deltaTime >= 0
         L = [(self.get_now() + deltaTime, func, arg)]
         simLock.acquire()
         self.events = sorted(self.events + L)

@@ -7,10 +7,15 @@ class Device(object):
 
     # noinspection PyUnusedLocal
     @abstractmethod
-    def __init__(self, time, engine, updateCallback, params):
+    def __init__(self, time, engine, update_callback, params):
         pass
 
     # noinspection PyUnusedLocal
     @abstractmethod
-    def externalEvent(self, eventName, arg):
+    def comms_ok(self):
+        pass
+
+    # noinspection PyUnusedLocal
+    @abstractmethod
+    def external_event(self, event_name, arg):
         pass

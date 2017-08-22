@@ -7,34 +7,38 @@ GOOD_RSSI = -50.0
 BAD_RSSI = -120.0
 
 class Comms(Device):
-    def __init__(self, time, engine, updateCallback, params):
-        super(Comms,self).__init__(time, engine, updateCallback, params)
-        self.commsReliability = params["comms"].get("reliability", 1.0) # Either a fraction, or a string containing a specification of the trajectory
-        self.commsUpDownPeriod = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
-        engine.register_event_in(0, self.tickCommsUpDown, self)
+    def __init__(self, time, engine, update_callback, params):
+        self.ok_comms = True
+        self.comms_reliability = params["comms"].get("reliability", 1.0) # Either a fraction, or a string containing a specification of the trajectory
+        self.comms_up_down_period = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
+        engine.register_event_in(0, self.tick_comms_up_down, self)
+        super(Comms,self).__init__(time, engine, update_callback, params)   # Set ourselves up before others do, so comms up/down takes effect even on device "boot"
 
-    def externalEvent(self, eventName, arg):
-        super(Comms,self).externalEvent(eventName, arg)
+    def comms_ok(self):
+        return super(Comms, self).comms_ok() and self.ok_comms
+
+    def external_event(self, event_name, arg):
+        super(Comms, self).external_event(event_name, arg)
         pass
     
     # Private methods
 
-    def tickCommsUpDown(self, _):
-        if isinstance(self.commsReliability, (int,float)):   # Simple probability
-            self.commsOK = self.commsReliability > random.random()
+    def tick_comms_up_down(self, _):
+        if isinstance(self.comms_reliability, (int,float)):   # Simple probability
+            self.ok_comms = self.comms_reliability > random.random()
         else:   # Probability spec, i.e. varies with time
             relTime = self.engine.get_now() - self.engine.get_start_time()
-            prob = timewave.interp(self.commsReliability, relTime)
-            if self.propertyExists("rssi"): # Now affect comms according to RSSI
-                rssi = self.getProperty("rssi")
+            prob = timewave.interp(self.comms_reliability, relTime)
+            if self.property_exists("rssi"): # Now affect comms according to RSSI
+                rssi = self.get_property("rssi")
                 radioGoodness = 1.0-(rssi-GOOD_RSSI)/(BAD_RSSI-GOOD_RSSI)   # Map to 0..1
                 radioGoodness = 1.0 - math.pow((1.0-radioGoodness), 4)      # Skew heavily towards "good"
                 prob *= radioGoodness
-            self.commsOK = prob > random.random()
+            self.ok_comms = prob > random.random()
 
-        deltaTime = random.expovariate(1.0 / self.commsUpDownPeriod)
-        deltaTime = min(deltaTime, self.commsUpDownPeriod * 100.0) # Limit long tail
-        self.engine.register_event_in(deltaTime, self.tickCommsUpDown, self)
+        delta_time = random.expovariate(1.0 / self.comms_up_down_period)
+        delta_time = min(delta_time, self.comms_up_down_period * 100.0) # Limit long tail
+        self.engine.register_event_in(delta_time, self.tick_comms_up_down, self)
 
 
 # Model for comms unreliability

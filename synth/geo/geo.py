@@ -35,11 +35,11 @@ Image.MAX_IMAGE_PIXELS = 1000000000 # We're dealing with large images, so preven
 import numpy
 from random import randint, random
 import math
-from google_maps import addressToLongLat
+from google_maps import address_to_lon_lat
 
 
-MINLONG = 100000
-MAXLONG = -10000
+MINLON = 100000
+MAXLON = -10000
 MINLAT  = 100000
 MAXLAT  = -10000
 MINX = 100000
@@ -47,12 +47,12 @@ MAXX = -100000
 MINY = 100000
 MAXY = -100000
 
-class pointPicker():
+class point_picker():
     """This uses a huge amount of memory. So strongly recommend deleting after use.""" 
-    def __init__(self, populationMap=DEFAULT_POP_MAP):
+    def __init__(self, population_map=DEFAULT_POP_MAP):
         # Load map
-        moduleLocalDir = os.path.dirname(__file__)
-        im = Image.open(os.path.join(moduleLocalDir, populationMap))
+        module_local_dir = os.path.dirname(__file__)
+        im = Image.open(os.path.join(module_local_dir, population_map))
         self.arr = numpy.asarray(im)
         self.xlimit, self.ylimit = float(len(self.arr[0])), float(len(self.arr))
         # print "Loaded image of size",self.xlimit,"x",self.ylimit
@@ -64,7 +64,7 @@ class pointPicker():
         # logging.info("Image size is "+str(self.arr.nbytes / (1024*1024))+" MB")
 
         
-    def setArea(self, area):
+    def set_area(self, area):
         """If <area> is defined it must be two strings: ["centre","edge"].
         Each string is an address (e.g. "Cambridge, UK") which is looked-up to get lat/lon.
         These are then used to define the centre and edge of an allowable circle to pick within"""
@@ -74,12 +74,12 @@ class pointPicker():
         # . The circle is a lon/lat circle. So on most map projections it will look circular over the equator, but an increasingly vertical oval towards the poles (e.g. UK).
         self.area = area
 
-        areaCentre, areaEdge = addressToLongLat(area[0]), addressToLongLat(area[1])
-        self.areaCentreXY, self.areaEdgeXY = self.lonLatToXY(areaCentre), self.lonLatToXY(areaEdge)
-        self.areaRadiusPixels = math.sqrt(math.pow(self.areaCentreXY[0]-self.areaEdgeXY[0], 2) + math.pow(self.areaCentreXY[1]-self.areaEdgeXY[1],2))
+        area_centre, area_edge = address_to_lon_lat(area[0]), address_to_lon_lat(area[1])
+        self.area_centre_xy, self.area_edge_xy = self.lon_lat_to_xy(area_centre), self.lon_lat_to_xy(area_edge)
+        self.area_radius_pixels = math.sqrt(math.pow(self.area_centre_xy[0]-self.area_edge_xy[0], 2) + math.pow(self.area_centre_xy[1]-self.area_edge_xy[1],2))
 
         
-    def xyToLonLat(self, coords):
+    def xy_to_lon_lat(self, coords):
         """Normalise axes to +/-1"""
         y = (2*coords[1]/self.ylimit)-1.0
         x = (2*coords[0]/self.xlimit)-1.0
@@ -92,7 +92,7 @@ class pointPicker():
 
         return (longitude, latitude)
 
-    def lonLatToXY(self, coords):
+    def lon_lat_to_xy(self, coords):
         """Reduce to +/-1"""
         x = coords[0] / 180.0
         y = coords[1] / -90.0
@@ -105,23 +105,23 @@ class pointPicker():
 
         return (x,y)
         
-    def pickPoint(self, area=None):
+    def pick_point(self, area=None):
         """Returns a (latitude,longitude) point, on population map, within area"""
-        global MINLONG,MAXLONG,MINLAT,MAXLAT,MINX,MAXX,MINY,MAXY
+        global MINLON,MAXLON,MINLAT,MAXLAT,MINX,MAXX,MINY,MAXY
 
         if area==None:
             self.area = None
         else:
-            self.setArea(area)
+            self.set_area(area)
         
         while True:
             if self.area:
-                radius = randint(0,int(self.areaRadiusPixels+0.5))
+                radius = randint(0,int(self.area_radius_pixels+0.5))
                 angle = random() * 2 * math.pi
                 ox = math.sin(angle) * radius
                 oy = math.cos(angle) * radius
-                x = int(self.areaCentreXY[0] + ox)
-                y = int(self.areaCentreXY[1] + oy)
+                x = int(self.area_centre_xy[0] + ox)
+                y = int(self.area_centre_xy[1] + oy)
             else:
                 x,y = randint(0,self.xlimit-1), randint(0,self.ylimit-1)    # Note: INTEGER pick, i.e nearest pixel.
             v = (self.arr[y][x] / 255.0)
@@ -132,12 +132,12 @@ class pointPicker():
         x += random()
         y += random()
 
-        longitude,latitude = self.xyToLonLat((x,y))
+        longitude,latitude = self.xy_to_lon_lat((x,y))
 
         MINLAT = min(MINLAT, latitude)
         MAXLAT = max(MAXLAT, latitude)
-        MINLONG = min(MINLONG, longitude)
-        MAXLONG = max(MAXLONG, longitude)
+        MINLON = min(MINLON, longitude)
+        MAXLON = max(MAXLON, longitude)
         MINX = min(MINX,x)
         MAXX = max(MAXX,x)
         MINY = min(MINY,y)
@@ -145,17 +145,17 @@ class pointPicker():
         # print "x,y=",x,y," longitude,latitude=",longitude,latitude
         return (longitude, latitude)
 
-    def pickPoints(self, n=1):
+    def pick_points(self, n=1):
         L = []
         for i in range(n):
-            L.append(self.pickPoint())
+            L.append(self.pick_point())
         return L
 
 def main():
-    p = pointPicker()
-    L = p.pickPoints(n=1000, area=["London,UK","Cambridge,UK"])
+    p = point_picker()
+    L = p.pick_points(n=1000, area=["London,UK","Cambridge,UK"])
 
-    print "LONG:",MINLONG, MAXLONG,"DIFF",MAXLONG-MINLONG
+    print "LONG:",MINLON, MAXLON,"DIFF",MAXLON-MINLON
     print "LAT:",MINLAT, MAXLAT,"DIFF",MAXLAT-MINLAT
     print "X:",MINX, MAXX,"DIFF",MAXX-MINX
     print "Y:",MINY, MAXY,"DIFF",MAXY-MINY

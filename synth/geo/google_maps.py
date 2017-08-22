@@ -37,11 +37,11 @@ def set_headers():
 
 
 # ==== Google Maps API ====
-geoCache = {}
-def addressToLongLat(address):
-    global geoCache
-    if address in geoCache:
-        return geoCache[address]    # Avoid thrashing Google (expensive!)
+geo_cache = {}
+def address_to_lon_lat(address):
+    global geo_cache
+    if address in geo_cache:
+        return geo_cache[address]    # Avoid thrashing Google (expensive!)
 
     (lng,lat) = (None, None)
 
@@ -58,12 +58,12 @@ def addressToLongLat(address):
     (lng,lat) = (geo["lng"], geo["lat"])
     ##    except:
     ##        print "FAILED to do Google Maps lookup on location "+str(address)
-    geoCache[address] = (lng,lat)
+    geo_cache[address] = (lng,lat)
     return (lng,lat)
 
 def main():
     address = "Cambridge, UK"
-    lon,lat = addressToLongLat(address)
+    lon,lat = address_to_lon_lat(address)
     print "For address",address,"Lon,Lat = ",lon,lat
  
 if __name__ == "__main__":

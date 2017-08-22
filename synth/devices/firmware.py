@@ -3,16 +3,19 @@ import random
 import logging
 
 class Firmware(Device):
-    def __init__(self, time, engine, updateCallback, params):
-        super(Firmware,self).__init__(time, engine, updateCallback, params)
+    def __init__(self, time, engine, update_callback, params):
+        super(Firmware,self).__init__(time, engine, update_callback, params)
         fw = random.choice(["0.51","0.52","0.6","0.6","0.6","0.7","0.7","0.7","0.7"])
-        self.setProperties({'factoryFirmware' : fw, 'firmware' : fw } )
+        self.set_properties({'factoryFirmware' : fw, 'firmware' : fw } )
 
-    def externalEvent(self, eventName, arg):
-        super(Firmware,self).externalEvent(eventName, arg)
-        if eventName=="upgradeFirmware":
+    def comms_ok(self):
+        return super(Firmware,self).comms_ok()
+
+    def external_event(self, event_name, arg):
+        super(Firmware,self).external_event(event_name, arg)
+        if event_name=="upgradeFirmware":
             logging.info("Upgrading firmware on device "+self.properties["$id"]+" to "+str(arg))
-            self.setProperty("firmware", arg)
-        if eventName=="factoryReset":
+            self.set_property("firmware", arg)
+        if event_name=="factoryReset":
             logging.info("Factory-resetting firmware on device "+self.properties["$id"])
-            self.setProperty("firmware", self.getProperty("factoryFirmware"))
+            self.set_property("firmware", self.get_property("factoryFirmware"))
