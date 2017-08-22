@@ -83,7 +83,7 @@ class Sim(Engine):
         return int(self.get_now() * 1000)
 
     def get_now_str(self):
-        return str(ISO8601.epochSecondsToISO8601(self.get_now()))
+        return str(ISO8601.epoch_seconds_to_ISO8601(self.get_now()))
 
     def events_to_come(self):
         """Return False if simulation has definitely ended"""

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
-# EVENTS
-# Spawn events at given times
+"""EVENTS
+   Spawn events at given times"""
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #

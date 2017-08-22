@@ -37,20 +37,20 @@ from datetime import datetime, timedelta, tzinfo
 import pytz
 import re
 
-def makeTimezone(tzname):
+def make_timezone(tzname):
     """s is Olsen name of a timezone, e.g. 'America/Los_Angeles'"""
     return pytz.timezone(tzname)
 
-def epochSecondsToDatetime(secs, tz=pytz.utc):
+def epoch_seconds_to_datetime(secs, tz=pytz.utc):
     """get time in UTC"""
     utc_dt = datetime.utcfromtimestamp(secs).replace(tzinfo=pytz.utc)
     # convert it to tz
     return tz.normalize(utc_dt.astimezone(tz))
     
-def epochSecondsToISO8601(secs, tz=pytz.utc):
-    return epochSecondsToDatetime(secs,tz).strftime('%Y-%m-%dT%H:%M:%S%z')
+def epoch_seconds_to_ISO8601(secs, tz=pytz.utc):
+    return epoch_seconds_to_datetime(secs,tz).strftime('%Y-%m-%dT%H:%M:%S%z')
 
-def toEpochSeconds(iso8601, tz=pytz.utc):   # Default UTC timezone has no DST
+def to_epoch_seconds(iso8601, tz=pytz.utc):   # Default UTC timezone has no DST
     """Convert ISO8601 string to Epoch-seconds.
 
        (from pytz docs) Note: Unfortunately using the tzinfo argument of the standard datetime constructors does not work with pytz for many timezones."""
@@ -66,8 +66,8 @@ def YesterdayInHours():
     (d,d,d,h,m,s,d,d,d) = time.gmtime(t)
     start = t - s - m*60 - h*60*60 - 86400  # Find start of previous whole day
     end = start + 86400
-    startS = epochSecondsToISO8601(start)
-    endS = epochSecondsToISO8601(end)
+    startS = epoch_seconds_to_ISO8601(start)
+    endS = epoch_seconds_to_ISO8601(end)
     return(startS,endS,3600)
 
 
@@ -168,17 +168,17 @@ def selfTest():
     # Try 1972 - Sun 19th March was transition
 
     print "Testing DST"
-    tz = makeTimezone("Europe/London")  # Should work for any time zone, e.g. "America/New_York"
+    tz = make_timezone("Europe/London")  # Should work for any time zone, e.g. "America/New_York"
 
     for day in range(1,31):
         today_str = "1972-03-%02dT00:00:00" % day
-        today_secs = toEpochSeconds(today_str, tz)
+        today_secs = to_epoch_seconds(today_str, tz)
 
         tomorrow_str = "1972-03-%02dT00:00:00" % (day+1)
-        tomorrow_secs = toEpochSeconds(tomorrow_str, tz)
+        tomorrow_secs = to_epoch_seconds(tomorrow_str, tz)
 
         secs = int(tomorrow_secs - today_secs)
-        print "Day "+epochSecondsToISO8601(today_secs,tz)+" starts at "+str(today_secs)+" and contains "+str(secs)+" seconds"
+        print "Day "+epoch_seconds_to_ISO8601(today_secs,tz)+" starts at "+str(today_secs)+" and contains "+str(secs)+" seconds"
 
         if(day!=19):
             assert secs == 24 * 60 * 60

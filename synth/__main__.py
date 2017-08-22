@@ -34,22 +34,22 @@ import device_factory
 import zeromq_rx
 
 logfile = None
-getSimTime = None   # TODO: Find a more elegant way for logging to discover simulation time
+g_get_sim_time = None   # TODO: Find a more elegant way for logging to discover simulation time
 
 # Set up Python logger to report simulated time
-def inSimulatedTime(self,secs=None):
-    if getSimTime:
-        t = getSimTime()
+def in_simulated_time(self,secs=None):
+    if g_get_sim_time:
+        t = g_get_sim_time()
     else:
         t = 0
-    return ISO8601.epochSecondsToDatetime(t).timetuple()  # Logging might be emitted within sections where simLock is acquired, so we accept a small chance of duff time values in log messages, in order to allow diagnostics without deadlock
+    return ISO8601.epoch_seconds_to_datetime(t).timetuple()  # Logging might be emitted within sections where simLock is acquired, so we accept a small chance of duff time values in log messages, in order to allow diagnostics without deadlock
 
 def initLogging():
     logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%Y-%m-%dT%H:%M:%S'
                     )
-    logging.Formatter.converter=inSimulatedTime # Make logger use simulated time
+    logging.Formatter.converter=in_simulated_time # Make logger use simulated time
 
 initLogging()
 
@@ -74,7 +74,7 @@ def readParamfile(filename):
     return s
 
 def main():
-    global getSimTime
+    global g_get_sim_time
     
     def postWebEvent(webParams):    # CAUTION: Called asynchronously from the web server thread
         if "action" in webParams:
@@ -133,7 +133,7 @@ def main():
         logging.error("No simulation engine defined")
         return
     engine = importer.get_class('engine', params['engine']['type'])(params['engine'], client.enter_interactive)
-    getSimTime = engine.get_now_no_lock
+    g_get_sim_time = engine.get_now_no_lock
 
     if not "events" in params:
         logging.warning("Warning - no events defined")

@@ -28,9 +28,9 @@ import sunpos_2
 import ISO8601
 
 def secondOfDay(epochSecs):
-    s = ISO8601.epochSecondsToISO8601(epochSecs)
+    s = ISO8601.epoch_seconds_to_ISO8601(epochSecs)
     s = "1970-01-01" + s[10:]
-    return ISO8601.toEpochSeconds(s)    
+    return ISO8601.to_epoch_seconds(s)    
 
 def diurnalCycle(epochSecs):
     """Varies from 0 at midnight to 1 at midday and back again."""
@@ -39,7 +39,7 @@ def diurnalCycle(epochSecs):
     return 0.5 + sin(3*pi/2 + frac*pi*2)/2
 
 def sunAngle(epochSecs, (longitude, latitude)):
-    dateS = ISO8601.epochSecondsToISO8601(epochSecs)
+    dateS = ISO8601.epoch_seconds_to_ISO8601(epochSecs)
     year = int(dateS[0:4])
     month = int(dateS[5:7])
     day = int(dateS[8:10])

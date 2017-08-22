@@ -35,21 +35,21 @@ def toHours(spec):
 
 def hourInDay(t):
     """Returns hour in day (as a float, to nearest second, e.g. 07:30 is 7.5)"""
-    dt = ISO8601.epochSecondsToDatetime(t)
+    dt = ISO8601.epoch_seconds_to_datetime(t)
     return int(dt.strftime("%H")) + int(dt.strftime("%M"))/60.0 + int(dt.strftime("%S"))/3600.0    
 
 def dayOfWeek(t):
     """Returns e.g. 'Mon'"""
-    dt = ISO8601.epochSecondsToDatetime(t)
+    dt = ISO8601.epoch_seconds_to_datetime(t)
     return dt.strftime("%a")
 
 def startOfNextDay(t):
     """Given a time, returns time of next midnight."""
-    s = ISO8601.epochSecondsToISO8601(t)    # e.g. "2007-10-23T23:32:10Z
-    dt = ISO8601.epochSecondsToDatetime(t)
+    s = ISO8601.epoch_seconds_to_ISO8601(t)    # e.g. "2007-10-23T23:32:10Z
+    dt = ISO8601.epoch_seconds_to_datetime(t)
     dt += datetime.timedelta(days=1)
     s = dt.strftime("%Y-%m-%dT00:00:00")    # We've assumed timezone!
-    return ISO8601.toEpochSeconds(s)
+    return ISO8601.to_epoch_seconds(s)
 
 def hourToHHMMSS(h):
     """Given a floating hour time, return a string in HH:MM:SS format (e.g. 14.5 becomes '14:30:00')"""
@@ -78,7 +78,7 @@ def jitter(t, X, amountS):
     """Return a random number (intended as a time offset, i.e. jitter) within the range +/-amountS
        The jitter is different (but constant) for any given day in t (epoch secs)
        and for any value X (which might be e.g. deviceID)"""
-    dt = ISO8601.epochSecondsToDatetime(t)
+    dt = ISO8601.epoch_seconds_to_datetime(t)
     dayOfYear = int(dt.strftime("%j"))
     year = int(dt.strftime("%Y"))
     uniqueValue = year*367+dayOfYear+abs(hash(X))   # Note that hash is implementation-dependent so may give different results on different platforms
@@ -105,9 +105,9 @@ def nextUsageTime(t, daySpec, hourSpec):
             break
         t = startOfNextDay(t)
     chosenHour = startHour + (endHour-startHour)*random.random()
-    ts = ISO8601.epochSecondsToISO8601(t)
+    ts = ISO8601.epoch_seconds_to_ISO8601(t)
     ts = ts[:11]+hourToHHMMSS(chosenHour)+ts[19:]
-    t = ISO8601.toEpochSeconds(ts)
+    t = ISO8601.to_epoch_seconds(ts)
     return t
 
 def interp(specStr, t):
@@ -131,13 +131,13 @@ if __name__ == "__main__":
 ##    specD = "08:00-10:00"
 ##    t = 0
 ##    while True:
-##        print ISO8601.epochSecondsToDatetime(t).strftime("%a %Y-%m-%dT%H:%M:%S")
+##        print ISO8601.epoch_seconds_to_datetime(t).strftime("%a %Y-%m-%dT%H:%M:%S")
 ##        t = nextUsageTime(t,specW,specD)
 #    for t in range(100):
 #        print jitter(t*60*60*24,0,100)
 
 ##    for t in range(0,60*60*24*7,3600):
-##        print ISO8601.epochSecondsToDatetime(t).strftime("%a %d-%b-%Y at %H:%M:%S : "),
+##        print ISO8601.epoch_seconds_to_datetime(t).strftime("%a %d-%b-%Y at %H:%M:%S : "),
 ##        print min(
 ##                days(t,["Mon","Tue","Wed","Thu","Fri"]),
 ##                max(
