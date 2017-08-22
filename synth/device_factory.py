@@ -3,6 +3,8 @@
 # DEVICE_FACTORY
 # A device factory
 #
+# TODO: Turn this into a class
+#
 # Copyright (c) 2017 DevicePilot Ltd.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,8 +34,6 @@ from devices.basic import Basic
 
 devices = []
 
-logfile = None
-
 def randList(start, delta, n):
     """Create a sorted list of <n> whole numbers ranging between <start> and <delta>."""
     L = [start + random.random()*delta for x in range(n)]
@@ -47,9 +47,9 @@ def composeClass(classNames):
     classes.append(Basic)   # Class at END of the list is the root of inheritance
     return type("compositeDeviceClass",tuple(classes),{})
 
-def createDevice((client, engine, params, updateCallback)):
+def createDevice((client, engine, updateCallback, logfile, params)):
     def callback(device_id, time, properties):
-        logEntry(time, properties)
+        logEntry(logfile, time, properties)
         updateCallback(device_id, time, properties)
 
     global devices
@@ -67,22 +67,8 @@ def createDevice((client, engine, params, updateCallback)):
         exit(-1)
     devices.append(d)
 
-def init(client, engine, updateCallback, logfileName, params):
-    global logfile
-    mode = "at"
-    if ("restart_log" in params) and (params["restart_log"]==True):
-        mode = "wt"
-    logfile = open("../synth_logs/"+logfileName+".evt", mode, 0)    # Unbuffered
-    logfile.write("*** New simulation starting at real time "+datetime.datetime.now().ctime()+" (local)\n")
-
-    if ("delete_demo_devices" in params) and (params["delete_demo_devices"]==True):
-        if "deleteDemoDevices" in dir(client):
-            client.deleteDemoDevices()
-            
-    device_count = params.get("device_count",0)
-    install_timespan = isodate.parse_duration(params.get("install_timespan", "PT0S")).total_seconds()
-    times = randList(engine.get_now(), install_timespan, params["device_count"])
-    engine.register_events_at(times, createDevice, (client,engine,params,updateCallback))
+def create_device(time, client, engine, updateCallback, logfile, params):
+    engine.register_event_at(time, createDevice, (client,engine,updateCallback,logfile,params))
 
 def numDevices():
     global devices
@@ -97,7 +83,7 @@ def getDeviceByProperty(prop, value):
                 return d
     return None
 
-def logEntry(time, properties):
+def logEntry(logfile, time, properties):
     logfile.write(pendulum.from_timestamp(time).to_datetime_string()+" ")
     for k in sorted(properties.keys()):
         s = str(k) + ","
@@ -119,10 +105,6 @@ def logString(s, time=None):
     else:
         ts = ""
     logfile.write(ts+s+"\n")
-
-def flush():
-    logging.info("Ending device logging ("+str(len(devices))+" devices were emulated)")
-    logfile.close()
 
 def externalEvent(params):
     """Accept events from outside world.

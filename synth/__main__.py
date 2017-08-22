@@ -24,15 +24,16 @@
 # SOFTWARE.
 
 import logging
-import ISO8601
-from common import importer
 import math, time, sys, json, threading, subprocess, re, traceback
 import random   # Might want to replace this with something we control
 from datetime import datetime
+import ISO8601
+from events import Events
+from common import importer
 import device_factory
 import zeromq_rx
 
-
+logfile = None
 getSimTime = None   # TODO: Find a more elegant way for logging to discover simulation time
 
 # Set up Python logger to report simulated time
@@ -116,6 +117,13 @@ def main():
     Tstart = time.time()
     random.seed(12345)  # Ensure reproduceability
 
+    global logfile
+    mode = "at"
+    if ("restart_log" in params) and (params["restart_log"]==True):
+        mode = "wt"
+    logfile = open("../synth_logs/"+params["instance_name"]+".evt", mode, 0)    # Unbuffered
+    logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
+
     if not "client" in params:
         logging.error("No client defined to receive simulation results")
         return
@@ -127,14 +135,9 @@ def main():
     engine = importer.get_class('engine', params['engine']['type'])(params['engine'], client.enter_interactive)
     getSimTime = engine.get_now_no_lock
 
-    if not "devices" in params:
-        logging.error("No devices defined")
-        return
-    device_factory.init(client,
-                        engine,
-                        updateCallback=client.update_device,
-                        logfileName=params["instance_name"],
-                        params=params["devices"])
+    if not "events" in params:
+        logging.warning("Warning - no events defined")
+    events = Events(client, engine, client.update_device, logfile, params["events"])
 
     zeromq_rx.init(postWebEvent)
 
@@ -171,9 +174,11 @@ def main():
     except:
         logging.error(traceback.format_exc()) # Report any exception, but continue to clean-up anyway
 
-    device_factory.flush()
-    client.flush()
     logging.info("Simulation ends")
+    logging.info("Ending device logging ("+str(len(device_factory.devices))+" devices were emulated)")
+    logfile.close()
+
+    client.flush()
 
     logging.info("Elapsed real time: "+str(int(time.time()-Tstart))+" seconds")
 
