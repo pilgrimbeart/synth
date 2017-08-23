@@ -12,7 +12,7 @@ class Basic(Device):
         self.properties["$id"] = "-".join([format(random.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
         self.properties["is_demo_device"] = True
         self.properties["label"] = "Thing "+str(Basic.device_number)
-        self.do_comms(self.properties) # Communicate ALL properties on boot
+        self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down)
         Basic.device_number = Basic.device_number + 1
         
     def external_event(self, event_name, arg):
@@ -27,10 +27,12 @@ class Basic(Device):
             t = timewave.next_usage_time(self.engine.get_now(), ["Mon","Tue","Wed","Thu","Fri"], "06:00-09:00")
             self.engine.register_event_at(t, self.tick_product_usage, self)
         
-    def do_comms(self, properties):
+    def do_comms(self, properties, force_comms = False):
         t = self.engine.get_now()
-        if self.comms_ok():
+        if force_comms or self.comms_ok():
             if self.update_callback:
+                if not "$id" in properties: # Ensure there's an ID
+                    properties["$id"] = self.properties["$id"]
                 if not "$ts" in properties: # Ensure there's a timestamp
                     properties["$ts"] = t
                 self.update_callback(self.properties["$id"], t, properties)

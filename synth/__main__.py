@@ -167,6 +167,7 @@ def main():
 ##        if params["initial_action"] != "loadExisting":
 
     logging.info("Simulation starts")
+
     try:
         while engine.events_to_come():
             engine.next_event()
@@ -183,4 +184,6 @@ def main():
     logging.info("Elapsed real time: "+str(int(time.time()-Tstart))+" seconds")
 
 if __name__ == "__main__":
+    # import cProfile
+    # cProfile.run('main()', "profiling")
     main()

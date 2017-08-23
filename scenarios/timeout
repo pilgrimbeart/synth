@@ -1,0 +1,46 @@
+{
+	"restart_log" : true,
+    "engine" : {
+		"type" : "sim",
+    	"start_time" : "now",
+    	"end_time" : null
+	},
+	"events" : [
+		{	# A device with periodic comms outages
+			"at" : "PT0S",
+			"repeats" : 1,
+			"interval" : "PT1S",
+			"action": {
+				"create_device" : {
+			    	"functions" : {
+			    		"heartbeat" : {
+			    			"interval" : "PT60S"
+			    		},
+			    		"commswave" : {
+			    			"function" : {
+			    				"squarewave" : {
+			    					"interval" : "PT240S",
+			    					"phase_relative" : "true"
+			    				}
+			    			}
+			    		}
+			    	}
+				}
+		    }
+		},
+		{	# A device that's always posting, to prevent old DP timeout logic bug
+			"at" : "PT0S",
+			"repeats" : 1,
+			"interval" : "PT1S",
+			"action": {
+				"create_device" : {
+			    	"functions" : {
+			    		"heartbeat" : {
+			    			"interval" : "PT30S"
+			    		}
+			    	}
+				}
+		    }
+		}
+	]
+}
