@@ -17,7 +17,16 @@
 			    			"interval" : "PT60S"
 			    		},
 			    		"commswave" : {
-			    			"function" : {
+			    			"timefunction" : {
+			    				"squarewave" : {
+			    					"interval" : "PT240S",
+			    					"phase_relative" : "true"
+			    				}
+			    			}
+			    		},
+			    		"expect" : {
+			    			"event_name" : "notifyTimeout",
+			    			"timefunction" : {
 			    				"squarewave" : {
 			    					"interval" : "PT240S",
 			    					"phase_relative" : "true"

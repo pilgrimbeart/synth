@@ -82,7 +82,9 @@ def main():
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
                     mini = float(params["web_response_min"])
                     maxi = float(params["web_response_max"])
-                    engine.register_event_in(mini + random.random()*maxi, device_factory.externalEvent, webParams)
+                    delay = mini + random.random()*maxi
+                    logging.info("Posting event with randomised delay of "+str(delay)+" : "+str(webParams))
+                    engine.register_event_in(delay, device_factory.externalEvent, webParams)
 
     params = {}
 

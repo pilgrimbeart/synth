@@ -38,7 +38,7 @@ def rxThread(callback):
     while True:
         try:
             string = socket.recv()  # { "action" : {"event"|"spawn"} ... }
-            logging.info("Received" + str(string))
+            logging.info("Received on ZeroMQ: " + str(string))
             params = json.loads(string)
             callback(params)
         except Exception as e:

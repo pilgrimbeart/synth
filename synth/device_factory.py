@@ -98,13 +98,13 @@ def logEntry(logfile, time, properties):
         logfile.write(s) # Property might contain unicode
     logfile.write("\n")
 
-def logString(s, time=None):
-    logging.info(s)
-    if time:
-        ts = pendulum.from_timestamp(time).to_datetime_string() + " "
-    else:
-        ts = ""
-    logfile.write(ts+s+"\n")
+##def logString(s, time=None):
+##    logging.info(s)
+##    if time:
+##        ts = pendulum.from_timestamp(time).to_datetime_string() + " "
+##    else:
+##        ts = ""
+##    logfile.write(ts+s+"\n")
 
 def externalEvent(params):
     """Accept events from outside world.
@@ -118,12 +118,11 @@ def externalEvent(params):
                 arg = None
                 if "arg" in body:
                     arg = body["arg"]
-                d.externalEvent(body["eventName"], arg)
+                d.external_event(body["eventName"], arg)
                 return
         e = "No such device "+str(deviceID)+" for incoming event "+str(eventName)
-        logString(e)
+        logging.error(e)
     except Exception as e:
-        logString("Error processing external event")
         logging.error("Error processing externalEvent: "+str(e))
         logging.error(traceback.format_exc())
         

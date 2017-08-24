@@ -10,19 +10,28 @@ class Squarewave(Timefunction):
         """<interval> is the length of both an up AND a down
            If <phase_relative> then phase of period is relative to simulation start time, otherwise to 00:00:00 1 Jan 1970"""
 
-    def current_state(self):
+    def state(self, t=None):
         """Return either 0 or 1"""
-        t = self.engine.get_now()
+        if t is None:
+            t = self.engine.get_now()
         if self.phase_relative:
             t -= self.initTime
         half = self.interval / 2.0
 	v = int(t / half) % 2
         return v
 
-    def next_change(self):
+    def next_change(self, t=None):
         """Return a future time when the next event will happen"""
-        t = self.engine.get_now()
+        if t is None:
+            t = self.engine.get_now()
+
         if self.phase_relative:
             t -= self.initTime
+
         half = self.interval / 2.0
-        return int(t / half)*half + half
+        t2 = int(t / half)*half + half
+
+        if self.phase_relative:
+            t2 += self.initTime
+
+        return t2

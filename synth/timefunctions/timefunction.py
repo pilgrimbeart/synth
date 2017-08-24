@@ -9,11 +9,11 @@ class Timefunction(object):
         pass
 
     @abstractmethod
-    def current_state(self):
-        """Return state of timefunction at the current time"""
+    def state(self, t=None):
+        """Return state of timefunction at the given epoch-time <t>, or at current simulation time if no <t> is given"""
         pass
 
     @abstractmethod
-    def next_change(self, time):
+    def next_change(self, t=None):
         """Return next time that state will change"""
         pass
