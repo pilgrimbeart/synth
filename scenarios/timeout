@@ -8,7 +8,7 @@
 	"events" : [
 		{	# A device with periodic comms outages
 			"at" : "PT0S",
-			"repeats" : 1,
+			"repeats" : 10,
 			"interval" : "PT1S",
 			"action": {
 				"create_device" : {
@@ -19,7 +19,7 @@
 			    		"commswave" : {
 			    			"timefunction" : {
 			    				"squarewave" : {
-			    					"interval" : "PT240S",
+			    					"interval" : "PT20M",
 			    					"phase_relative" : "true"
 			    				}
 			    			}
@@ -28,7 +28,7 @@
 			    			"event_name" : "notifyTimeout",
 			    			"timefunction" : {
 			    				"squarewave" : {
-			    					"interval" : "PT240S",
+			    					"interval" : "PT20M",
 			    					"phase_relative" : "true"
 			    				}
 			    			}
@@ -45,7 +45,7 @@
 				"create_device" : {
 			    	"functions" : {
 			    		"heartbeat" : {
-			    			"interval" : "PT30S"
+			    			"interval" : "PT60S"
 			    		}
 			    	}
 				}

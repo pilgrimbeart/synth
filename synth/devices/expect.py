@@ -4,49 +4,35 @@
    and an event name. Our "window" when we expect to receive exactly one event
    is each period where the function returns 1.
    We expect to receive no events when it is returning 0.
-
-   NOTE: Unlike most other moduels in this package, this module distinguishes
-   "real time" from "sim time" because it deals with live, incoming, asynchronous events.
-   Reason: Even if the general simulator has caught-up with real-time,
-   simulation time only advances event-to-event. So if there are no events scheduled
-   for the next 100 seconds then "engine.get_now()" will return a time 100 seconds
-   into the future, and the simulator just waits doing nothing until real time
-   catches-up with that. But this module can receive events during that time,
-   and wants to time-stamp them correctly and perhaps schedule other events for immediate execution.
-   So for that it needs to use real time not sim time.
-
-   This isn't an issue for events coming from the simulator (e.g. ticks) because they should fire
-   at almost exactly the right real-time.
 """
 
 from device import Device
 import pendulum
 import logging
-import time
 from common import importer
 
 # Types of event that we log
-EVENT_IN_WINDOW = 'E'           # As expected we got an event within the window
-EVENT_OUTSIDE_WINDOW = 'O'      # We got an event unexpectedly outside the window
-MISSING_EVENT = 'X'             # We failed to get any event within the window
-DUPLICATE_EVENT_IN_WINDOW = 'D' # We got a duplicate event within the window
+EVENT_IN_WINDOW = 'EXPECTED_EVENT'              # As expected we got an event within the window
+EVENT_OUTSIDE_WINDOW = 'OUTSIDE_WINDOW'         # We got an event unexpectedly outside the window
+MISSING_EVENT = 'MISSING_EVENT'                 # We failed to get any event within the window
+DUPLICATE_EVENT_IN_WINDOW = 'DUPLICATE_EVENT'   # We got a duplicate event within the window
 
-def live_time(engine):
-    """See NOTE in Module docs"""
-    return min(time.time(), engine.get_now()) # Has no effect for historical simulations, but ensures that real-time simualations record and schedule correctly
 
 class Expect(Device):
+    """A device function which expects to receive events at certain times, and logs when it does/doesn't."""
+    event_log = []  # List of (event_time, deviceID, event_type) - across all devices
+    
     def __init__(self, time, engine, update_callback, params):
         super(Expect,self).__init__(time, engine, update_callback, params)
         fn_name = params["expect"]["timefunction"].keys()[0]
         fn_class = importer.get_class("timefunction", fn_name)
         self.expected_timefunction = fn_class(engine, params["expect"]["timefunction"])
         self.expected_event_name = params["expect"]["event_name"]
-        self.event_log = []  # List of (event_time, event_type)
         self.seen_event_in_this_window = False
 
-        t_next = self.expected_timefunction.next_change(live_time(engine))
-        if self.expected_timefunction.state(live_time(engine)):
+        t = engine.get_now()
+        t_next = self.expected_timefunction.next_change(t)
+        if self.expected_timefunction.state(t):
             self.engine.register_event_at(t_next, self.tick_window_end, self)
         else:
             self.engine.register_event_at(t_next, self.tick_window_start, self)
@@ -60,7 +46,7 @@ class Expect(Device):
         logging.info("Expect.py 2 saw event "+event_name+" on device "+self.properties["$id"])
         if event_name==self.expected_event_name:
             logging.info("Expect.py acting on event "+event_name+" on device "+self.properties["$id"])
-            t = live_time(self.engine)
+            t = self.engine.get_now()
             if self.expected_timefunction.state(t):
                 if self.seen_event_in_this_window:
                     self.add_event(t,DUPLICATE_EVENT_IN_WINDOW)
@@ -84,11 +70,11 @@ class Expect(Device):
             self.add_event(self.engine.get_now(),MISSING_EVENT)
 
     def add_event(self, t, event):
-        self.event_log.append( (t, event) )
+        Expect.event_log.append( (t, self.properties["$id"], event) )
         self.dump_events()
         
     def dump_events(self):
-        print "Log of (un)expected events:"
-        for L in self.event_log:
-            print pendulum.from_timestamp(L[0]).to_datetime_string() + " " + str(L[1])
-
+        s = ""
+        for L in Expect.event_log:
+            s += pendulum.from_timestamp(L[0]).to_datetime_string() + "," + str(L[1]) + "," + str(L[2]) + "\n"
+        logging.info("Log of (un)expected events:\n"+s)

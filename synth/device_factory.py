@@ -115,9 +115,7 @@ def externalEvent(params):
         logging.info("external Event received: "+str(params))
         for d in devices:
             if d.properties["$id"] == body["deviceId"]:
-                arg = None
-                if "arg" in body:
-                    arg = body["arg"]
+                arg = body.get("arg", None)
                 d.external_event(body["eventName"], arg)
                 return
         e = "No such device "+str(deviceID)+" for incoming event "+str(eventName)

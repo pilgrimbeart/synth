@@ -80,11 +80,7 @@ def main():
         if "action" in webParams:
             if webParams["action"] == "event":
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
-                    mini = float(params["web_response_min"])
-                    maxi = float(params["web_response_max"])
-                    delay = mini + random.random()*maxi
-                    logging.info("Posting event with randomised delay of "+str(delay)+" : "+str(webParams))
-                    engine.register_event_in(delay, device_factory.externalEvent, webParams)
+                    engine.register_event_in(0, device_factory.externalEvent, webParams)
 
     params = {}
 
@@ -92,9 +88,7 @@ def main():
     # TODO: Outdated, delete once completely unused
     params = merge(params, {
         "instance_name" : "default",    # Used for naming log files
-        "web_key" : 12345,
-        "web_response_min" : 3,  # (s) Range of delay to respond to an incoming web request
-        "web_response_max" : 10
+        "web_key" : 12345
         })
 
 
