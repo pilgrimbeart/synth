@@ -5,6 +5,28 @@
     	"start_time" : "now",
     	"end_time" : null
 	},
+	"client" :
+    {
+    	"type" : "devicepilot",
+    	"create_devicepilot_filters" : [ 
+    		{
+    			"$description" : "Down (test)",
+    			"where" : "$ts < ago(300)",
+    			"monitor" : true,
+    			"action" : {
+        			"$description": "Notify Synth of timeout (test)",
+        			"body": "{\n\"deviceId\" : \"{device.$id}\",\n\"eventName\" : \"notifyTimeout\"\n}",
+        			"headers": {
+            			"Instancename": "<<<instance_name>>>",	# OnProductionSynthtestPilgrim
+            			"Key": "<<<web_key>>>" # 6954177026348348
+        			},
+        			"method": "POST",
+        			"target": "request",
+        			"url": "https://synth.devicepilot.com/event"
+    			}
+    		}
+    	]
+    },
 	"events" : [
 		{	# A device with periodic comms outages
 			"at" : "PT0S",

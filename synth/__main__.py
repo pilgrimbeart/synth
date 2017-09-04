@@ -61,6 +61,10 @@ def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/d
             if isinstance(a[key], dict) and isinstance(b[key], dict):
                 merge(a[key], b[key], path + [str(key)])
             else:
+                ps = ".".join(path)
+                if path != []:
+                    ps += "."
+                logging.warning("Overwriting "+str(ps)+str(key)+" with "+str(b[key])+" (was "+str(a[key])+")")
                 a[key] = b[key]
         else:
             a[key] = b[key]
@@ -82,18 +86,9 @@ def main():
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
                     engine.register_event_in(0, device_factory.externalEvent, webParams)
 
-    params = {}
-
-    # Default params. Override these by specifying one or more JSON files on the command line.
-    # TODO: Outdated, delete once completely unused
-    params = merge(params, {
-        "instance_name" : "default",    # Used for naming log files
-        "web_key" : 12345
-        })
-
-
     logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
     
+    params = {}
     for arg in sys.argv[1:]:
         if arg.startswith("{"):
             logging.info("Setting parameters "+arg)
@@ -105,7 +100,12 @@ def main():
         else:
             logging.info("Loading parameter file "+arg)
             s = readParamfile(arg)
-            s = re.sub("#.*$","",s,flags=re.MULTILINE) # Remove Python-style comments
+            s = re.sub("#.*$",     "", s, flags=re.MULTILINE) # Remove Python-style comments
+           # TODO: Make generic macro substitution
+           if "instance_name" in params:
+                s = re.sub("<<<instance_name>>>", params["instance_name"], s)
+            if "web_key" in params:
+                s = re.sub("<<<web_key>>>", params["web_key"], s)
             params = merge(params, json.loads(s))
     
     logging.info("Parameters:\n"+json.dumps(params, sort_keys=True, indent=4, separators=(',', ': ')))
