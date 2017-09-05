@@ -17,3 +17,9 @@ class Timefunction(object):
     def next_change(self, t=None):
         """Return next time that state will change"""
         pass
+
+    @abstractmethod
+    def period(self):
+        """Return period of timefunction in seconds"""
+        pass
+

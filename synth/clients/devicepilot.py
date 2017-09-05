@@ -32,7 +32,14 @@ NOTIFICATION_ENDPOINT = "/notifications"        # UI calls these "actions"
 
 last_post_time = 0
 
-logging.getLogger("requests").setLevel(logging.WARNING) # Suppress annoying connection messages from Requests
+# Suppress annoying Requests debug
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("requests.auth").setLevel(logging.WARNING)
+logging.getLogger("requests.packages").setLevel(logging.WARNING)
+logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("urllib3.poolmanager").setLevel(logging.WARNING)
+logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
 
 def set_headers(token):
     headers = {}
@@ -225,8 +232,6 @@ class Devicepilot(Client):
             logging.info("("+endpoint+" already exists, so updating it)")
             body_set["$id"]=the_id      # POST will replace existing one iff $id is provided"""
 
-        print "BODY=",body_set
-        
         url = self.url + endpoint
         resp = requests.post(url, verify=True, headers=set_headers(self.key), data=json.dumps(body_set))
         if not resp.ok:
@@ -246,12 +251,9 @@ class Devicepilot(Client):
         logging.info("devicepilot:create_incidentconfig("+str(filter_id)+","+str(active)+")")
 
         ## BODGE TO AVOID 500 SERVER ERROR
-        logging.info("deleting incidentconfig [BODGE to avoid 500 errors]")
         the_id = self.get_X_id_by_field(INCIDENTCONFIG_ENDPOINT, "$savedSearch", filter_id)
-        logging.info("Existing id is "+str(the_id))
         if the_id is not None:
             resp = requests.delete(self.url + the_id, headers=set_headers(self.key))
-            print "Delete response was ",resp
 
         body_set = { "$savedSearch" : filter_id,
                      "active" : active,
@@ -265,24 +267,21 @@ class Devicepilot(Client):
         logging.info("devicepilot:create_notification("+str(action)+")")
 
         ## BODGE TO AVOID 500 SERVER ERROR
-        logging.info("deleting notification [BODGE to avoid 500 errors]")
         the_id = self.get_X_id_by_field(NOTIFICATION_ENDPOINT, "$description", action["$description"])
-        logging.info("Existing id is "+str(the_id))
         if the_id is not None:
             resp = requests.delete(self.url + the_id, headers=set_headers(self.key))
-            print "Delete response was ",resp
 
         body_set = action
         return self.create_or_update_X(NOTIFICATION_ENDPOINT, "$description", action["$description"], body_set)
 
     def setup_filters(self, filters):
         """Create arbitrary DevicePilot filters"""
-        print "/savedSearches (aka Filters):"
-        print json.dumps(self.get_all_X(SAVEDSEARCH_ENDPOINT), indent=4, sort_keys=True, separators=(',', ': '))
-        print "/incidentConfigs (aka Events):"
-        print json.dumps(self.get_all_X(INCIDENTCONFIG_ENDPOINT), indent=4, sort_keys=True, separators=(',', ': '))
-        print "/notifications (aka: Actions)"
-        print json.dumps(self.get_all_X(NOTIFICATION_ENDPOINT), indent=4, sort_keys=True, separators=(',', ': '))
+##        print "/savedSearches (aka Filters):"
+##        print json.dumps(self.get_all_X(SAVEDSEARCH_ENDPOINT), indent=4, sort_keys=True, separators=(',', ': '))
+##        print "/incidentConfigs (aka Events):"
+##        print json.dumps(self.get_all_X(INCIDENTCONFIG_ENDPOINT), indent=4, sort_keys=True, separators=(',', ': '))
+##        print "/notifications (aka: Actions)"
+##        print json.dumps(self.get_all_X(NOTIFICATION_ENDPOINT), indent=4, sort_keys=True, separators=(',', ': '))
         
         for f in filters:
             description = f["$description"]

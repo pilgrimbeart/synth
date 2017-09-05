@@ -77,17 +77,14 @@ def readParamfile(filename):
         s = open("../synth_accounts/"+filename,"rt").read()
     return s
 
-def main():
-    global g_get_sim_time
-    
-    def postWebEvent(webParams):    # CAUTION: Called asynchronously from the web server thread
-        if "action" in webParams:
-            if webParams["action"] == "event":
-                if webParams["headers"]["Instancename"]==params["instance_name"]:
-                    engine.register_event_in(0, device_factory.externalEvent, webParams)
+def get_params():
+    """Read command-line to ingest parameters and parameter files"""
+    def macro(matchobj):
+        s = matchobj.group(0)[3:-3] # Remove <<<anglebrackets>>>
+        if s not in params:
+            raise ValueError("undefined macro: %s" % s)
+        return params[s]
 
-    logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
-    
     params = {}
     for arg in sys.argv[1:]:
         if arg.startswith("{"):
@@ -101,13 +98,22 @@ def main():
             logging.info("Loading parameter file "+arg)
             s = readParamfile(arg)
             s = re.sub("#.*$",     "", s, flags=re.MULTILINE) # Remove Python-style comments
-           # TODO: Make generic macro substitution
-           if "instance_name" in params:
-                s = re.sub("<<<instance_name>>>", params["instance_name"], s)
-            if "web_key" in params:
-                s = re.sub("<<<web_key>>>", params["web_key"], s)
+            s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution
             params = merge(params, json.loads(s))
+    return params    
+
+def main():
+    global g_get_sim_time
     
+    def postWebEvent(webParams):    # CAUTION: Called asynchronously from the web server thread
+        if "action" in webParams:
+            if webParams["action"] == "event":
+                if webParams["headers"]["Instancename"]==params["instance_name"]:
+                    engine.register_event_in(0, device_factory.externalEvent, webParams)
+
+    logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
+    
+    params = get_params()    
     logging.info("Parameters:\n"+json.dumps(params, sort_keys=True, indent=4, separators=(',', ': ')))
 
     Tstart = time.time()
@@ -132,7 +138,7 @@ def main():
     g_get_sim_time = engine.get_now_no_lock
 
     if not "events" in params:
-        logging.warning("Warning - no events defined")
+        logging.warning("No events defined")
     events = Events(client, engine, client.update_device, logfile, params["events"])
 
     zeromq_rx.init(postWebEvent)
