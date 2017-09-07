@@ -7,7 +7,7 @@ class Device(object):
 
     # noinspection PyUnusedLocal
     @abstractmethod
-    def __init__(self, time, engine, update_callback, params):
+    def __init__(self, instance_name, time, engine, update_callback, params):
         pass
 
     # noinspection PyUnusedLocal

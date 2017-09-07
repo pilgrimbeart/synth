@@ -33,7 +33,6 @@ from common import importer
 import device_factory
 import zeromq_rx
 
-logfile = None
 g_get_sim_time = None   # TODO: Find a more elegant way for logging to discover simulation time
 
 # Set up Python logger to report simulated time
@@ -113,18 +112,11 @@ def main():
 
     logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
     
-    params = get_params()    
+    params = get_params()
     logging.info("Parameters:\n"+json.dumps(params, sort_keys=True, indent=4, separators=(',', ': ')))
 
     Tstart = time.time()
     random.seed(12345)  # Ensure reproduceability
-
-    global logfile
-    mode = "at"
-    if ("restart_log" in params) and (params["restart_log"]==True):
-        mode = "wt"
-    logfile = open("../synth_logs/"+params["instance_name"]+".evt", mode, 0)    # Unbuffered
-    logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
 
     if not "client" in params:
         logging.error("No client defined to receive simulation results")
@@ -139,10 +131,9 @@ def main():
 
     if not "events" in params:
         logging.warning("No events defined")
-    events = Events(client, engine, client.update_device, logfile, params["events"])
+    events = Events(params["instance_name"], params.get("restart_log",False), client, engine, client.update_device, params["events"])
 
     zeromq_rx.init(postWebEvent)
-
 
     # Set up the world
     
@@ -179,7 +170,7 @@ def main():
 
     logging.info("Simulation ends")
     logging.info("Ending device logging ("+str(len(device_factory.devices))+" devices were emulated)")
-    logfile.close()
+    events.flush()
 
     client.flush()
 

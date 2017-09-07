@@ -120,6 +120,28 @@ def spawn():
     time.sleep(1)   # If client next immediately tests <is_running>, this will vastly increase chances of that working
     return "ok"
 
+@app.route("/plots/<filename>", methods=['GET'])
+def plots(filename):
+    """Serve plots from special directory"""
+    logging.info("Got web request to "+str(request.path)+" so filename is "+str(filename))
+
+    if re.search(r'[^A-Za-z0-9.]', filename):
+        for c in filename:
+            logging.info(str(ord(c)))
+        logging.info("Bad characters")
+        abort(400)
+
+    if ".." in filename:
+        logging.info("Illegal .. in pathname")
+        abort(400)
+
+    try:
+        f=open("../synth_logs/plots/"+filename).read()
+    except:
+        logging.warning("Can't open file")
+        return ("Can't open that file")
+    return f
+
 @app.route("/is_running")
 def isRunning():
     logging.info("Got web request to /is_running")

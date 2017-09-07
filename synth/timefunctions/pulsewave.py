@@ -20,22 +20,28 @@ class Pulsewave(Timefunction):
                 self.transition = float(p["transition"][0:-1]) / 100.0
             else:
                 self.transition = float(isodate.parse_duration(p["transition"]).total_seconds()) / self.interval
+        assert (self.transition>=0) and (self.transition<self.interval), "Transition must be within interval"
 
         self.delay = float(isodate.parse_duration(p.get("delay", "PT0S")).total_seconds())
         self.phase_absolute = p.get("phase_absolute", False)
+        self.invert = p.get("invert", False)
         self.initTime = engine.get_now()
 
-    def state(self, t=None):
-        """Return either 0 or 1"""
+    def state(self, t=None, t_relative=False):
+        """Return either 0 or 1 depending on current (or given) time.
+           If <t_relative> then forces t to be relative regardless of settings at init()"""
         if t is None:
             t = self.engine.get_now()
-        if not self.phase_absolute:
+        if (not self.phase_absolute) and (not t_relative):
             t -= self.initTime
         t -= self.delay
 
         mod = (t % self.interval) / self.interval
         result = (mod >= self.transition)
 
+        if self.invert:
+            result = not result
+            
         return [0,1][result]
 
     def next_change(self, t=None):
@@ -77,6 +83,22 @@ if __name__ == "__main__":
     assert fn.state(t=100)==0
     assert fn.state(t=150)==1
     assert fn.state(t=200)==0
+
+    assert fn.next_change(t=0)==50
+    assert fn.next_change(t=49.999999)==50
+    assert fn.next_change(t=50)==100
+    assert fn.next_change(t=99.999999)==100
+    assert fn.next_change(t=100)==150
+
+    print "Testing 100s squarewave inverted"
+    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT100S", "invert" : True }})
+    assert fn.state(t=0)==1
+    assert fn.state(t=49.999999)==1
+    assert fn.state(t=50)==0
+    assert fn.state(t=99.999999)==0
+    assert fn.state(t=100)==1
+    assert fn.state(t=150)==0
+    assert fn.state(t=200)==1
 
     assert fn.next_change(t=0)==50
     assert fn.next_change(t=49.999999)==50
@@ -177,5 +199,23 @@ if __name__ == "__main__":
     assert fn.next_change(t=30)==70
     assert fn.next_change(t=70)==90
     assert fn.next_change(t=90)==130
+
+    print "Testing 20mins (15m:5m) pulsewave with -5m delay"
+    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT20M", "transition" : "PT15M", "delay" : "-PT5M" }})
+    assert fn.state(t=0*60)==0
+    assert fn.state(t=5*60)==0
+    assert fn.state(t=10*60)==1
+    assert fn.state(t=15*60)==0
+    assert fn.state(t=20*60)==0
+    assert fn.state(t=25*60)==0
+    assert fn.state(t=30*60)==1
+    assert fn.state(t=35*60)==0
+    assert fn.state(t=40*60)==0
+
+    assert fn.next_change(t=0)==10*60  # Going true
+    assert fn.next_change(t=10*60)==15*60
+    assert fn.next_change(t=15*60)==30*60
+    assert fn.next_change(t=30*60)==35*60
+    assert fn.next_change(t=35*60)==50*60
 
     print "All tests passed"

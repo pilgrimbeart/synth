@@ -4,9 +4,9 @@ import isodate
 import logging
 
 class Heartbeat(Device):
-    def __init__(self, time, engine, update_callback, params):
+    def __init__(self, instance_name, time, engine, update_callback, params):
         """Simple metronomic heartbeat transmission so that server knows we're still here"""
-        super(Heartbeat,self).__init__(time, engine, update_callback, params)
+        super(Heartbeat,self).__init__(instance_name, time, engine, update_callback, params)
         self.heartbeat_interval = isodate.parse_duration(params["heartbeat"].get("interval", "PT10M")).total_seconds()
         self.engine.register_event_in(self.heartbeat_interval, self.tick_heartbeat, self)
 

@@ -6,13 +6,13 @@ from device import Device
 from common import importer
 
 class Commswave(Device):
-    def __init__(self, time, engine, update_callback, params):
+    def __init__(self, instance_name, time, engine, update_callback, params):
         fn_name = params["commswave"]["timefunction"].keys()[0]
         fn_class = importer.get_class("timefunction", fn_name)
         self.timefunction = fn_class(engine, params["commswave"]["timefunction"])
         """No need to "tick" these functions, as they can calculate their states at arbitrary times on demand"""
         # engine.register_event_at(self.timefunction.next_change(), self.tick_commswave, self)
-        super(Commswave,self).__init__(time, engine, update_callback, params)
+        super(Commswave,self).__init__(instance_name, time, engine, update_callback, params)
 
     def comms_ok(self):
         return super(Commswave, self).comms_ok() and self.timefunction.state()

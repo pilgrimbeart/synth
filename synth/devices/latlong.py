@@ -4,8 +4,8 @@ from geo import geo
 pp = geo.point_picker()  # Very expensive, so do only once
 
 class Latlong(Device):
-    def __init__(self, time, engine, update_callback, params):
-        super(Latlong,self).__init__(time, engine, update_callback, params)
+    def __init__(self, instance_name, time, engine, update_callback, params):
+        super(Latlong,self).__init__(instance_name, time, engine, update_callback, params)
         self.area_centre = params["latlong"].get("area_centre", None)
         self.area_radius = params["latlong"].get("area_radius", None)
         area = None

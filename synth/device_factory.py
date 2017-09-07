@@ -47,7 +47,7 @@ def composeClass(classNames):
     classes.append(Basic)   # Class at END of the list is the root of inheritance
     return type("compositeDeviceClass",tuple(classes),{})
 
-def createDevice((client, engine, updateCallback, logfile, params)):
+def createDevice((instance_name, client, engine, updateCallback, logfile, params)):
     def callback(device_id, time, properties):
         logEntry(logfile, time, properties)
         updateCallback(device_id, time, properties)
@@ -57,9 +57,9 @@ def createDevice((client, engine, updateCallback, logfile, params)):
 
     if "functions" in params:
         C = composeClass(params["functions"].keys())        # Create a composite device class from all the given class names
-        d = C(engine.get_now(), engine, callback, params["functions"])   # Instantiate it
+        d = C(instance_name, engine.get_now(), engine, callback, params["functions"])   # Instantiate it
     else:
-        d = Basic(engine.get_now(), engine, callback, params)
+        d = Basic(instance_name, engine.get_now(), engine, callback, params)
     client.add_device(d.properties["$id"], engine.get_now(), d.properties)
 
     if getDeviceByProperty("$id",d.properties["$id"]) != None:
@@ -67,8 +67,8 @@ def createDevice((client, engine, updateCallback, logfile, params)):
         exit(-1)
     devices.append(d)
 
-def create_device(time, client, engine, updateCallback, logfile, params):
-    engine.register_event_at(time, createDevice, (client,engine,updateCallback,logfile,params))
+def create_device(time, instance_name, client, engine, updateCallback, logfile, params):
+    engine.register_event_at(time, createDevice, (instance_name,client,engine,updateCallback,logfile,params))
 
 def numDevices():
     global devices
@@ -118,8 +118,7 @@ def externalEvent(params):
                 arg = body.get("arg", None)
                 d.external_event(body["eventName"], arg)
                 return
-        e = "No such device "+str(deviceID)+" for incoming event "+str(eventName)
-        logging.error(e)
+        logging.error("No such device "+str(body["deviceId"])+" for incoming event "+str(body["eventName"]))
     except Exception as e:
         logging.error("Error processing externalEvent: "+str(e))
         logging.error(traceback.format_exc())

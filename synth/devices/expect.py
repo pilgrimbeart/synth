@@ -15,19 +15,22 @@ from common import plotting
 
 # Types of event that we log
 EVENT_IN_WINDOW = 'EXPECTED_EVENT'              # As expected we got an event within the window
+DUPLICATE_EVENT_IN_WINDOW = 'DUPLICATE_EVENT'   # We got a duplicate event within the window
 EVENT_OUTSIDE_WINDOW = 'OUTSIDE_WINDOW'         # We got an event unexpectedly outside the window
 MISSING_EVENT = 'MISSING_EVENT'                 # We failed to get any event within the window
-DUPLICATE_EVENT_IN_WINDOW = 'DUPLICATE_EVENT'   # We got a duplicate event within the window
 
 REPORT_PERIOD_S = 1*60
+HISTO_BINS = 20
 
 class Expect(Device):
     """A device function which expects to receive events at certain times, and logs when it does/doesn't."""
-    event_log = []  # List of (event_time, deviceID, event_type) - across all devices
+    # Note below are all CLASS variables, not instance variables, because we only want one of them across all devices
+    event_log = []  # List of (event_time_relative, deviceID, event_type) - across all devices
+    score_log = []  # List of (time, score)
     slack_initialised = False
     
-    def __init__(self, time, engine, update_callback, params):
-        super(Expect,self).__init__(time, engine, update_callback, params)
+    def __init__(self, instance_name, time, engine, update_callback, params):
+        super(Expect,self).__init__(instance_name, time, engine, update_callback, params)
         fn_name = params["expect"]["timefunction"].keys()[0]
         fn_class = importer.get_class("timefunction", fn_name)
         self.expected_timefunction = fn_class(engine, params["expect"]["timefunction"])
@@ -52,9 +55,7 @@ class Expect(Device):
         return super(Expect,self).comms_ok()
 
     def external_event(self, event_name, arg):
-        logging.info("Expect.py 1 saw event "+event_name+" on device "+self.properties["$id"])
         super(Expect,self).external_event(event_name, arg)
-        logging.info("Expect.py 2 saw event "+event_name+" on device "+self.properties["$id"])
         if event_name==self.expected_event_name:
             logging.info("Expect.py acting on event "+event_name+" on device "+self.properties["$id"])
             t = self.engine.get_now()
@@ -81,39 +82,68 @@ class Expect(Device):
             self.add_event(self.engine.get_now(),MISSING_EVENT)
 
     def add_event(self, t, event):
-        Expect.event_log.append( (t, self.properties["$id"], event) )
+        rel_t = t - self.creation_time  # Convert to relative time
+        Expect.event_log.append( (rel_t, self.properties["$id"], event) )
         self.dump_events()
         
     def dump_events(self):
         s = ""
         for L in Expect.event_log:
-            s += pendulum.from_timestamp(L[0]).to_datetime_string() + "," + str(L[1]) + "," + str(L[2]) + "\n"
+            s += str(L[0]) + "," + str(L[1]) + "," + str(L[2]) + "\n"
         logging.info("Log of (un)expected events:\n"+s)
 
+    def score(self):
+        """Return a quality score of between 0.0 and 1.0."""
+        if len(Expect.event_log)==0:
+            return 1.0
+        sum = 0
+        for L in Expect.event_log:
+            if L[2]==EVENT_IN_WINDOW:
+                sum += 1
+        sum = sum / float(len(Expect.event_log))
+
+        return sum
+
     def create_histo(self):
-        """Gather logged events into a histogram"""
-        HISTO_BINS = 10
-        histo = [0] * HISTO_BINS
+        """Plot logged events as a set of histograms."""
+        histo_in_window = [0] * HISTO_BINS
+        histo_duplicate_event = [0] * HISTO_BINS
+        histo_outside_window = [0] * HISTO_BINS
+        histo_missing_event = [0] * HISTO_BINS
         period = self.expected_timefunction.period()
         for L in Expect.event_log:
             modulo_time = (float(L[0]) % period) / period # Normalise time to 0..1
             bin = int(HISTO_BINS * modulo_time)
-            histo[bin] += 1
+            if L[2]==EVENT_IN_WINDOW:
+                histo_in_window[bin] += 1
+            elif L[2]==DUPLICATE_EVENT_IN_WINDOW:
+                histo_duplicate_event[bin] += 1
+            elif L[2]==EVENT_OUTSIDE_WINDOW:
+                histo_outside_window[bin] += 1
+            elif L[2]==MISSING_EVENT:
+                histo_missing_event[bin] += 1
+            else:
+                assert False
 
         expected=[]
         for ti in range(HISTO_BINS):
             t = ti * float(period) / HISTO_BINS
-            expected.append(self.expected_timefunction.state(t))    # TODO: Should this be relative?
+            expected.append(self.expected_timefunction.state(t, t_relative=True))
 
-        url = plotting.plot_histo(period, histo, expected)
-        return url
+        return (period, expected, [histo_in_window, histo_duplicate_event, histo_outside_window, histo_missing_event])
+
+    def output_plot(self):
+        histo = self.create_histo()
+        div1 = plotting.plot_histo(histo[0], histo[1], histo[2])
+        div2 = plotting.plot_score_log(Expect.score_log)
+        plotting.write_page(self.instance_name, [div1, div2])
         
     def post_to_slack(self, text):
         if self.slack_webhook is not None:
             text = "{:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()) + " GMT " + text
             payload = {"text" : text,
                        "as_user" : False,
-                       "username" : "Synth",
+                       "username" : "Synth "+self.instance_name,
                        }
             try:
                 response = requests.post(self.slack_webhook, data=json.dumps(payload), headers={'Content-Type': 'application/json'})
@@ -121,7 +151,9 @@ class Expect(Device):
                 logging.error("expect.post_to_slack() failed: "+str(err))
 
     def tick_send_report(self, _):
-        url = self.create_histo()
-        self.post_to_slack("Synth histogram of expected vs. actual: "+url)
+        Expect.score_log.append( (self.engine.get_now(), self.score() * 100) )
+
+        self.output_plot()
+        # self.post_to_slack("Synth histogram of expected vs. actual: "+url)
         self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
         

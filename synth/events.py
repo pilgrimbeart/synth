@@ -26,16 +26,23 @@
 # TODO: Make actions pluggable?
 
 import device_factory
+from datetime import datetime
 import isodate
 import logging
 
 class Events():
-    def __init__(self, client, engine, updateCallback, logfile, eventList):
+    def __init__(self, instance_name, restart_log, client, engine, updateCallback, eventList):
         """<params> is a list of events"""
         self.client = client
         self.engine = engine
         self.updateCallback = updateCallback
-        self.logfile = logfile
+        self.instance_name = instance_name
+
+        mode = "at"
+        if restart_log:
+            mode = "wt"
+        self.logfile = open("../synth_logs/"+instance_name+".evt", mode, 0)    # Unbuffered
+        self.logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
 
         t = engine.get_now()
         for event in eventList:
@@ -46,8 +53,9 @@ class Events():
 
             while repeats > 0:
                 if "create_device" in action:
-                    device_factory.create_device(t, client, engine, updateCallback, logfile,
-                                action["create_device"])
+                    device_factory.create_device(   t, instance_name, client, engine,
+                                                    updateCallback,self.logfile,
+                                                    action["create_device"])
                 elif "delete_demo_devices" in action:
                     if "deleteDemoDevices" in dir(client):
                         client.deleteDemoDevices()
@@ -56,3 +64,7 @@ class Events():
 
                 t += isodate.parse_duration(interval).total_seconds()
                 repeats -= 1
+
+    def flush(self):
+        """Call at exit to clean up."""
+        self.logfile.flush()
