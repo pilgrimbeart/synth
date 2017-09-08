@@ -22,4 +22,3 @@ class Timefunction(object):
     def period(self):
         """Return period of timefunction in seconds"""
         pass
-

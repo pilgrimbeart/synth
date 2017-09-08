@@ -1,7 +1,8 @@
-from device import Device
 """A basic device implementation"""
 import random
 import logging
+from device import Device
+from common import importer
 
 class Basic(Device):
     device_number = 0
@@ -12,7 +13,7 @@ class Basic(Device):
         self.update_callback = update_callback
         self.properties = {}
         self.properties["$id"] = "-".join([format(random.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
-        self.properties["is_demo_device"] = True
+        self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
         self.properties["label"] = "Thing "+str(Basic.device_number)
         self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down)
         Basic.device_number = Basic.device_number + 1
@@ -22,16 +23,12 @@ class Basic(Device):
 
     def finish(self):
         pass
-        
+
     def comms_ok(self):
         return True
 
-    def tick_product_usage(self, _):
-        if self.propertyAbsent("battery") or self.getProperty("battery") > 0:
-            self.setProperty("buttonPress", 1)
-            t = timewave.next_usage_time(self.engine.get_now(), ["Mon","Tue","Wed","Thu","Fri"], "06:00-09:00")
-            self.engine.register_event_at(t, self.tick_product_usage, self)
-        
+    # Internal methods
+    
     def do_comms(self, properties, force_comms = False):
         t = self.engine.get_now()
         if force_comms or self.comms_ok():
@@ -53,14 +50,22 @@ class Basic(Device):
     def property_absent(self, prop_name):
         return not self.property_exists(prop_name)
     
-    def set_property(self, prop_name, value):
+    def set_property(self, prop_name, value, always_send = True):
         """Set device property and transmit an update"""
+        if not prop_name in self.properties:
+            changed = True
+        elif self.properties[prop_name] != value:
+            changed = True
+        else:
+            changed = False
+        
         new_props = { prop_name : value, "$id" : self.properties["$id"], "$ts" : self.engine.get_now() }
         self.properties.update(new_props)
-        self.do_comms(new_props)
+        if changed or always_send:
+            self.do_comms(new_props)
 
     def set_properties(self, new_props):
         new_props.update({ "$id" : self.properties["$id"], "$ts" : self.engine.get_now() })  # Force ID and timestamp to be correct
         self.properties.update(new_props)
-        self.do_comms(new_props)
+        self.do_comms(new_props)    # TODO: Suppress if unchanged
 

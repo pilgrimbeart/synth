@@ -1,8 +1,5 @@
-#!/usr/bin/env python
-#
-# TIMEWAVE
-# Create periodic events over periods of human time
-# Given a time, each event generator outputs a value between 0.0 and 1.0
+"""TIMEWAVE
+   Create periodic events over periods of human time"""
 # To "and" use min(), to "or" use max()
 #
 # Copyright (c) 2017 DevicePilot Ltd.
@@ -28,6 +25,8 @@
 import ISO8601, datetime, random, ast
 import numpy
 import utils
+
+# TODO: Converting to pendulum would make this all much easier!
 
 def toHours(spec):
     """spec is of the form '08:00-10:00' """

@@ -140,23 +140,26 @@ class Sim(Engine):
         time.sleep(min(1.0, wait))
         self.set_now(time.time())    # So that any events injected asynchronously will correctly get stamped with current time
 
-    def register_event_at(self, time, func, arg=None):
-        L = [(time, func, arg)]
+    def _add_events(self, L):
+        for e in L:            
+            if e[0] == 0:
+                logging.info("Advisory: Setting event at epoch=0 (not illegal, but often a sign of a mistake)")
+            elif e[0] <= self.get_now():
+                logging.info("Advisory: Setting event in the past (not illegal, but often a sign of a mistake)")
         simLock.acquire()
         self.events = sorted(self.events + L)   # TODO: Might be more efficient to append and then sort in place?
         simLock.release()
+    
+    def register_event_at(self, time, func, arg=None):
+        L = [(time, func, arg)]
+        self._add_events(L)
         
     def register_events_at(self, times, func, arg=None):
         L = [(t,func,arg) for t in times]
-        simLock.acquire()
-        self.events = sorted(self.events + L)
-        simLock.release()
+        self._add_events(L)
 
     def register_event_in(self, deltaTime, func, arg=None):
         assert deltaTime >= 0
         L = [(self.get_now() + deltaTime, func, arg)]
-        simLock.acquire()
-        self.events = sorted(self.events + L)
-        simLock.release()
-
+        self._add_events(L)
 

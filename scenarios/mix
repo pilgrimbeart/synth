@@ -1,0 +1,53 @@
+{
+	"restart_log" : true,
+    "engine" : {
+		"type" : "sim",
+    	"start_time" : "-P7D",
+    	"end_time" : "now"
+	},
+	"events" : [
+		{	# A device which presses buttons periodically
+			"at" : "PT0S",
+			"repeats" : 1,
+			"interval" : "PT1S",
+			"action": {
+				"create_device" : {
+			    	"functions" : {
+			    		"variable" : {
+			    			"name" : "mixdemo",
+			    			"timefunction" : {
+			    				"mix" : {
+			    					"operator" : "and",
+			    					"timefunctions" : [
+			    						{
+			    							"pulsewave" : {
+			    								"interval" : "PT24H"
+			    							}
+			    						},
+			    						{
+			    							"mix" : {
+			    								"operator" : "mul",
+			    								"timefunctions" : [
+			    									{
+			    										"sinewave" : {
+			    											"period" : "PT12H"
+			    										}
+			    									},
+			    									{
+			    										"sinewave" : {
+			    											"period" : "PT1H"
+			    										}
+			    									}
+			    								]
+			    							}
+			    						}
+			    					]
+			    				}
+			    			}
+			    		}
+			    	}
+				}
+		    }
+		}
+	]
+}

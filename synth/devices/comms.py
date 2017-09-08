@@ -29,7 +29,7 @@ class Comms(Device):
         if isinstance(self.comms_reliability, (int,float)):   # Simple probability
             self.ok_comms = self.comms_reliability > random.random()
         else:   # Probability spec, i.e. varies with time
-            relTime = self.engine.get_now() - self.engine.get_start_time()
+            relTime = self.engine.get_now() - self.creation_time
             prob = timewave.interp(self.comms_reliability, relTime)
             if self.property_exists("rssi"): # Now affect comms according to RSSI
                 rssi = self.get_property("rssi")

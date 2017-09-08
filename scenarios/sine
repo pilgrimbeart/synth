@@ -1,0 +1,29 @@
+{
+	"restart_log" : true,
+    "engine" : {
+		"type" : "sim",
+    	"start_time" : "-PT24H",
+    	"end_time" : "now"
+	},
+	"events" : [
+		{
+			"at" : "PT0S",
+			"repeats" : 1,
+			"interval" : "PT1S",
+			"action": {
+				"create_device" : {
+			    	"functions" : {
+			    		"variable" : {
+			    			"name" : "sine",
+			    			"timefunction" : {
+			    				"sinewave" : {
+			    					"period" : "PT1H"
+			    				}
+			    			}
+			    		}
+			    	}
+				}
+		    }
+		}
+	]
+}

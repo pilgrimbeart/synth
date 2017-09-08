@@ -11,20 +11,19 @@ class Pulsewave(Timefunction):
            <delay> is the absolute amount that the start is delayed
            If <phase_absolute> then phase of period is relative to 00:00:00 1 Jan 1970, otherwise to when this device is created"""
         self.engine = engine
-        p = params["pulsewave"]
-        self.interval = float(isodate.parse_duration(p["interval"]).total_seconds())
-        if "transition" not in p:
+        self.interval = float(isodate.parse_duration(params["interval"]).total_seconds())
+        if "transition" not in params:
             self.transition = 0.5 # Square wave by default
         else:
-            if p["transition"].endswith("%"):
-                self.transition = float(p["transition"][0:-1]) / 100.0
+            if params["transition"].endswith("%"):
+                self.transition = float(params["transition"][0:-1]) / 100.0
             else:
-                self.transition = float(isodate.parse_duration(p["transition"]).total_seconds()) / self.interval
+                self.transition = float(isodate.parse_duration(params["transition"]).total_seconds()) / self.interval
         assert (self.transition>=0) and (self.transition<self.interval), "Transition must be within interval"
 
-        self.delay = float(isodate.parse_duration(p.get("delay", "PT0S")).total_seconds())
-        self.phase_absolute = p.get("phase_absolute", False)
-        self.invert = p.get("invert", False)
+        self.delay = float(isodate.parse_duration(params.get("delay", "PT0S")).total_seconds())
+        self.phase_absolute = params.get("phase_absolute", False)
+        self.invert = params.get("invert", False)
         self.initTime = engine.get_now()
 
     def state(self, t=None, t_relative=False):
@@ -75,7 +74,7 @@ class dummy_engine():
 
 if __name__ == "__main__":
     print "Testing 100s squarewave"
-    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT100S" }})
+    fn = Pulsewave(dummy_engine(), { "interval" : "PT100S" })
     assert fn.state(t=0)==0
     assert fn.state(t=49.999999)==0
     assert fn.state(t=50)==1
@@ -91,7 +90,7 @@ if __name__ == "__main__":
     assert fn.next_change(t=100)==150
 
     print "Testing 100s squarewave inverted"
-    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT100S", "invert" : True }})
+    fn = Pulsewave(dummy_engine(), { "interval" : "PT100S", "invert" : True })
     assert fn.state(t=0)==1
     assert fn.state(t=49.999999)==1
     assert fn.state(t=50)==0
@@ -107,7 +106,7 @@ if __name__ == "__main__":
     assert fn.next_change(t=100)==150
 
     print "Testing 100s 50% pulsewave"
-    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT100S", "transition" : "50%" }})
+    fn = Pulsewave(dummy_engine(), { "interval" : "PT100S", "transition" : "50%" })
     assert fn.state(t=0)==0
     assert fn.state(t=49)==0
     assert fn.state(t=49.999999)==0
@@ -124,7 +123,7 @@ if __name__ == "__main__":
     assert fn.next_change(t=100)==150
 
     print "Testing 100s 75% pulsewave"
-    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT100S", "transition" : "75%" }})
+    fn = Pulsewave(dummy_engine(), { "interval" : "PT100S", "transition" : "75%" })
     assert fn.state(t=0)==0
     assert fn.state(t=50)==0
     assert fn.state(t=74.999999)==0
@@ -138,7 +137,7 @@ if __name__ == "__main__":
     assert fn.next_change(t=100)==175
 
     print "Testing 100s (75s:25s) pulsewave"
-    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT100S", "transition" : "PT75S" }})
+    fn = Pulsewave(dummy_engine(), { "interval" : "PT100S", "transition" : "PT75S" })
     assert fn.state(t=0)==0
     assert fn.state(t=50)==0
     assert fn.state(t=74.999999)==0
@@ -155,7 +154,7 @@ if __name__ == "__main__":
     assert fn.next_change(t=200)==275
 
     print "Testing 100s (25%:75%) pulsewave"
-    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT100S", "transition" : "25%" }})
+    fn = Pulsewave(dummy_engine(), { "interval" : "PT100S", "transition" : "25%" })
     assert fn.state(t=0)==0
     assert fn.state(t=24.999999)==0
     assert fn.state(t=25)==1
@@ -171,7 +170,7 @@ if __name__ == "__main__":
     assert fn.next_change(t=200)==225
 
     print "Testing 60min (20min:40min) pulsewave"
-    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT60M", "transition" : "PT20M" }})
+    fn = Pulsewave(dummy_engine(), { "interval" : "PT60M", "transition" : "PT20M" })
     assert fn.state(t=0)==0
     assert fn.state(t=20*60)==1
     assert fn.state(t=60*60)==0
@@ -183,7 +182,7 @@ if __name__ == "__main__":
     assert fn.next_change(t=80*60)==2*60*60
 
     print "Testing 60s (20s:40s) pulsewave with 10s delay"
-    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT60S", "transition" : "PT20S", "delay" : "PT10S" }})
+    fn = Pulsewave(dummy_engine(), { "interval" : "PT60S", "transition" : "PT20S", "delay" : "PT10S" })
     assert fn.state(t=0)==1
     assert fn.state(t=9)==1
     assert fn.state(t=10)==0
@@ -201,7 +200,7 @@ if __name__ == "__main__":
     assert fn.next_change(t=90)==130
 
     print "Testing 20mins (15m:5m) pulsewave with -5m delay"
-    fn = Pulsewave(dummy_engine(), { "pulsewave" : { "interval" : "PT20M", "transition" : "PT15M", "delay" : "-PT5M" }})
+    fn = Pulsewave(dummy_engine(),  { "interval" : "PT20M", "transition" : "PT15M", "delay" : "-PT5M" })
     assert fn.state(t=0*60)==0
     assert fn.state(t=5*60)==0
     assert fn.state(t=10*60)==1
