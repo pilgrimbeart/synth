@@ -38,7 +38,7 @@ class Expect(Device):
 
         self.slack_webhook = params["expect"].get("slack_webhook", None)
         if not Expect.slack_initialised:    # Only do this for first device registered
-            self.post_to_slack("Synth running")
+            self.post_to_slack("Started")
             self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
             Expect.slack_initialised = True
 
@@ -69,6 +69,12 @@ class Expect(Device):
                 self.add_event(t,EVENT_OUTSIDE_WINDOW)
         else:
             logging.info("Doesn't match expected event name "+str(self.expected_event_name))
+
+    def finish(self):
+        if Expect.slack_initialised:
+            self.post_to_slack("Stopped")
+            Expect.slack_initialised = False
+        super(Expect,self).finish()
 
     # Private methods
     

@@ -19,3 +19,8 @@ class Firmware(Device):
         if event_name=="factoryReset":
             logging.info("Factory-resetting firmware on device "+self.properties["$id"])
             self.set_property("firmware", self.get_property("factoryFirmware"))
+
+    def finish(self):
+        super(Firmware,self).finish()
+
+        

@@ -20,6 +20,9 @@ class Basic(Device):
     def external_event(self, event_name, arg):
         logging.info("Received external event "+event_name+" for device "+str(self.properties["$id"]))
 
+    def finish(self):
+        pass
+        
     def comms_ok(self):
         return True
 

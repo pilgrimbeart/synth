@@ -14,6 +14,9 @@ class Light(Device):
         super(Light,self).external_event(event_name, arg)
         pass
 
+    def finish(self):
+        super(Light,self).finish()
+
     # Private methods
     def tick_light(self):
         lon = float(self.properties.get("longitude", 0.0))

@@ -19,3 +19,8 @@ class Device(object):
     @abstractmethod
     def external_event(self, event_name, arg):
         pass
+
+    # noinspection PyUnusedLocal
+    @abstractmethod
+    def finish(self):
+        pass

@@ -143,7 +143,7 @@ class Sim(Engine):
     def register_event_at(self, time, func, arg=None):
         L = [(time, func, arg)]
         simLock.acquire()
-        self.events = sorted(self.events + L)
+        self.events = sorted(self.events + L)   # TODO: Might be more efficient to append and then sort in place?
         simLock.release()
         
     def register_events_at(self, times, func, arg=None):

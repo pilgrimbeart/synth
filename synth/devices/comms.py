@@ -19,8 +19,10 @@ class Comms(Device):
 
     def external_event(self, event_name, arg):
         super(Comms, self).external_event(event_name, arg)
-        pass
-    
+
+    def finish(self):
+        super(Comms,self).finish()
+
     # Private methods
 
     def tick_comms_up_down(self, _):

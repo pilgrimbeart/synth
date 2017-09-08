@@ -16,6 +16,9 @@ class Heartbeat(Device):
     def external_event(self, event_name, arg):
         super(Heartbeat,self).external_event(event_name, arg)
 
+    def finish(self):
+        super(Heartbeat,self).finish()
+
     # Private methods
     
     def tick_heartbeat(self,_):

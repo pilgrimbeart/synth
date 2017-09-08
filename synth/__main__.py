@@ -108,7 +108,7 @@ def main():
         if "action" in webParams:
             if webParams["action"] == "event":
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
-                    engine.register_event_in(0, device_factory.externalEvent, webParams)
+                    engine.register_event_in(0, device_factory.external_event, webParams)
 
     logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
     
@@ -170,8 +170,8 @@ def main():
 
     logging.info("Simulation ends")
     logging.info("Ending device logging ("+str(len(device_factory.devices))+" devices were emulated)")
+    device_factory.finish()
     events.flush()
-
     client.flush()
 
     logging.info("Elapsed real time: "+str(int(time.time()-Tstart))+" seconds")

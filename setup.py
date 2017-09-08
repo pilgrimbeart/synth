@@ -18,7 +18,8 @@ setup(name='synth',
             'numpy',
             'pytz',
             'flask_cors',
-            'pillow',
+            'zlib',
+            'Pillow',
             'boto3'
       ],
       )

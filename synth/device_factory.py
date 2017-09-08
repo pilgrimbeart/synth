@@ -1,9 +1,5 @@
-#!/usr/bin/env python
-#
-# DEVICE_FACTORY
-# A device factory
-#
-# TODO: Turn this into a class
+"""DEVICE_FACTORY
+   A device factory. TODO: Turn this into a class."""
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #
@@ -13,10 +9,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,76 +21,70 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import random, math
+import logging
+import traceback
+import pendulum
 from common import importer
-import datetime
-import logging, traceback
-import pendulum, isodate
 from devices.basic import Basic
 
 devices = []
 
-def randList(start, delta, n):
-    """Create a sorted list of <n> whole numbers ranging between <start> and <delta>."""
-    L = [start + random.random()*delta for x in range(n)]
-    return sorted(L)
-
-def composeClass(classNames):
+def compose_class(class_names):
     """Create a composite class from a list of class names."""
     classes = []
-    for className in classNames:
-        classes.append(importer.get_class('device', className))
+    for class_name in class_names:
+        classes.append(importer.get_class('device', class_name))
     classes.append(Basic)   # Class at END of the list is the root of inheritance
-    return type("compositeDeviceClass",tuple(classes),{})
+    return type("compositeDeviceClass", tuple(classes), {})
 
-def createDevice((instance_name, client, engine, updateCallback, logfile, params)):
+def create_the_device((instance_name, client, engine, update_callback, logfile, params)):
     def callback(device_id, time, properties):
-        logEntry(logfile, time, properties)
-        updateCallback(device_id, time, properties)
+        log_entry(logfile, time, properties)
+        update_callback(device_id, time, properties)
 
     global devices
-    deviceNum = numDevices()
+    device_num = num_devices()
 
     if "functions" in params:
-        C = composeClass(params["functions"].keys())        # Create a composite device class from all the given class names
+        C = compose_class(params["functions"].keys())        # Create a composite device class from all the given class names
         d = C(instance_name, engine.get_now(), engine, callback, params["functions"])   # Instantiate it
     else:
         d = Basic(instance_name, engine.get_now(), engine, callback, params)
     client.add_device(d.properties["$id"], engine.get_now(), d.properties)
 
-    if getDeviceByProperty("$id",d.properties["$id"]) != None:
+    if get_device_by_property("$id", d.properties["$id"]) != None:
         logging.error("FATAL: Attempt to create duplicate device "+str(d.properties["$id"]))
         exit(-1)
     devices.append(d)
 
-def create_device(time, instance_name, client, engine, updateCallback, logfile, params):
-    engine.register_event_at(time, createDevice, (instance_name,client,engine,updateCallback,logfile,params))
+def create_device(time, instance_name, client, engine, update_callback, logfile, params):
+    engine.register_event_at(time, create_the_device, (instance_name, client, engine, update_callback, logfile, params))
 
-def numDevices():
+def num_devices():
     global devices
     n = len(devices)
     return n
 
-def getDeviceByProperty(prop, value):
+def get_device_by_property(prop, value):
     global devices
     for d in devices:
         if prop in d.properties:
-            if d.properties[prop]==value:
+            if d.properties[prop] == value:
                 return d
     return None
 
-def logEntry(logfile, time, properties):
+def log_entry(logfile, time, properties):
     logfile.write(pendulum.from_timestamp(time).to_datetime_string()+" ")
     for k in sorted(properties.keys()):
         s = str(k) + ","
         if isinstance(properties[k], basestring):
             try:
-                s += properties[k].encode('ascii','ignore') # Python 2.x barfs if you try to write unicode into an ascii file
+                s += properties[k].encode('ascii', 'ignore') # Python 2.x barfs if you try to write unicode into an ascii file
             except:
                 s += "<unicode encoding error>"
         else:
             s += str(properties[k])
-        s+= ","
+        s += ","
         logfile.write(s) # Property might contain unicode
     logfile.write("\n")
 
@@ -106,7 +96,7 @@ def logEntry(logfile, time, properties):
 ##        ts = ""
 ##    logfile.write(ts+s+"\n")
 
-def externalEvent(params):
+def external_event(params):
     """Accept events from outside world.
     (these have already been synchronised via the event queue so we don't need to worry about thread-safety here)"""
     global devices
@@ -120,6 +110,10 @@ def externalEvent(params):
                 return
         logging.error("No such device "+str(body["deviceId"])+" for incoming event "+str(body["eventName"]))
     except Exception as e:
-        logging.error("Error processing externalEvent: "+str(e))
+        logging.error("Error processing external_event: "+str(e))
         logging.error(traceback.format_exc())
-        
+
+
+def finish():
+    for d in devices:
+        d.finish()

@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-#
-# Dump events to the filesystem
+"""A client for Synth which dumps events to the filesystem as a CSV file"""
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #
@@ -25,41 +23,26 @@
 import logging
 import json
 from clients.client import Client
-
-# We don't know a-priori which properties we'll encounter,
-# but we need to write a CSV file which includes a column header
-# for each property, so we accumulate everything and write at the end.
-# <time> and <device_id> are concatenated to make our key
+from common import evt2csv
 
 SEP = "!"
 
 class Filesystem(Client):
+    """Filesystem client for Synth.
+
+        We don't know a-priori which properties we'll encounter, but ultimately we need
+        to write a CSV file which includes a column header for each property.
+        So we use evt2csv to accumulate and write at the end.
+    """
     def __init__(self, params):
         self.params = params
-        self.postQueue = {} # A dict of events. Each contains a list of (prop,val) pairs
+        self.events = {} # A dict of events in a format handled by evt2csv
 
     def add_device(self, device_id, time, properties):
         self.update_device(device_id, time, properties)
 
     def update_device(self, device_id, time, properties):
-        newProps = []
-
-        # Construct list of (prop,value)
-        for k in properties.keys():
-            if k not in ["$id","$ts"]:
-                newProps.append( (k, properties[k]) )
-        # logging.info("Property list is "+str(newProps))
-
-        # Insert
-        key = str(time) + SEP + str(device_id)
-        if key in self.postQueue:
-            existingProps = self.postQueue[key] # Extend list if it already exists
-        else:
-            existingProps = []
-        existingProps.extend(newProps)
-
-        # logging.info("Final property list is "+str(key)+" : " +str(existingProps))
-        self.postQueue[key] = existingProps
+        evt2csv.insert_properties(self.events, time, device_id, properties)
         return True
 
     def get_device(self):
@@ -79,36 +62,8 @@ class Filesystem(Client):
     
     def flush(self):
         """To be called before exiting."""
-        # Collect all property names
-        props = []
-        for k in self.postQueue.keys():
-            for (p,v) in self.postQueue[k]:
-                if p not in props:
-                    props.append(p)
-        props.sort()
-
-        # Write column headers
-        f = open("../synth_logs/"+self.params["filename"]+".csv","wt")
-        f.write("$ts,$id,")
-        for p in props:
-            f.write(p+",")
-        f.write("\n")
-
-        # Write time series
-        for k in sorted(self.postQueue.keys()):
-            (t,i) = k.split(SEP)
-            f.write(t+","+i+",")
-            for propName in props:  # For every column
-                found=False
-                for (p,v) in self.postQueue[k]: # If we have a value, write it
-                    if p==propName:
-                        f.write(str(v)+",")
-                        found=True
-                        break
-                if not found:
-                    f.write(",")
-            f.write("\n")
-
-        f.close()
-        
+        csv = evt2csv.convert_to_csv(self.events)
+        filename = "../synth_logs/"+self.params["filename"]+".csv"
+        open(filename,"wt").write(csv)
+        logging.info("A total of "+str(csv.count("\n"))+" rows (including a header row) were written to "+filename)        
         return
