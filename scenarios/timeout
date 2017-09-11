@@ -5,33 +5,36 @@
     	"start_time" : "now",
     	"end_time" : null
 	},
-	"client" :
-    {
-    	"type" : "devicepilot",
-    	"create_devicepilot_filters" : [ 
-    		{
-    			"$description" : "Down (test)",
-    			"where" : "$ts < ago(300)",
-    			"monitor" : true,
-    			"action" : {
-        			"$description": "Notify Synth of timeout (test)",
-        			"body": "{\n\"deviceId\" : \"{device.$id}\",\n\"eventName\" : \"notifyTimeout\"\n}",
-        			"headers": {
-            			"Instancename": "<<<instance_name>>>",
-            			"Key": "<<<web_key>>>"
-        			},
-        			"method": "POST",
-        			"target": "request",
-        			"url": "https://synth.devicepilot.com/event"
-    			}
-    		}
-    	]
-    },
 	"events" : [
-		{	# A device with periodic comms outages
+		{
+			"at" : "PT0S",
+			"action" :
+			{
+		    	"create_devicepilot_filters" : [
+		    		{
+		    			"$description" : "Down (test)",
+		    			"where" : "$ts < ago(300)",
+		    			"monitor" : true,
+		    			"action" : {
+		        			"$description": "Notify Synth of timeout (test)",
+		        			"body": "{\n\"deviceId\" : \"{device.$id}\",\n\"eventName\" : \"notifyTimeout\"\n}",
+		        			"headers": {
+		            			"Instancename": "<<<instance_name>>>",
+		            			"Key": "<<<web_key>>>"
+		        			},
+		        			"method": "POST",
+		        			"target": "request",
+		        			"url": "https://synth.devicepilot.com/event"
+		    			}
+		    		}
+		    	]
+		    }
+		},
+		{
 			"at" : "PT0S",
 			"repeats" : 10,
 			"interval" : "PT1S",
+			"comment" : "A device with periodic comms outages",
 			"action": {
 				"create_device" : {
 			    	"functions" : {
@@ -42,7 +45,8 @@
 			    			"timefunction" : {
 			    				"pulsewave" : {
 			    					"interval" : "PT20M",
-			    					"invert" : true	# So devices will be sending heartbeats for first 10 minutes, then timeout
+			    					"invert" : true,
+			    					"comment" : "So devices will be sending heartbeats for first 10 minutes, then timeout"
 			    				}
 			    			}
 			    		},
@@ -52,7 +56,8 @@
 			    				"pulsewave" : {
 			    					"interval" : "PT20M",
 			    					"transition" : "PT15M",
-			    					"delay" : "-PT5M"	# 5 min window immediately after timeout
+			    					"delay" : "-PT5M",
+			    					"comment" : "5 min window immediately after timeout"
 			    				}
 			    			},
 			    			"slack_webhook" : "https://hooks.slack.com/services/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"
@@ -61,10 +66,11 @@
 				}
 		    }
 		},
-		{	# A device that's always posting, to prevent old DP timeout logic bug
+		{
 			"at" : "PT0S",
 			"repeats" : 1,
 			"interval" : "PT1S",
+			"comment" : "A device that's always posting, to prevent old DP timeout logic bug",
 			"action": {
 				"create_device" : {
 			    	"functions" : {

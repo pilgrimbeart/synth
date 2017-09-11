@@ -97,7 +97,7 @@ def get_params():
             logging.info("Loading parameter file "+arg)
             s = readParamfile(arg)
             s = re.sub("#.*$",     "", s, flags=re.MULTILINE) # Remove Python-style comments
-            s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution
+            s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
             params = merge(params, json.loads(s))
     return params    
 

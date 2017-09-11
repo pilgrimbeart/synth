@@ -52,15 +52,24 @@ class Events():
             interval = event.get("interval","PT0S")
 
             while repeats > 0:
+                # Built-in actions
                 if "create_device" in action:
                     device_factory.create_device(   t, instance_name, client, engine,
                                                     updateCallback,self.logfile,
                                                     action["create_device"])
-                elif "delete_demo_devices" in action:
-                    if "deleteDemoDevices" in dir(client):
-                        client.deleteDemoDevices()
-                else:
-                    logging.warning("Ignoring unknown event action type "+str(event["action"]))
+                else:   # Plug-in actions
+                    for k in action.keys():
+                        if k in dir(client):
+                            logging.info("Calling plug-in client action "+str(k))
+                            getattr(client, k)(action[k])    # Programmatically call the method
+                        else:
+                            logging.error("Ignoring event action "+str(k)+" (not a built-in action, nor an action of a loaded client)")
+##                    
+##                elif "delete_demo_devices" in action:
+##                    if "deleteDemoDevices" in dir(client):
+##                        client.deleteDemoDevices()
+##                else:
+##                    logging.warning("Ignoring unknown event action type "+str(event["action"]))
 
                 t += isodate.parse_duration(interval).total_seconds()
                 repeats -= 1

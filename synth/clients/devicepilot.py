@@ -58,8 +58,6 @@ class Devicepilot(Client):
         # If criterion=="messages" then limit is number of messages, e.g. 1000
         # If criterion=="time" then limit is amount of simulated time passing, e.g. sim.days(30)
         # If criterion=="interactive" then limit is amount of real time passing, e.g. 1 (second)
-        if "create_devicepilot_filters" in params:
-            self.setup_filters(params["create_devicepilot_filters"])
 
         self.post_queue = []
         self.post_count = 0
@@ -274,7 +272,9 @@ class Devicepilot(Client):
         body_set = action
         return self.create_or_update_X(NOTIFICATION_ENDPOINT, "$description", action["$description"], body_set)
 
-    def setup_filters(self, filters):
+    # PLUG-IN ACTIONS
+    
+    def create_devicepilot_filters(self, filters):
         """Create arbitrary DevicePilot filters"""
 ##        print "/savedSearches (aka Filters):"
 ##        print json.dumps(self.get_all_X(SAVEDSEARCH_ENDPOINT), indent=4, sort_keys=True, separators=(',', ': '))
