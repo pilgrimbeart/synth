@@ -1,0 +1,81 @@
+{
+	"restart_log" : true,
+    "engine" : {
+		"type" : "sim",
+    	"start_time" : "-PT24H",
+    	"end_time" : "now"
+	},
+	"events" : [
+		{
+			"at" : "PT0S",
+			"comment" : "A device with all plug-in functions",
+			"action": {
+				"create_device" : {
+			    	"functions" : {
+			    		"battery" : {
+			    			"life_mu" : "PT1H",
+			    			"life_sigma" : "PT5M",
+			    			"autoreplace" : true
+			    		},
+			    		"button" : {
+			    			"timefunction" : {
+			    				"pulsewave" : {
+			    					"interval" : "PT20M"
+			    				}
+			    			}
+			    		},
+			    		"comms" : {
+			    			"reliability" : 0.5,
+			    			"period" : "PT1H"
+			    		},
+			    		"commswave" : {
+			    			"timefunction" : {
+			    				"pulsewave" : {
+			    					"interval" : "PT20M",
+			    					"invert" : true,
+			    					"comment" : "So devices will be sending heartbeats for first 10 minutes, then timeout"
+			    				}
+			    			}
+			    		},
+			    		"expect" : {
+			    			"event_name" : "notifyTimeout",
+			    			"timefunction" : {
+			    				"pulsewave" : {
+			    					"interval" : "PT20M",
+			    					"transition" : "PT15M",
+			    					"delay" : "-PT5M",
+			    					"comment" : "5 min window immediately after timeout"
+			    				}
+			    			},
+			    			"slack_webhook" : "https://hooks.slack.com/services/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"
+			    		},
+			    		"firmware" : {
+			    		},
+			    		"heartbeat" : {
+			    			"interval" : "PT60S"
+			    		},
+			    		"latlong" : {
+			    			"area_centre" : "London, UK",
+			    			"area_radius" : "Berlin, Germany"
+			    		},
+			    		"light" : {
+			    		},
+			    		"names" : {
+			    		},
+			    		"variable" : {
+			    			"name" : "testvar",
+			    			"timefunction" : {
+			    				"pulsewave" : {
+			    					"interval" : "PT20M",
+			    					"transition" : "PT15M",
+			    					"delay" : "-PT5M",
+			    					"comment" : "5 min window immediately after timeout"
+			    				}
+			    			}
+			    		}
+			    	}
+				}
+		    }
+		}
+	]
+}
