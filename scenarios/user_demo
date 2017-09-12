@@ -1,0 +1,30 @@
+{
+    "engine" :
+    {
+        "type" : "sim",
+        "start_time" : "-P3M",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 100,
+            "interval" : "PT1M",
+            "comment" : "TODO: FIRST DELETE DEMO DEVICES, AND SETUP DEMO FILTERS",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "heartbeat" : {
+                            "interval" : "PT1H"
+                        },
+                        "comms" : {
+                            "reliability" : "[[0,0.20],[30,0.65],[60,0.50],[90,0.95],[120,0.98]]"
+                        },
+                        "names" : {
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

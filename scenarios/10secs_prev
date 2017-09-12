@@ -1,10 +1,37 @@
 {
+	"restart_log" : true,
     "engine" :
 	{
 		"type" : "sim",
     	"start_time" : "-PT10S",
-    	"end_time" : "now",
+    	"end_time" : "now"
 	},
-    "device_count" : 10,
-    "install_timespan" : 10
+	"events" : [
+		{
+			"at" : "PT1S",
+			"repeats" : 10,
+			"interval" : "PT1S",
+			"action": {
+				"create_device" : {
+			    	"functions" : {
+			    		"battery" : {
+			    			"life_mu" : "PT1M",
+			    			"life_sigma" : "PT0M",
+			    			"autoreplace" : false
+			    		},
+			    		"names" : {},
+			    		"firmware" : {},
+			    		"latlong" : {
+			    			"area_centre" : "London, UK",
+			    			"area_radius" : "Berlin, Germany"
+			    		},
+			    		"comms" : {
+			    			"reliability" : 0.1,
+			    			"period" : "PT1H"
+			    		}
+			    	}
+				}
+		    }
+		}
+	]
 }

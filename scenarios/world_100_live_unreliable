@@ -1,0 +1,34 @@
+{
+	"restart_log" : true,
+    "engine" :
+    {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : null
+    },
+	"events" : [
+		{
+			"at" : "PT0S",
+			"repeat" : 100,
+			"interval" : "PT1M",
+			"action": {
+				"create_device" : {
+			        "functions" : {
+			            "battery" : {
+			                "life_mu" : "P1D",
+			                "life_sigma" : "PT1H",
+			                "autoreplace" : true
+			            },
+			            "names" : {},
+			            "firmware" : {},
+			            "latlong" : {},
+			            "comms" : {
+			                "reliability" : 0.5,
+			                "period" : "PT1H"
+			            }
+			        }
+			    }
+			}
+		}
+    ]
+}
