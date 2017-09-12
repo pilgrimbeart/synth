@@ -1,5 +1,5 @@
 from device import Device
-from geo import geo
+from helpers.geo import geo
 
 pp = geo.point_picker()  # Very expensive, so do only once
 
