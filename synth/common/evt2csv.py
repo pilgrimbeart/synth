@@ -11,34 +11,40 @@
     which can be initialised to {}
 
     Input is either read from a .evt file:
-        c = read_evt_file("filename.evt")
-        convert_to_csv(c)
+        evts = read_evt_file("filename.evt")
+        convert_to_csv(evts)
     or input property-by-property:
         evts = {}
-        insert_properties(evt,...)  # Repeatedly
-        convert_to_csv(c)
+        insert_properties(evts,...)  # Repeatedly
+        convert_to_csv(evts)
 
+    The key format is private, but has the guarantee that sorted() will
+    sort it by time order.
 
     This module can also be run on the command-line as a standalone utility, with filenames as arguments.
 """
 
 import re
 import logging
+import json
 
 SEP = "!"
+TIME_FORMAT = "%012d" # leading zeroes allow sorted() to time-sort
 
-def insert_properties(the_dict, time, device_id, properties):
-    """Update an event dict, given a set of properties that are updated
-       at a particular <time> on a particular <device_id>"""
+def insert_properties(the_dict, properties):
+    """Update an event dict."""
+    assert "$ts" in properties
+    assert "$id" in properties
+
     newProps = []
 
     # Construct list of (prop,value)
     for k in properties.keys():
-        if k not in ["$id","$ts"]:
-            newProps.append( (k, properties[k]) )
+        # if k not in ["$id","$ts"]:
+        newProps.append( (k, properties[k]) )
 
     # Insert
-    key = str(time) + SEP + str(device_id)
+    key = TIME_FORMAT % int(float(properties["$ts"])) + SEP + str(properties["$id"])
     if key in the_dict:
         existingProps = the_dict[key] # Extend list if it already exists
     else:
@@ -56,18 +62,17 @@ def convert_to_csv(the_dict):
     props = []
     for k in the_dict.keys():
         for (p,v) in the_dict[k]:
-            if p not in props:
-                props.append(p)
+            if p not in ["$ts","$id"]:
+                if p not in props:
+                    props.append(p)
     props.sort()
+    props=["$ts","$id"] + props # First two columns are always time and id in that order
 
     # Write header row (i.e. column titles)
-    out_str += "$ts,$id," + ",".join( [str(x) for x in props] ) + "\n"
+    out_str += ",".join( [str(x) for x in props] ) + "\n"
 
     # Write time series
     for k in sorted(the_dict):
-        (t,i) = k.split(SEP)
-        out_str += t + ","
-        out_str += i + ","
         for propName in props:  # For every column
             found=False
             for (p,v) in the_dict[k]: # If we have a value, write it
@@ -81,18 +86,28 @@ def convert_to_csv(the_dict):
 
     return out_str
 
+
 def read_evt_file(filename):
-    """Load an .evt file as a dict"""
+    """Load an .evt file as a event dict."""
+    contents = open(filename,"rt").read()
+    return read_evt_str(contents)
+
+def read_evt_str(contents):
+    """Load an .evt record as a dict."""
     # An event file can contains two types of line:
     #     *** Comment lines that start with three stars, which we ignore
     #     2017-09-08 01:43:50 $id,6a-02-d2-4c-5d-31,$ts,1504835030.7,is_demo_device,True,label,Thing 0,
     # We ignore the human datestamp.
-    # Following that are pairs thus: "<propertyname>,<propertyvalue>,"
+    # Following that are pairs thus: <propertyname>,<propertyvalue>,
+    # Propertyvalue is typed as per JSON, e.g. strings have quotes, floats have .
+    # The pairs are un-ordered.
     # Pairs for $ts and $id are mandatory.
     # No other pairs are mandatory, e.g. a heartbeat could contain nothing else.
     result = {}
     seen_start = False
-    for line in open(filename,"rt").read().splitlines():
+    for line in contents.split("\n"):
+        if line == "":  # Ignore empty lines
+            continue
         line = line.rstrip(",") # Trailing comma is legal but confusing
         if line.startswith("*** New simulation"):
             if seen_start:
@@ -104,9 +119,11 @@ def read_evt_file(filename):
         if not re.search("^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][ T][0-9][0-9]:[0-9][0-9]:[0-9][0-9] ", line):
             logging.error("Unrecognised line format in .evt file "+str(line))
         singles = line[20:].split(",")
-        pairs = zip(singles[::2], singles[1::2])
+        names = singles[::2]
+        values = [json.loads(x) for x in singles[1::2]] # json.loads() to preserve type
+        pairs = zip(names, values)
         properties = dict(pairs)
-        insert_properties(result, properties["$ts"], properties["$id"], properties)
+        insert_properties(result, properties)
     return result 
 
 if __name__ == "__main__":

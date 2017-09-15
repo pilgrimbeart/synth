@@ -24,13 +24,12 @@
 
 import logging, time
 import json, requests, httplib, urllib
+import isodate
 from clients.client import Client
 
 SAVEDSEARCH_ENDPOINT = "/savedSearches"         # UI calls these "filters"
 INCIDENTCONFIG_ENDPOINT = "/incidentConfigs"    # UI calls these "event configurations"
 NOTIFICATION_ENDPOINT = "/notifications"        # UI calls these "actions"
-
-last_post_time = 0
 
 # Suppress annoying Requests debug
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -49,11 +48,19 @@ def set_headers(token):
 
 class Devicepilot(Client):
     def __init__(self, params):
+        """There are two types of queue-throttling:
+            1) flush_criterion says "don't post until you have X messages (or X secs have passed)"
+            2) throttle_seconds_per_post says "don't post more than X messages per second
+        """
         logging.info("Initialising DevicePilot client")
         self.url = params["devicepilot_api"]
         self.key = params["devicepilot_key"]
-        self.queue_flush_criterion = params.get("queue_criterion","messages") # or "time" or "interactive"
-        self.queue_flush_limit = params.get("queue_limit",500)
+        self.throttle_seconds_per_post = params.get("devicepilot_throttle_seconds_per_post", None)
+        # self.queue_flush_criterion = params.get("queue_criterion","messages") # or "time" or "interactive"
+        # self.queue_flush_limit = params.get("queue_limit",500)
+        self.min_post_period = isodate.parse_duration(params.get("devicepilot_min_post_period", "PT60S")).total_seconds()
+        self.max_items_per_post = params.get("devicepilot_max_items_per_post", 500)
+        self.last_post_time = time.time() - self.min_post_period    # Allow first post immediately
         # queue_criterion/limit sets how often we flush messages to DevicePilot API
         # If criterion=="messages" then limit is number of messages, e.g. 1000
         # If criterion=="time" then limit is amount of simulated time passing, e.g. sim.days(30)
@@ -83,13 +90,17 @@ class Devicepilot(Client):
 
     def enter_interactive(self):
         logging.info("DevicePilot client entering (interactive,1sec) mode")
-        self.flush_post_queue()
+        self.flush_post_queue_if_ready()
         # self.recalcHistorical(anId)
-        self.queue_flush_criterion = "interactive"
-        self.queue_flush_limit = 1
+        # self.queue_flush_criterion = "interactive"
+        # self.queue_flush_limit = 1
+        # self.min_post_period = 1
     
-    def flush(self):
-        self.flush_post_queue()
+    def close(self):
+        logging.info("Closing DevicePilot client. "+str(len(self.post_queue))+" items to flush.")
+        while len(self.post_queue):
+            self.flush_post_queue_if_ready()
+            time.sleep(1)
         # self.recalcHistorical(device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
         logging.info("A total of "+str(self.post_count)+" items were posted to DevicePilot")
 
@@ -106,8 +117,7 @@ class Devicepilot(Client):
     def post_device(self, device, historical=False):
         # DevicePilot API accepts either a single JSON object, or an array of such
         # If <historical> is true, DevicePilot doesn't calculate any dependent events (so e.g. won't send alerts)
-        global last_post_time
-        last_post_time = time.time()
+        self.last_post_time = time.time()
         
         body = json.dumps(device)
         
@@ -143,28 +153,46 @@ class Devicepilot(Client):
 
         return True
 
-    def ready_to_flush(self):
-        if self.queue_flush_criterion == "messages":
-            if len(self.post_queue) >= self.queue_flush_limit:
-                return True
-        if self.queue_flush_criterion == "time":
-            # Note that $ts properties in the post queue will be in epoch-MILLIseconds as that's what DP expects
-            if self.post_queue[-1]["$ts"] - self.post_queue[0]["$ts"] >= self.queue_flush_limit * 1000:
-                return True
-        if self.queue_flush_criterion == "interactive":
-            if time.time() - last_post_time > self.queue_flush_limit:
-                return True
-        return False
+    def how_many_to_flush(self):
+        """Return number of items to flush"""
+##        num = 0
+##        if self.queue_flush_criterion == "messages":
+##            if len(self.post_queue) >= self.queue_flush_limit:
+##                num = None
+##        if self.queue_flush_criterion == "time":
+##            # Note that $ts properties in the post queue will be in epoch-MILLIseconds as that's what DP expects
+##            if self.post_queue[-1]["$ts"] - self.post_queue[0]["$ts"] >= self.queue_flush_limit * 1000:
+##                num = None
+##        if self.queue_flush_criterion == "interactive":
+##            if time.time() - self.last_post_time > self.queue_flush_limit:
+##                num = None
+
+        if time.time() - self.last_post_time < self.min_post_period:
+            return 0
+        return min(len(self.post_queue), self.max_items_per_post)
+
+##        if self.throttle_seconds_per_post is not None:
+##            if num == None:
+##                num = int((time.time() - self.last_post_time) / self.throttle_seconds_per_post)
+##                time.sleep(1)   # TODO: Horrid, but without this we'll do loads of back-to-back posts
+##        return num
 
     def flush_post_queue_if_ready(self):
-        if self.ready_to_flush():
-            self.flush_post_queue()
+        num_items = self.how_many_to_flush()
+        if num_items > 0:
+            self.flush_post_queue(num_items)
 
-    def flush_post_queue(self):
+    def flush_post_queue(self, max_items=None):
         if len(self.post_queue) > 0:
-            logging.info("POSTing "+str(len(self.post_queue))+" queued items into DevicePilot")
-            self.post_device(self.post_queue, historical=True)
-            self.post_queue = []
+            limit = len(self.post_queue)
+            comment = ""
+            if max_items is not None:
+                limit = max_items
+                if limit < len(self.post_queue):
+                    comment = " ("+str(len(self.post_queue)-limit)+" throttled)"
+            logging.info("POSTing "+str(limit)+" queued items into DevicePilot" + comment)
+            self.post_device(self.post_queue[0:limit], historical=True)
+            self.post_queue = self.post_queue[limit:]
 
     def recalc_historical(self, anId):
         logging.info("DevicePilot client finalising historical updates")
@@ -273,8 +301,8 @@ class Devicepilot(Client):
         return self.create_or_update_X(NOTIFICATION_ENDPOINT, "$description", action["$description"], body_set)
 
     # PLUG-IN ACTIONS
-    
-    def create_devicepilot_filters(self, filters):
+
+    def devicepilot_create_filters(self, filters):
         """Create arbitrary DevicePilot filters"""
 ##        print "/savedSearches (aka Filters):"
 ##        print json.dumps(self.get_all_X(SAVEDSEARCH_ENDPOINT), indent=4, sort_keys=True, separators=(',', ': '))

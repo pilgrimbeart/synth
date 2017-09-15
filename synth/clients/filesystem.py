@@ -42,7 +42,9 @@ class Filesystem(Client):
         self.update_device(device_id, time, properties)
 
     def update_device(self, device_id, time, properties):
-        evt2csv.insert_properties(self.events, time, device_id, properties)
+        properties["$id"] = device_id # Ensure we always specify these
+        properties["$ts"] = time
+        evt2csv.insert_properties(self.events, properties)
         return True
 
     def get_device(self):
@@ -60,8 +62,8 @@ class Filesystem(Client):
     def tick(self):
         pass
     
-    def flush(self):
-        """To be called before exiting."""
+    def close(self):
+        """Called to clean up on exiting."""
         csv = evt2csv.convert_to_csv(self.events)
         filename = "../synth_logs/"+self.params["filename"]+".csv"
         open(filename,"wt").write(csv)

@@ -86,7 +86,7 @@ class Aws(Client):
     def tick(self):
         pass
     
-    def flush(self):
+    def close(self):
         pass
 
     def get_device(self, device_id):

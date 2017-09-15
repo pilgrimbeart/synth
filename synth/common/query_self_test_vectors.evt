@@ -1,0 +1,12 @@
+*** Test file for measure.py (we don't bother setting ISO timestamp column correctly, so rely on it being ignored)
+*** Heartbeat with period of 10 seconds (probably unrealistically fast, but easy to work with)
+1970-01-01 00:00:00 $ts,0,$id,1
+1970-01-01 00:00:00 $ts,10,$id,1
+1970-01-01 00:00:00 $ts,20,$id,1
+1970-01-01 00:00:00 $ts,30,$id,1
+1970-01-01 00:00:00 $ts,40,$id,1
+1970-01-01 00:00:00 $ts,50,$id,1
+*** Gap
+1970-01-01 00:00:00 $ts,100,$id,1
+1970-01-01 00:00:00 $ts,110,$id,1
+1970-01-01 00:00:00 $ts,120,$id,1

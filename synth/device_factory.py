@@ -23,6 +23,7 @@
 
 import logging
 import traceback
+import json
 import pendulum
 from common import importer
 from devices.basic import Basic
@@ -37,12 +38,14 @@ def compose_class(class_names):
     classes.append(Basic)   # Class at END of the list is the root of inheritance
     return type("compositeDeviceClass", tuple(classes), {})
 
-def create_the_device((instance_name, client, engine, update_callback, logfile, params)):
+def create_device(args):
+    global devices
     def callback(device_id, time, properties):
-        log_entry(logfile, time, properties)
+        log_entry(write_log, time, properties)
         update_callback(device_id, time, properties)
 
-    global devices
+    (instance_name, client, engine, update_callback, write_log, params) = args
+    
     device_num = num_devices()
 
     if "functions" in params:
@@ -57,9 +60,6 @@ def create_the_device((instance_name, client, engine, update_callback, logfile, 
         exit(-1)
     devices.append(d)
 
-def create_device(time, instance_name, client, engine, update_callback, logfile, params):
-    engine.register_event_at(time, create_the_device, (instance_name, client, engine, update_callback, logfile, params))
-
 def num_devices():
     global devices
     n = len(devices)
@@ -73,20 +73,21 @@ def get_device_by_property(prop, value):
                 return d
     return None
 
-def log_entry(logfile, time, properties):
-    logfile.write(pendulum.from_timestamp(time).to_datetime_string()+" ")
+def log_entry(write_log, time, properties):
+    write_log(pendulum.from_timestamp(time).to_datetime_string()+" ")
     for k in sorted(properties.keys()):
         s = str(k) + ","
         if isinstance(properties[k], basestring):
             try:
-                s += properties[k].encode('ascii', 'ignore') # Python 2.x barfs if you try to write unicode into an ascii file
+                s += json.dumps(properties[k])  # Use dumps not str so we preserve type in output
+                # s += properties[k].encode('ascii', 'ignore') # Python 2.x barfs if you try to write unicode into an ascii file
             except:
                 s += "<unicode encoding error>"
         else:
-            s += str(properties[k])
+            s += json.dumps(properties[k])
         s += ","
-        logfile.write(s) # Property might contain unicode
-    logfile.write("\n")
+        write_log(s) # Property might contain unicode
+    write_log("\n")
 
 ##def logString(s, time=None):
 ##    logging.info(s)

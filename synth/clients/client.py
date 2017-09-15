@@ -40,6 +40,6 @@ class Client:
         pass
 
     @abstractmethod
-    def flush(self):
+    def close(self):
         """Write all pending data (e.g. before exiting)."""
         pass

@@ -25,14 +25,33 @@
 
 # TODO: Make actions pluggable?
 
-import device_factory
 from datetime import datetime
-import isodate
 import logging
+import isodate
+import device_factory
+from common import query
+from common import evt2csv
+from common import ISO8601
 
 class Events():
     def __init__(self, instance_name, restart_log, client, engine, updateCallback, eventList):
         """<params> is a list of events"""
+        def query_action(params):
+            events = evt2csv.read_evt_str(self.logtext)
+            query.do_query(params, events)
+            
+        def plugin_action(args):
+            (name, params) = args
+            if name in dir(client):
+                logging.info("Calling plug-in client action "+str(name))
+                getattr(client, name)(params)    # Programmatically call the method
+            else:
+                logging.error("Ignoring unknown event action '"+str(name)+"' (neither an inbuilt action, nor an action of a loaded client)")
+
+        def write_log(s):
+            self.logfile.write(s)
+            self.logtext += s
+
         self.client = client
         self.engine = engine
         self.updateCallback = updateCallback
@@ -44,26 +63,35 @@ class Events():
         self.logfile = open("../synth_logs/"+instance_name+".evt", mode, 0)    # Unbuffered
         self.logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
 
-        t = engine.get_now()
+        self.logtext = ""   # TODO: Probably a Bad Idea to store this in memory. Instead when we want this we should probably close the logfile, read it and then re-open it
+        
         for event in eventList:
-            timedelta = event["at"]    # MUST specify a time and an action
+            timespec = event["at"]
+            if timespec[0] in "-+P":    # Time relative to current sim time
+                at_time = engine.get_now() + isodate.parse_duration(timespec).total_seconds()
+            else:
+                at_time = ISO8601.to_epoch_seconds(timespec)
+
             action = event["action"]
             repeats = event.get("repeats", 1)    # MAY also specify a repeat and interval
             interval = event.get("interval","PT0S")
 
             while repeats > 0:
-                # Built-in actions
+                # Built-in actions (yes, these should really be plug-in too!)
                 if "create_device" in action:
-                    device_factory.create_device(   t, instance_name, client, engine,
-                                                    updateCallback,self.logfile,
-                                                    action["create_device"])
+                    engine.register_event_at(at_time,
+                                             device_factory.create_device,
+                                             (instance_name, client, engine, updateCallback, write_log, action["create_device"]))
+                elif "query" in action:
+                    print "registering query at",at_time
+                    engine.register_event_at(at_time,
+                                             query_action,
+                                             action["query"])
                 else:   # Plug-in actions
-                    for k in action.keys():
-                        if k in dir(client):
-                            logging.info("Calling plug-in client action "+str(k))
-                            getattr(client, k)(action[k])    # Programmatically call the method
-                        else:
-                            logging.error("Ignoring event action "+str(k)+" (not a built-in action, nor an action of a loaded client)")
+                    name = action.keys()[0]
+                    engine.register_event_at(at_time,
+                                             plugin_action,
+                                             (name, action[name]))
 ##                    
 ##                elif "delete_demo_devices" in action:
 ##                    if "deleteDemoDevices" in dir(client):
@@ -71,7 +99,7 @@ class Events():
 ##                else:
 ##                    logging.warning("Ignoring unknown event action type "+str(event["action"]))
 
-                t += isodate.parse_duration(interval).total_seconds()
+                at_time += isodate.parse_duration(interval).total_seconds()
                 repeats -= 1
 
     def flush(self):

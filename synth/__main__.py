@@ -172,7 +172,7 @@ def main():
     logging.info("Ending device logging ("+str(len(device_factory.devices))+" devices were emulated)")
     device_factory.finish()
     events.flush()
-    client.flush()
+    client.close()
 
     logging.info("Elapsed real time: "+str(int(time.time()-Tstart))+" seconds")
 
