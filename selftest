@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e # Abort on error
+python synth OnFStest 10secs_prev
+python synth OnFStest 90000_events
+echo "Self tests PASSED"

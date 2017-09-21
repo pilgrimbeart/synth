@@ -101,11 +101,12 @@ class Sim(Engine):
 
         if self.end_after_events:
             if self.event_count_callback() >= self.end_after_events:
-                logging.info("Ending simulation because hit end_after_events limit of "+str(self.end_after_events))
+                logging.info("Reached target of "+str(self.end_after_events)+" events")
                 return False
             
-        simLock.acquire()       # <--
         try:
+            simLock.acquire()       # <--
+            
             if self.simTime >= time.time() - 1.0:   # Allow a bit of slack because otherwise we might never quite catch-up, because we always wait to ensure we don't
                 caughtUp()
 
@@ -113,11 +114,15 @@ class Sim(Engine):
                 return True
 
             if self.endTime == "when_done":
-                return len(self.events)>0
+                keep_going = len(self.events)>0
+                if not keep_going:
+                    logging.info("No further events")
+                return keep_going
                            
             if self.endTime=="now":    # Terminate when we've caught-up with real-time
-                if self.simTime >= time.time():
+                if self.simTime >= (time.time()-1.0):   # Allow some slack
                     caughtUp()
+                    logging.info("Caught up with real time")
                     return False
                 return True
 
