@@ -30,8 +30,8 @@ class Battery(Device):
             self.set_property("battery", 100)
             self.engine.register_event_in(self.battery_life/100.0, self.tick_battery_decay, self)
 
-    def finish(self):
-        super(Battery,self).finish()
+    def close(self, err_str):
+        super(Battery,self).close(err_str)
         
     # Private methods
     

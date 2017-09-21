@@ -64,11 +64,12 @@ class Events():
         self.logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
 
         self.logtext = ""   # TODO: Probably a Bad Idea to store this in memory. Instead when we want this we should probably close the logfile, read it and then re-open it
-        
+
+        at_time = engine.get_now()
         for event in eventList:
             timespec = event["at"]
             if timespec[0] in "-+P":    # Time relative to current sim time
-                at_time = engine.get_now() + isodate.parse_duration(timespec).total_seconds()
+                at_time = at_time + isodate.parse_duration(timespec).total_seconds()
             else:
                 at_time = ISO8601.to_epoch_seconds(timespec)
 

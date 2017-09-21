@@ -161,16 +161,19 @@ def main():
 
     logging.info("Simulation starts")
 
+    err_str = ""
     try:
         while engine.events_to_come():
             engine.next_event()
             client.tick()
     except:
-        logging.error(traceback.format_exc()) # Report any exception, but continue to clean-up anyway
+        err_str = traceback.format_exc()  # Report any exception, but continue to clean-up anyway
+        logging.error("Error at real time "+str(datetime.now())+" (local)")
+        logging.error(err_str)
 
     logging.info("Simulation ends")
     logging.info("Ending device logging ("+str(len(device_factory.devices))+" devices were emulated)")
-    device_factory.finish()
+    device_factory.close(err_str)
     events.flush()
     client.close()
 

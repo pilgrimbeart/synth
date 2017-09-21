@@ -20,6 +20,6 @@ class Latlong(Device):
     def external_event(self, event_name, arg):
         super(Latlong,self).external_event(event_name, arg)
 
-    def finish(self):
-        super(Latlong,self).finish()
+    def close(self, err_str):
+        super(Latlong,self).close(err_str)
 

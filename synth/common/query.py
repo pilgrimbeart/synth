@@ -93,9 +93,17 @@ def do_query(params, event_dict):
     # Rename property names like "$*" into "_*" so that evaluator can handle them as valid variable names
     expression = re.sub(r"\$","_", expression)
 
-    # Turn dict-of-lists into list-of-dicts
+    # Create a dict of $ids, each of which will be a list of events
+    events_by_id = {}
+    for pairs in event_dict.values():
+        for p,v in pairs:
+            if p == "$id":
+                id = v
+                if id not in events_by_id:
+                    events_by_id[id] = []
+    
+    # Fill lists by ID
     # (and rename $* to _*)
-    events = []
     for k in sorted(event_dict.keys()):
         props = {}
         for (p,v) in event_dict[k]:
@@ -103,22 +111,23 @@ def do_query(params, event_dict):
                 props["_"+p[1:]] = v
             else:
                 props[p] = v
-        events.append(props)
+        events_by_id[props["_id"]].append(props)
 
     # Evaluate expression for each event
-    LEN = len(events)
-    for n in range(LEN):
-        if n==0:
-            prev = None
-        else:
-            prev = events[n-1]
-        curr = events[n]
-        if n==LEN-1:
-            succ = None
-        else:
-            succ = events[n+1]
-        if evaluate(expression, prev,curr,succ):
-            print curr
+    for events in events_by_id.values():
+        LEN = len(events)
+        for n in range(LEN):
+            if n==0:
+                prev = None
+            else:
+                prev = events[n-1]
+            curr = events[n]
+            if n==LEN-1:
+                succ = None
+            else:
+                succ = events[n+1]
+            if evaluate(expression, prev,curr,succ):
+                print curr
 
 if __name__ == "__main__":
     import sys

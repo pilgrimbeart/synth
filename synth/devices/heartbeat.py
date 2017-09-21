@@ -16,8 +16,8 @@ class Heartbeat(Device):
     def external_event(self, event_name, arg):
         super(Heartbeat,self).external_event(event_name, arg)
 
-    def finish(self):
-        super(Heartbeat,self).finish()
+    def close(self, err_str):
+        super(Heartbeat, self).close(err_str)
 
     # Private methods
     

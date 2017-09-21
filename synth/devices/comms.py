@@ -1,7 +1,7 @@
 from device import Device
 import random
 import isodate
-import timewave
+import helpers.timewave
 
 GOOD_RSSI = -50.0
 BAD_RSSI = -120.0
@@ -20,8 +20,8 @@ class Comms(Device):
     def external_event(self, event_name, arg):
         super(Comms, self).external_event(event_name, arg)
 
-    def finish(self):
-        super(Comms,self).finish()
+    def close(self, err_str):
+        super(Comms,self).close(err_str)
 
     # Private methods
 

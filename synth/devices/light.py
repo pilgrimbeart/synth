@@ -14,8 +14,8 @@ class Light(Device):
         super(Light,self).external_event(event_name, arg)
         pass
 
-    def finish(self):
-        super(Light,self).finish()
+    def close(self, err_str):
+        super(Light,self).close(err_str)
 
     # Private methods
     def tick_light(self, _):

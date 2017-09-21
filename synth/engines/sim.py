@@ -59,10 +59,12 @@ class Sim(Engine):
         self.set_now(t)
 
     def set_end_time_str(self,timeString):
-        """<timeString> can be None (for never end)
-           or 'now' to end when simulation reaches current time
-           or else an ISO8601 absolute or relative time"""
-        if (timeString==None) or (timeString=="now"):
+        """<timeString> can be:
+            None (for never end)
+            'now' to end when simulation reaches current time
+            'when_done' to end when no further events are pending
+            or else an ISO8601 absolute or relative time"""
+        if timeString in [None, "now", "when_done"]:
             self.endTime = timeString
         else:
             self.endTime = richTime(timeString)
@@ -101,7 +103,10 @@ class Sim(Engine):
 
             if self.endTime == None:
                 return True
-                
+
+            if self.endTime == "when_done":
+                return len(self.events)>0
+                           
             if self.endTime=="now":    # Terminate when we've caught-up with real-time
                 if self.simTime >= time.time():
                     caughtUp()

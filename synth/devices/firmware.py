@@ -20,7 +20,7 @@ class Firmware(Device):
             logging.info("Factory-resetting firmware on device "+self.properties["$id"])
             self.set_property("firmware", self.get_property("factoryFirmware"))
 
-    def finish(self):
-        super(Firmware,self).finish()
+    def close(self, err_str):
+        super(Firmware,self).close(err_str)
 
         

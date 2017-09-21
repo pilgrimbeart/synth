@@ -33,8 +33,18 @@
 		{
 			"at" : "2017-01-01T23:59:59",
 			"action": {
-				"query" : {
-					"expression" : "$ts < ago(120)"
+				"devicepilot_sync" : {
+				}
+		    }
+		},
+		{
+			"at" : "PT0S",
+			"action": {
+				"devicepilot_testquery" : {
+					"start" : "2017-01-01T00:00:00",
+					"end" : "2017-01-02T00:00:00",
+					"op" : "duration",
+					"valueFilterStr" : "$ts > ago(86400)"
 				}
 		    }
 		}

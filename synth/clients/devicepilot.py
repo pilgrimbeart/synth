@@ -23,9 +23,14 @@
 # SOFTWARE.
 
 import logging, time
-import json, requests, httplib, urllib
+import json
+import requests
+from requests.packages.urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
+import httplib, urllib
 import isodate
 from clients.client import Client
+from common import ISO8601
 
 SAVEDSEARCH_ENDPOINT = "/savedSearches"         # UI calls these "filters"
 INCIDENTCONFIG_ENDPOINT = "/incidentConfigs"    # UI calls these "event configurations"
@@ -68,6 +73,13 @@ class Devicepilot(Client):
 
         self.post_queue = []
         self.post_count = 0
+
+        self.session = requests.Session()   # Using a persistent session allows re-use of connection, retries 
+        retries = Retry(total=5,
+                backoff_factor=0.1,
+                status_forcelist=[ 403 ])   # DevicePilot will throw occasional auth failures 
+        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
     def add_device(self, device_id, time, properties):
         self.update_device(device_id, time, properties)
@@ -132,7 +144,7 @@ class Devicepilot(Client):
                 url += '/ingest'    # Was to "/historical"
             else:
                 url += '/ingest'
-            resp = requests.post(url, verify=True, headers=set_headers(self.key), data=body)
+            resp = self.session.post(url, verify=True, headers=set_headers(self.key), data=body)
         except httplib.HTTPException as err:
             logging.error("ERROR: devicepilot.post_device() couldn't create on server")
             logging.error(str(err))
@@ -197,11 +209,11 @@ class Devicepilot(Client):
     def recalc_historical(self, anId):
         logging.info("DevicePilot client finalising historical updates")
         self.post_device({"$id" : anId}, historical=False) # After a run of historical posts, posting anything with (historical==False) triggers DevicePilot to update all its event calculations [we just need any valid id]
-        resp = requests.put(self.url + '/propertySummaries', headers=set_headers(self.key)) # Tell DP that we should regen property summaries
+        resp = self.session.put(self.url + '/propertySummaries', headers=set_headers(self.key)) # Tell DP that we should regen property summaries
         
     def delete_all_devices(self):
         logging.info("Deleting all devices on this account...")
-        resp = requests.delete(self.url + "/devices", headers=set_headers(self.key))
+        resp = self.session.delete(self.url + "/devices", headers=set_headers(self.key))
         logging.info("All devices deleted")
 
     def delete_devices_where(self, whereStr): 
@@ -210,14 +222,14 @@ class Devicepilot(Client):
         logging.info("    "+str(len(devs))+" devices to delete")
         for dev in devs:
             logging.info("Deleting "+str(dev["$urn"]))
-            resp = requests.delete(self.url + dev["$urn"], headers=set_headers(self.key))
+            resp = self.session.delete(self.url + dev["$urn"], headers=set_headers(self.key))
             if not resp.ok:
                 logging.error(str(resp.reason) + ":" + str(resp.text))
 
 ##    def get_devices(self):
 ##        logging.info("Loading all devices")
 ##        r = self.url + '/devices'
-##        resp = requests.get(r, headers=set_headers(self.key))
+##        resp = self.session.get(r, headers=set_headers(self.key))
 ##        devices = json.loads(resp.text)
 ##        logging.info("    Loaded "+str(len(devices))+" devices")
 ##        # Remove all DevicePilot-internal properties
@@ -229,12 +241,12 @@ class Devicepilot(Client):
 
     def get_devices_where(self, where):   # where could be e.g. '(State == "LIVE_OCCUPIED")'
         r = self.url + '/devices?$profile=/profiles/$view&where=' + urllib.quote_plus(where)
-        resp = requests.get(r, headers=set_headers(self.key))
+        resp = self.session.get(r, headers=set_headers(self.key))
         return json.loads(resp.text)
 
     def get_device_history(self, device_URN, start, end, fields):
         req = self.url + device_URN + "/history" + "?" + urllib.urlencode({"start":start,"end":end,"fields":fields}) + "&timezoneOffset=0"+"&random=973"
-        resp = requests.get(req, headers=set_headers(self.key))    # Beware caching of live data (change 'random' value to avoid)
+        resp = self.session.get(req, headers=set_headers(self.key))    # Beware caching of live data (change 'random' value to avoid)
         if not resp.ok:
             logging.error(str(resp.reason))
             logging.error(str(resp.text))
@@ -242,7 +254,7 @@ class Devicepilot(Client):
 
     def get_all_X(self, endpoint):
         """Return all X (where X is some DevicePilot endpoint such as "/savedSearches")"""
-        return json.loads(requests.get(self.url + endpoint, headers=set_headers(self.key)).text)
+        return json.loads(self.session.get(self.url + endpoint, headers=set_headers(self.key)).text)
         
     def get_X_id_by_field(self, endpoint, field, field_value):
         """Return the ID of an endpoint (e.g. a filter, if the endpoint is "/savedSearches") by value of some field, else None"""
@@ -259,7 +271,7 @@ class Devicepilot(Client):
             body_set["$id"]=the_id      # POST will replace existing one iff $id is provided"""
 
         url = self.url + endpoint
-        resp = requests.post(url, verify=True, headers=set_headers(self.key), data=json.dumps(body_set))
+        resp = self.session.post(url, verify=True, headers=set_headers(self.key), data=json.dumps(body_set))
         if not resp.ok:
             logging.error(resp.text)
             resp.raise_for_status()
@@ -279,7 +291,7 @@ class Devicepilot(Client):
         ## BODGE TO AVOID 500 SERVER ERROR
         the_id = self.get_X_id_by_field(INCIDENTCONFIG_ENDPOINT, "$savedSearch", filter_id)
         if the_id is not None:
-            resp = requests.delete(self.url + the_id, headers=set_headers(self.key))
+            resp = self.session.delete(self.url + the_id, headers=set_headers(self.key))
 
         body_set = { "$savedSearch" : filter_id,
                      "active" : active,
@@ -295,7 +307,7 @@ class Devicepilot(Client):
         ## BODGE TO AVOID 500 SERVER ERROR
         the_id = self.get_X_id_by_field(NOTIFICATION_ENDPOINT, "$description", action["$description"])
         if the_id is not None:
-            resp = requests.delete(self.url + the_id, headers=set_headers(self.key))
+            resp = self.session.delete(self.url + the_id, headers=set_headers(self.key))
 
         body_set = action
         return self.create_or_update_X(NOTIFICATION_ENDPOINT, "$description", action["$description"], body_set)
@@ -321,3 +333,30 @@ class Devicepilot(Client):
                 notification_ID = self.create_notification(action)    # Add notification to this monitor
             if monitor or (action is not None):
                 incident_ID = self.create_incidentconfig(filter_ID, notification_ID)   # When filter matches, do the action
+
+    def devicepilot_testquery(self, params):
+        body = {}
+        for p in params:
+            if p in ["start","end"]:
+                body.update({p : ISO8601.to_epoch_seconds(params[p])*1000}),   # TODO: Needs * 1000 for ms?
+            else:
+                body.update({p : params[p]})
+        resp = self.session.post(self.url+"/query", verify=True, headers=set_headers(self.key), data=json.dumps(body))
+        assert resp.ok, str(resp.reason) + str(resp.text)
+
+    def devicepilot_sync(self, _):
+        """Synchronise Synth with DevicePilot (i.e. wait until data in Synth is consistent)"""
+        logging.info("Synchronising with DevicePilot")
+        t = time.time()
+        device_id = "SyncDevice"+str(int(t))
+        self.add_device(device_id, t, properties={})
+        where_str = '($id == \"'+device_id+'")'
+        while True:
+            self.flush_post_queue_if_ready()
+            devs = self.get_devices_where(where_str)
+            if devs != []:
+                break
+            logging.info("Waiting to sync")
+            time.sleep(10)
+        self.delete_devices_where(where_str)
+        logging.info("Synchronised with DevicePilot")

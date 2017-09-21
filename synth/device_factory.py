@@ -115,6 +115,7 @@ def external_event(params):
         logging.error(traceback.format_exc())
 
 
-def finish():
+def close(err_str):
+    """Close all devices. err_str if any provided for information only"""
     for d in devices:
-        d.finish()
+        d.close(err_str)

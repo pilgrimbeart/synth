@@ -69,11 +69,14 @@ class Expect(Device):
         else:
             logging.info("Doesn't match expected event name "+str(self.expected_event_name))
 
-    def finish(self):
+    def close(self, err_str):
         if Expect.slack_initialised:
-            self.post_to_slack("Stopped")
+            if err_str=="":
+                self.post_to_slack("Finished OK")
+            else:
+                self.post_to_slack(err_str)
             Expect.slack_initialised = False
-        super(Expect,self).finish()
+        super(Expect,self).close(err_str)
 
     # Private methods
     

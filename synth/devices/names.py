@@ -14,6 +14,6 @@ class Names(Device):
     def external_event(self, event_name, arg):
         super(Names,self).external_event(event_name, arg)
 
-    def finish(self):
-        super(Names,self).finish()
+    def close(self, err_str):
+        super(Names,self).close(err_str)
 
