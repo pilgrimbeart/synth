@@ -66,10 +66,10 @@ class Events():
             self.logfile.write(s)
             self.logtext.append(s)
             
+            self.json_check_next_file()
             jprops = properties.copy()
             jprops["$ts"] = int(jprops["$ts"] * 1000) # Convert timestamp to ms as that's what DP uses internally in JSON files
             self.jsonfile.write(json.dumps(jprops, sort_keys=True)+",\n")
-            self.json_check_next_file()
 
             self.event_count += 1
             
@@ -85,8 +85,6 @@ class Events():
         self.logfile = open("../synth_logs/"+instance_name+".evt", self.file_mode, 0)    # Unbuffered
         self.logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
         self.jsonfile = None
-        self.json_events_in_this_file = 0
-        self.json_move_to_next_file()
         self.logtext = []   # TODO: Probably a Bad Idea to store this in memory. Instead when we want this we should probably close the logfile, read it and then re-open it. We store as an array because appending to a large string gets very slow
 
         at_time = engine.get_now()
@@ -138,13 +136,15 @@ class Events():
         logging.info("Starting new logfile "+filename)
         self.jsonfile = open(filename, self.file_mode, 0)
         self.jsonfile.write("[\n")
+        self.json_events_in_this_file = 0
 
     def json_check_next_file(self):
         """Check if time to move to next json file"""
-        self.json_events_in_this_file += 1
+        if self.jsonfile is None:
+            self.json_move_to_next_file()
         if self.json_events_in_this_file >= JSON_EVENTS_PER_FILE:
             self.json_move_to_next_file()
-            self.json_events_in_this_file = 0
+        self.json_events_in_this_file += 1
         
     def json_close_file(self):
         if self.jsonfile is not None:
