@@ -27,7 +27,8 @@
 
 from datetime import datetime
 import logging
-import isodate
+import json
+import pendulum, isodate
 import device_factory
 from common import query
 from common import evt2csv
@@ -48,9 +49,22 @@ class Events():
             else:
                 logging.error("Ignoring unknown event action '"+str(name)+"' (neither an inbuilt action, nor an action of a loaded client)")
 
-        def write_log(s):
+        def write_log(properties):
+            s = pendulum.from_timestamp(properties["$ts"]).to_datetime_string()+" "
+            for k in sorted(properties.keys()):
+                s += str(k) + ","
+                try:
+                    s += json.dumps(properties[k])  # Use dumps not str so we preserve type in output
+                    # s += properties[k].encode('ascii', 'ignore') # Python 2.x barfs if you try to write unicode into an ascii file
+                except:
+                    s += "<unicode encoding error>"
+                s += ","
+            s += "\n"
             self.logfile.write(s)
             self.logtext += s
+            jprops = properties.copy()
+            jprops["$ts"] = jprops["$ts"] * 1000 # Convert timestamp to ms as that's what DP uses internally in JSON files
+            self.jsonfile.write(json.dumps(jprops, sort_keys=True)+",\n")
 
         self.client = client
         self.engine = engine
@@ -62,6 +76,8 @@ class Events():
             mode = "wt"
         self.logfile = open("../synth_logs/"+instance_name+".evt", mode, 0)    # Unbuffered
         self.logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
+        self.jsonfile = open("../synth_logs/"+instance_name+".json", mode, 0)
+        self.jsonfile.write("[\n")
 
         self.logtext = ""   # TODO: Probably a Bad Idea to store this in memory. Instead when we want this we should probably close the logfile, read it and then re-open it
 
@@ -106,3 +122,6 @@ class Events():
     def flush(self):
         """Call at exit to clean up."""
         self.logfile.flush()
+        self.jsonfile.seek(-3,1)    # Move back over final comma, linefeed, newline
+        self.jsonfile.write("\n]\n")
+        self.jsonfile.flush()

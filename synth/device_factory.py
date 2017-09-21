@@ -74,20 +74,7 @@ def get_device_by_property(prop, value):
     return None
 
 def log_entry(write_log, time, properties):
-    write_log(pendulum.from_timestamp(time).to_datetime_string()+" ")
-    for k in sorted(properties.keys()):
-        s = str(k) + ","
-        if isinstance(properties[k], basestring):
-            try:
-                s += json.dumps(properties[k])  # Use dumps not str so we preserve type in output
-                # s += properties[k].encode('ascii', 'ignore') # Python 2.x barfs if you try to write unicode into an ascii file
-            except:
-                s += "<unicode encoding error>"
-        else:
-            s += json.dumps(properties[k])
-        s += ","
-        write_log(s) # Property might contain unicode
-    write_log("\n")
+    write_log(properties)
 
 ##def logString(s, time=None):
 ##    logging.info(s)

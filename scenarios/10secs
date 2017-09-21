@@ -9,7 +9,7 @@
 		{
 			"at" : "PT1S",
 			"repeats" : 10,
-			"interval" : "PT1S",
+			"interval" : "PT0S",
 			"action": {
 				"create_device" : {
 			    	"functions" : {
