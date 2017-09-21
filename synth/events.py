@@ -100,7 +100,6 @@ class Events():
                                              device_factory.create_device,
                                              (instance_name, client, engine, updateCallback, write_log, action["create_device"]))
                 elif "query" in action:
-                    print "registering query at",at_time
                     engine.register_event_at(at_time,
                                              query_action,
                                              action["query"])

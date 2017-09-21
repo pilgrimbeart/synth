@@ -41,7 +41,6 @@ def compose_class(class_names):
 def create_device(args):
     global devices
     def callback(device_id, time, properties):
-        print "time=",time,"properties=",properties
         write_log(properties)
         update_callback(device_id, time, properties)
 
