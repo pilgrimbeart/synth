@@ -38,11 +38,13 @@ class Sim(Engine):
     """Capable of both historical and real-time simulation,
        and of moving smoothly between the two"""
 
-    def __init__(self, params, cb = None):
+    def __init__(self, params, cb = None, event_count_callback = None):
         self.set_start_time_str(params.get("start_time", "now"))
         self.set_end_time_str(params.get("end_time", None))
+        self.end_after_events = params.get("end_after_events", None)
         self.caughtUpCallback = cb
         self.caughtUp = False
+        self.event_count_callback = event_count_callback
         self.events = []     # A sorted list of simulation callbacks: [(epochTime,function,arg), ...]
 
     def set_now(self,epochSecs):
@@ -95,6 +97,11 @@ class Sim(Engine):
                 if self.caughtUpCallback:
                     self.caughtUpCallback()  # Mustn't create new events, or deadlock will occur
             self.caughtUp = True
+
+        if self.end_after_events:
+            if self.event_count_callback() >= self.end_after_events:
+                logging.info("Ending simulation because hit end_after_events limit of "+str(self.end_after_events))
+                return False
             
         simLock.acquire()       # <--
         try:

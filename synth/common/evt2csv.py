@@ -29,7 +29,7 @@ import logging
 import json
 
 SEP = "!"
-TIME_FORMAT = "%012d" # leading zeroes allow sorted() to time-sort
+TIME_FORMAT = "%012.3f" # leading zeroes allow sorted() to time-sort, milli-second precision
 
 def insert_properties(the_dict, properties):
     """Update an event dict."""
@@ -44,7 +44,7 @@ def insert_properties(the_dict, properties):
         newProps.append( (k, properties[k]) )
 
     # Insert
-    key = TIME_FORMAT % int(float(properties["$ts"])) + SEP + str(properties["$id"])
+    key = TIME_FORMAT % float(properties["$ts"]) + SEP + str(properties["$id"])
     if key in the_dict:
         existingProps = the_dict[key] # Extend list if it already exists
     else:
@@ -52,7 +52,6 @@ def insert_properties(the_dict, properties):
     existingProps.extend(newProps)
 
     the_dict[key] = existingProps
-
 
 def convert_to_csv(the_dict):
     """Convert dict and return a CSV file contents as a string"""

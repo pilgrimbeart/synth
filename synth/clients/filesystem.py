@@ -64,7 +64,9 @@ class Filesystem(Client):
     
     def close(self):
         """Called to clean up on exiting."""
+        logging.info("Preparing CSV file")
         csv = evt2csv.convert_to_csv(self.events)
+        logging.info("Writing CSV file")
         filename = "../synth_logs/"+self.params["filename"]+".csv"
         open(filename,"wt").write(csv)
         logging.info("A total of "+str(csv.count("\n"))+" rows (including a header row) were written to "+filename)        

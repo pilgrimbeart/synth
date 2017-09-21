@@ -110,6 +110,9 @@ def main():
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
                     engine.register_event_in(0, device_factory.external_event, webParams)
 
+    def event_count_callback():
+        return events.event_count
+    
     logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
     
     params = get_params()
@@ -126,7 +129,7 @@ def main():
     if not "engine" in params:
         logging.error("No simulation engine defined")
         return
-    engine = importer.get_class('engine', params['engine']['type'])(params['engine'], client.enter_interactive)
+    engine = importer.get_class('engine', params['engine']['type'])(params['engine'], client.enter_interactive, event_count_callback)
     g_get_sim_time = engine.get_now_no_lock
 
     if not "events" in params:

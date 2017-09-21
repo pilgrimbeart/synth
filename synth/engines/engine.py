@@ -6,9 +6,10 @@ class Engine(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, params, cb):
+    def __init__(self, params, cb, event_count_callback):
         """If defined, <cb> callback will be called when (if) simulator moves from historical to real-time.
-           This callback must NOT create new events, or deadlock will occur"""
+           This callback must NOT create new events, or deadlock will occur.
+           event_count_callback is a function to find out how many events have been emitted"""
         pass
 
 ## This now split into events_to_come() and next_event()
