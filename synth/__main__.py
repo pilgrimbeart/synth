@@ -182,6 +182,10 @@ def main():
 
     logging.info("Elapsed real time: "+str(int(time.time()-Tstart))+" seconds")
 
+    if err_str=="":
+        exit(0)
+    exit(-1)
+    
 if __name__ == "__main__":
 ##    import cProfile, pstats
 ##    cProfile.run('main()', 'profiling')
