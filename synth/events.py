@@ -142,7 +142,7 @@ class Events():
     def json_check_next_file(self):
         """Check if time to move to next json file"""
         self.json_events_in_this_file += 1
-        if self.json_events_in_this_file > JSON_EVENTS_PER_FILE:
+        if self.json_events_in_this_file >= JSON_EVENTS_PER_FILE:
             self.json_move_to_next_file()
             self.json_events_in_this_file = 0
         
