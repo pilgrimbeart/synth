@@ -36,11 +36,6 @@ class Engine(object):
         pass
 
     @abstractmethod
-    def register_events_at(self, times, func, arg=None):
-        """Schedule multiple events at times[]"""
-        pass
-
-    @abstractmethod
     def register_event_in(self, interval, event):
         """Schedule an event (callback) after a given interval from current sim time"""
         pass

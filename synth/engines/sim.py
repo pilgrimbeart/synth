@@ -26,6 +26,7 @@
 import time
 import logging
 import threading
+import bisect
 from common import ISO8601
 from common.conftime import richTime
 
@@ -152,26 +153,31 @@ class Sim(Engine):
         time.sleep(min(1.0, wait))
         self.set_now(time.time())    # So that any events injected asynchronously will correctly get stamped with current time
 
-    def _add_events(self, L):
-        for e in L:
-            if e[0] == 0:
-                logging.info("Advisory: Setting event at epoch=0 (not illegal, but often a sign of a mistake)")
-            elif e[0] < self.get_now():
-                logging.info("Advisory: Setting event in the past (not illegal, but often a sign of a mistake)")
-        simLock.acquire()
-        self.events = sorted(self.events + L)   # TODO: Might be more efficient to append and then sort in place?
-        simLock.release()
-    
-    def register_event_at(self, time, func, arg=None):
-        L = [(time, func, arg)]
-        self._add_events(L)
-        
-    def register_events_at(self, times, func, arg=None):
-        L = [(t,func,arg) for t in times]
-        self._add_events(L)
+    def _add_event(self, time, func, arg):
+        if time == 0:
+            logging.info("Advisory: Setting event at epoch=0 (not illegal, but often a sign of a mistake)")
+        elif time < self.get_now():
+            logging.info("Advisory: Setting event in the past (not illegal, but often a sign of a mistake)")
 
+        simLock.acquire()
+        bisect.insort(self.events, (time, func, arg)) # Efficient since we know the list is kept sorted
+        simLock.release()
+
+##        try:
+##            simLock.acquire()   # <---
+##            if len(self.events) > 0:    # Avoid sorting whole list if we're just adding to end. But this never happens!
+##                if self.events[-1] < L[0]:
+##                    self.events.extend(L)
+##                    return
+##            self.events = sorted(self.events + L)   # TODO: Might be more efficient to append and then sort in place?
+##        finally:
+##            simLock.release()   # --->
+
+          
+    def register_event_at(self, time, func, arg=None):
+        self._add_event(time, func, arg)
+        
     def register_event_in(self, deltaTime, func, arg=None):
         assert deltaTime >= 0
-        L = [(self.get_now() + deltaTime, func, arg)]
-        self._add_events(L)
+        self._add_event(self.get_now() + deltaTime, func, arg)
 

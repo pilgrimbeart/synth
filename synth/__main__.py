@@ -183,6 +183,8 @@ def main():
     logging.info("Elapsed real time: "+str(int(time.time()-Tstart))+" seconds")
 
 if __name__ == "__main__":
-    # import cProfile
-    # cProfile.run('main()', "profiling")
-    main()
+    import cProfile, pstats
+    cProfile.run('main()', 'profiling')
+    p = pstats.Stats('profiling')
+    p.sort_stats('time').print_stats(20)
+# main()
