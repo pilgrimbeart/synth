@@ -7,9 +7,9 @@
 	},
 	"events" : [
 		{
-			"at" : "PT1S",
+			"at" : "PT0S",
 			"repeats" : 10,
-			"interval" : "PT0S",
+			"interval" : "PT1S",
 			"action": {
 				"create_device" : {
 			    	"functions" : {

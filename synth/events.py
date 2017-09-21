@@ -63,7 +63,7 @@ class Events():
             self.logfile.write(s)
             self.logtext += s
             jprops = properties.copy()
-            jprops["$ts"] = jprops["$ts"] * 1000 # Convert timestamp to ms as that's what DP uses internally in JSON files
+            jprops["$ts"] = int(jprops["$ts"] * 1000) # Convert timestamp to ms as that's what DP uses internally in JSON files
             self.jsonfile.write(json.dumps(jprops, sort_keys=True)+",\n")
 
         self.client = client

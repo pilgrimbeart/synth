@@ -41,7 +41,8 @@ def compose_class(class_names):
 def create_device(args):
     global devices
     def callback(device_id, time, properties):
-        log_entry(write_log, time, properties)
+        print "time=",time,"properties=",properties
+        write_log(properties)
         update_callback(device_id, time, properties)
 
     (instance_name, client, engine, update_callback, write_log, params) = args
@@ -73,8 +74,6 @@ def get_device_by_property(prop, value):
                 return d
     return None
 
-def log_entry(write_log, time, properties):
-    write_log(properties)
 
 ##def logString(s, time=None):
 ##    logging.info(s)
