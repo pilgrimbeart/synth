@@ -23,8 +23,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# TODO: Make actions pluggable?
-
 from datetime import datetime
 import logging
 import json

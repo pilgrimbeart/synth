@@ -71,9 +71,9 @@ def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/d
 
 def readParamfile(filename):
     try:
-        s = open("scenarios/"+filename,"rt").read()
+        s = open("scenarios/"+filename+".json","rt").read()
     except:
-        s = open("../synth_accounts/"+filename,"rt").read()
+        s = open("../synth_accounts/"+filename+".json","rt").read()
     return s
 
 def get_params():

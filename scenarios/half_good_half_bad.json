@@ -1,0 +1,69 @@
+{
+    "restart_log" : true,
+    "engine" :
+    {
+        "type" : "sim",
+        "start_time" : "2017-09-14T00:00:00",
+        "end_time" : null,
+        "end_after_events" : 90000
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 5,
+            "interval" : "PT0H",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "heartbeat" : {
+                            "interval" : "PT1M"
+                        },
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT30M",
+                                    "transition": "PT16M",
+                                    "invert" : true,
+                                    "comment" : "So devices will be sending heartbeats for first 15 minutes, then timeout"
+                                }
+                            }
+                        },
+                        "variable" : {
+                            "name" : "count",
+                            "timefunction" : {
+                                "count" : {
+                                    "interval" : "PT1M"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "at" : "PT0S",
+            "repeats" : 5,
+            "interval" : "PT0H",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "heartbeat" : {
+                            "interval" : "PT1M"
+                        },
+                        "variable" : {
+                            "name" : "count",
+                            "timefunction" : {
+                                "count" : {
+                                    "interval" : "PT1M"
+                                }
+                            }
+                        },
+                        "names" :
+                        {
+                        }
+                    }
+                }
+            }
+        }        
+    ]
+}
