@@ -7,13 +7,29 @@ from common import importer
 
 class Variable(Device):
     def __init__(self, instance_name, time, engine, update_callback, params):
-        """A property whose value is driven by some time function"""
+        """A property whose value is static or driven by some time function."""
+        def create_var(params):
+            var_name = params["name"]
+            if "value" in params:
+                var_value = params["value"]
+                self.set_property(var_name, var_value)
+            elif "timefunction" in params:
+                tf_name = params["timefunction"].keys()[0]
+                var_value = importer.get_class("timefunction", tf_name)(engine, params["timefunction"][tf_name])
+                print "tf_name",tf_name,"var_value",var_value
+                self.set_property(var_name, var_value.state())
+                engine.register_event_at(var_value.next_change(), self.tick_variable, (var_name, var_value))
+            else:
+                assert False,"variable " + var_name + " must have either value or timefunction"
+            self.variables.append( (var_name, var_value) )
+
         super(Variable, self).__init__(instance_name, time, engine, update_callback, params)
-        self.variable_name = params["variable"]["name"]
-        tf = params["variable"]["timefunction"]
-        self.variable_timefunction = importer.get_class("timefunction", tf.keys()[0])(engine, tf[tf.keys()[0]])
-        self.set_property(self.variable_name, self.variable_timefunction.state())
-        engine.register_event_at(self.variable_timefunction.next_change(), self.tick_variable, self)
+        self.variables = [] # List of (name, value) and <value> may be a static value or a timefunction 
+        if type(params["variable"]) == dict:
+            create_var(params["variable"])
+        else:
+            for v in params["variable"]:
+                create_var(v)
 
     def comms_ok(self):
         return super(Variable, self).comms_ok()
@@ -26,7 +42,8 @@ class Variable(Device):
 
     # Private methods
 
-    def tick_variable(self, _):
-        new_value = self.variable_timefunction.state()
-        self.set_property(self.variable_name, new_value, always_send=False)
-        self.engine.register_event_at(self.variable_timefunction.next_change(), self.tick_variable, self)
+    def tick_variable(self, args):
+        (name, function) = args
+        new_value = function.state()
+        self.set_property(name, new_value, always_send=False)
+        self.engine.register_event_at(function.next_change(), self.tick_variable, args)
