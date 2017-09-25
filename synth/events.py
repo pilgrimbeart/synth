@@ -67,7 +67,9 @@ class Events():
             self.json_check_next_file()
             jprops = properties.copy()
             jprops["$ts"] = int(jprops["$ts"] * 1000) # Convert timestamp to ms as that's what DP uses internally in JSON files
-            self.jsonfile.write(json.dumps(jprops, sort_keys=True)+",\n")
+            if self.json_events_in_this_file > 0:
+                self.jsonfile.write(",\n")
+            self.jsonfile.write(json.dumps(jprops, sort_keys=True))
 
             self.event_count += 1
             
@@ -140,15 +142,16 @@ class Events():
         """Check if time to move to next json file"""
         if self.jsonfile is None:
             self.json_move_to_next_file()
-        if self.json_events_in_this_file >= JSON_EVENTS_PER_FILE:
+            return
+        if self.json_events_in_this_file >= JSON_EVENTS_PER_FILE-1:
             self.json_move_to_next_file()
+            return
         self.json_events_in_this_file += 1
-        
+
     def json_close_file(self):
         if self.jsonfile is not None:
-            self.jsonfile.seek(-3,1)    # Move back over final comma, linefeed, newline
+            # self.jsonfile.seek(-3,1)    # Move back over final comma, linefeed, newline
             self.jsonfile.write("\n]\n")
-            self.jsonfile.flush()
             self.jsonfile.close()
             self.jsonfile = None
 
