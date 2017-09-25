@@ -1,56 +1,56 @@
 {
-	"restart_log" : true,
+    "restart_log" : true,
     "engine" : {
-		"type" : "sim",
-    	"start_time" : "-PT24H",
-    	"end_time" : "now"
-	},
-	"events" : [
-		{
-			"at" : "PT0S",
-			"comment" : "A device with a some constant properties and a variable property",
-			"action": {
-				"create_device" : {
-			    	"functions" : {
-			    		"variable" : [
-			    			{
-			    				"name" : "unchanging_number",
-			    				"value" : 42
-			    			},
-			    			{
-			    				"name" : "unchanging_string",
-			    				"value" : "42"
-			    			},
-			    			{
-			    				"name" : "varying_number",
-			    				"timefunction" : {
-			    					"sinewave" : {
-			    						"period" : "PT24H"
-			    					}
-			    				}			    				
-			    			}
-			    		]
-			    	}
-				}
-		    }
-		},
-		{
-			"at" : "PT0S",
-			"comment" : "A device with a variable squarewave property",
-			"action": {
-				"create_device" : {
-			    	"functions" : {
-			    		"variable" : {
-			    			"name" : "squarewave",
-			    			"timefunction" : {
-			    				"pulsewave" : {
-			    					"interval" : "PT30M"
-			    				}
-			    			}
-			    		}
-			    	}
-				}
-		    }
-		}
-	]
+        "type" : "sim",
+        "start_time" : "-PT24H",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "comment" : "A device with a some constant properties and a variable property",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : [
+                            {
+                                "name" : "unchanging_number",
+                                "value" : 42
+                            },
+                            {
+                                "name" : "unchanging_string",
+                                "value" : "42"
+                            },
+                            {
+                                "name" : "varying_number",
+                                "timefunction" : {
+                                    "sinewave" : {
+                                        "period" : "PT24H"
+                                    }
+                                }                                
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "at" : "PT0S",
+            "comment" : "A device with a variable squarewave property",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : {
+                            "name" : "squarewave",
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT30M"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
 }

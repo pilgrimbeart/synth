@@ -1,32 +1,32 @@
 {
-	"restart_log" : true,
+    "restart_log" : true,
     "engine" : {
-		"type" : "sim",
-    	"start_time" : "-PT10H",
-    	"end_time" : "now"
-	},
-	"events" : [
-		{	# A device with periodic comms outages
-			"at" : "PT0S",
-			"repeats" : 10,
-			"interval" : "PT1S",
-			"action": {
-				"create_device" : {
-			    	"functions" : {
-			    		"heartbeat" : {
-			    			"interval" : "PT60S"
-			    		},
-			    		"commswave" : {
-			    			"timefunction" : {
-			    				"pulsewave" : {
-			    					"interval" : "PT20M",
-			    					"invert" : true	# So devices will be sending heartbeats for first 10 minutes, then timeout
-			    				}
-			    			}
-			    		}
-			    	}
-				}
-		    }
-		}
-	]
+        "type" : "sim",
+        "start_time" : "-PT10H",
+        "end_time" : "now"
+    },
+    "events" : [
+        {    # A device with periodic comms outages
+            "at" : "PT0S",
+            "repeats" : 10,
+            "interval" : "PT1S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "heartbeat" : {
+                            "interval" : "PT60S"
+                        },
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT20M",
+                                    "invert" : true    # So devices will be sending heartbeats for first 10 minutes, then timeout
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
 }

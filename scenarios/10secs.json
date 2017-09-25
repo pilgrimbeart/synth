@@ -1,36 +1,36 @@
 {
-	"restart_log" : true,
+    "restart_log" : true,
     "engine" : {
-		"type" : "sim",
-    	"start_time" : "now",
-    	"end_time" : "PT10S"
-	},
-	"events" : [
-		{
-			"at" : "PT0S",
-			"repeats" : 10,
-			"interval" : "PT1S",
-			"action": {
-				"create_device" : {
-			    	"functions" : {
-			    		"battery" : {
-			    			"life_mu" : "PT1M",
-			    			"life_sigma" : "PT0M",
-			    			"autoreplace" : false
-			    		},
-			    		"names" : {},
-			    		"firmware" : {},
-			    		"latlong" : {
-			    			"area_centre" : "London, UK",
-			    			"area_radius" : "Berlin, Germany"
-			    		},
-			    		"comms" : {
-			    			"reliability" : 0.1,
-			    			"period" : "PT1H"
-			    		}
-			    	}
-				}
-		    }
-		}
-	]
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "PT10S"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 10,
+            "interval" : "PT1S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "battery" : {
+                            "life_mu" : "PT1M",
+                            "life_sigma" : "PT0M",
+                            "autoreplace" : false
+                        },
+                        "names" : {},
+                        "firmware" : {},
+                        "latlong" : {
+                            "area_centre" : "London, UK",
+                            "area_radius" : "Berlin, Germany"
+                        },
+                        "comms" : {
+                            "reliability" : 0.1,
+                            "period" : "PT1H"
+                        }
+                    }
+                }
+            }
+        }
+    ]
 }

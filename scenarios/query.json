@@ -1,52 +1,52 @@
 {
-	"restart_log" : true,
+    "restart_log" : true,
     "engine" : {
-		"type" : "sim",
-    	"start_time" : "2017-01-01T00:00:00",
-    	"end_time" : "2017-01-02T00:00:00"
-	},
-	"events" : [
-		{
-			"at" : "PT0S",
-			"repeats" : 1,
-			"interval" : "PT1S",
-			"comment" : "A device with periodic comms outages",
-			"action": {
-				"create_device" : {
-			    	"functions" : {
-			    		"heartbeat" : {
-			    			"interval" : "PT60S"
-			    		},
-			    		"commswave" : {
-			    			"timefunction" : {
-			    				"pulsewave" : {
-			    					"interval" : "PT20M",
-			    					"invert" : true,
-			    					"comment" : "So devices will be sending heartbeats for first 10 minutes, then timeout"
-			    				}
-			    			}
-			    		}
-			    	}
-				}
-		    }
-		},
-		{
-			"at" : "2017-01-01T23:59:59",
-			"action": {
-				"devicepilot_sync" : {
-				}
-		    }
-		},
-		{
-			"at" : "PT0S",
-			"action": {
-				"devicepilot_testquery" : {
-					"start" : "2017-01-01T00:00:00",
-					"end" : "2017-01-02T00:00:00",
-					"op" : "duration",
-					"valueFilterStr" : "$ts > ago(86400)"
-				}
-		    }
-		}
-	]
+        "type" : "sim",
+        "start_time" : "2017-01-01T00:00:00",
+        "end_time" : "2017-01-02T00:00:00"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 1,
+            "interval" : "PT1S",
+            "comment" : "A device with periodic comms outages",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "heartbeat" : {
+                            "interval" : "PT60S"
+                        },
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT20M",
+                                    "invert" : true,
+                                    "comment" : "So devices will be sending heartbeats for first 10 minutes, then timeout"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "at" : "2017-01-01T23:59:59",
+            "action": {
+                "devicepilot_sync" : {
+                }
+            }
+        },
+        {
+            "at" : "PT0S",
+            "action": {
+                "devicepilot_testquery" : {
+                    "start" : "2017-01-01T00:00:00",
+                    "end" : "2017-01-02T00:00:00",
+                    "op" : "duration",
+                    "valueFilterStr" : "$ts > ago(86400)"
+                }
+            }
+        }
+    ]
 }
