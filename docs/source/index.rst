@@ -14,6 +14,7 @@ Welcome to Synth's documentation!
    device_functions
    time_functions
    web_endpoints
+   output_file_formats
    examples
 
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#
 """EVENTS
    Spawn events at given times"""
 #
@@ -31,8 +30,9 @@ import device_factory
 from common import query
 from common import evt2csv
 from common import ISO8601
+from common import json_writer
 
-JSON_EVENTS_PER_FILE = 10000
+LOG_DIRECTORY = "../synth_logs/"
 
 class Events():
     def __init__(self, instance_name, restart_log, client, engine, updateCallback, eventList):
@@ -63,13 +63,8 @@ class Events():
             s += "\n"
             self.logfile.write(s)
             self.logtext.append(s)
-            
-            self.json_check_next_file()
-            jprops = properties.copy()
-            jprops["$ts"] = int(jprops["$ts"] * 1000) # Convert timestamp to ms as that's what DP uses internally in JSON files
-            if self.json_events_in_this_file > 0:
-                self.jsonfile.write(",\n")
-            self.jsonfile.write(json.dumps(jprops, sort_keys=True))
+
+            self.json_stream.write_event(properties)
 
             self.event_count += 1
             
@@ -82,9 +77,9 @@ class Events():
         self.file_mode = "at"
         if restart_log:
             self.file_mode = "wt"
-        self.logfile = open("../synth_logs/"+instance_name+".evt", self.file_mode, 0)    # Unbuffered
+        self.logfile = open(LOG_DIRECTORY+instance_name+".evt", self.file_mode, 0)    # Unbuffered
         self.logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
-        self.jsonfile = None
+        self.json_stream = json_writer.Stream(instance_name)
         self.logtext = []   # TODO: Probably a Bad Idea to store this in memory. Instead when we want this we should probably close the logfile, read it and then re-open it. We store as an array because appending to a large string gets very slow
 
         at_time = engine.get_now()
@@ -124,38 +119,7 @@ class Events():
                 at_time += isodate.parse_duration(interval).total_seconds()
                 repeats -= 1
 
-    def json_move_to_next_file(self):
-        """Move to next json file"""
-        if self.jsonfile is None:
-            self.json_file_count = 1
-        else:
-            self.json_close_file()
-            self.json_file_count += 1
-
-        filename = "../synth_logs/" + self.instance_name + "%05d" % self.json_file_count + ".json"
-        logging.info("Starting new logfile "+filename)
-        self.jsonfile = open(filename, self.file_mode, 0)
-        self.jsonfile.write("[\n")
-        self.json_events_in_this_file = 0
-
-    def json_check_next_file(self):
-        """Check if time to move to next json file"""
-        if self.jsonfile is None:
-            self.json_move_to_next_file()
-            return
-        if self.json_events_in_this_file >= JSON_EVENTS_PER_FILE-1:
-            self.json_move_to_next_file()
-            return
-        self.json_events_in_this_file += 1
-
-    def json_close_file(self):
-        if self.jsonfile is not None:
-            # self.jsonfile.seek(-3,1)    # Move back over final comma, linefeed, newline
-            self.jsonfile.write("\n]\n")
-            self.jsonfile.close()
-            self.jsonfile = None
-
     def flush(self):
         """Call at exit to clean up."""
         self.logfile.flush()
-        self.json_close_file()
+        self.json_stream.close()
