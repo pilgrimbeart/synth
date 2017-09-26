@@ -1,3 +1,23 @@
+"""
+latlong
+=======
+Scatters devices on the surface of the Earth in a realistic way according to population.
+If no arguments are provided, devices are scattered across the whole Earth.
+Uses a Google Maps API.
+
+Arguments::
+
+    {
+        "area_centre" : e.g. "London, UK"
+        "area_radius" : e.g. "Manchester, UK"
+    }
+
+Properties::
+
+    latitude : latitude in degrees as a floating-point number
+    longitude : longitude in degrees as a floating-point number
+"""
+
 from device import Device
 from helpers.geo import geo
 

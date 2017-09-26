@@ -1,3 +1,20 @@
+"""
+heartbeat
+=========
+Forces the device to communicate at regular intervals so that communications timeouts can be detected by the service.
+Doesn't set any properties.
+
+Arguments::
+
+    {
+        "interval" : as an ISO8601 duration e.g. "PT10M"
+    }
+
+Properties::
+
+    (none)
+"""
+
 from device import Device
 import random
 import isodate

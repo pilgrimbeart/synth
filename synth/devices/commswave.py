@@ -1,5 +1,18 @@
-"""Commswave
-   Takes comms up and down according to some time function
+"""
+commswave
+=========
+Takes device communications up and down according to a timefunction.
+Comms will be working whenever the timefunction returns non-zero.
+
+Arguments::
+
+    {
+        "timefunction" : A timefunction definition
+    }
+
+Properties::
+
+    (none)
 """
 
 from device import Device

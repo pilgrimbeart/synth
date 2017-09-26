@@ -25,7 +25,7 @@
 import json, httplib, urllib
 import logging
 
-GOOGLE_MAPS_API_KEY = open("../synth_certs/googlemapskey","rt").read().strip()
+GM_KEY_PATH = "../synth_certs/googlemapskey"
 
 def set_headers():
     """Sets the headers for sending to the DM server.
@@ -45,10 +45,12 @@ def address_to_lon_lat(address):
 
     (lng,lat) = (None, None)
 
+    google_maps_api_key = open(GM_KEY_PATH,"rt").read().strip()
+
     logging.info("Looking up "+str(address)+" in Google Maps")
     #try:
     conn = httplib.HTTPSConnection("maps.google.com")   # Must now use SSL
-    URL = '/maps/api/geocode/json' + '?' + urllib.urlencode({'key':GOOGLE_MAPS_API_KEY}) + '&' + urllib.urlencode({'address':address})
+    URL = '/maps/api/geocode/json' + '?' + urllib.urlencode({'key':google_maps_api_key}) + '&' + urllib.urlencode({'address':address})
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
     result = resp.read()

@@ -1,4 +1,20 @@
-"""Generates pulsewaves of defined interval, mark-space and offset"""
+"""
+pulsewave
+=========
+Generates a pulse-wave with programmable characteristics.
+The transition argument is either a percentage (default to 50%) or an ISO8601 duration.
+
+Arguments::
+
+    {
+        "interval" : the period of the cycle e.g. "PT10M"
+        "transition" : (optional) the delay to the mid transition, as a percentage or interval "PT10M"
+        "delay" : (optional) a time delay by which to shift the waveform
+        "invert" : (optional) inverts the output
+        "phase_absolute" : (optional) if true then phase is relative to Jan 1970 (so all similar functions will be aligned), otherwise to when timefunction is created
+    }
+"""
+
 
 from timefunction import Timefunction
 import isodate

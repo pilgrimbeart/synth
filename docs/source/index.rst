@@ -11,6 +11,11 @@ Welcome to Synth's documentation!
    :caption: Contents:
 
    introduction
+   device_functions
+   time_functions
+   web_endpoints
+   examples
+
 
 Indices and tables
 ==================

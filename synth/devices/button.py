@@ -1,5 +1,18 @@
-"""Button
-   Presses a button on the device according to some time function"""
+"""
+button
+======
+Presses a button on the device, according to some timefunction.
+
+Arguments::
+
+    {
+        "timefunction" : A time function specification.
+    }
+
+Properties::
+
+    button_press : Sent as a 1 on every button press
+"""
    
 import logging
 from device import Device

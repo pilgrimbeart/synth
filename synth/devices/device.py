@@ -1,7 +1,6 @@
 # abc for a device
 from abc import ABCMeta, abstractmethod
 
-
 class Device(object):
     __metaclass__ = ABCMeta
 

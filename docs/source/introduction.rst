@@ -1,21 +1,21 @@
 Welcome to Synth
 ================
 
-You need to build and test your Internet of Things services and applications before the "Things" themselves exist. You need to check they'll work at a greater scale than the number of devices currently in use. And it's hard to build effective regression tests using actual devices.
+Connected devices are being deployed in every market sector in increasing numbers. A significant challenge of the Internet of Things is how to test IoT services? Services must typically be brought-up ahead of the widespread availability of the devices they will serve, yet testing a service requires an estate of devices to test it with – a chicken-and-egg problem. And as a proposition grows in the market, operators will wish to continually test services at a scale perhaps an order-of-magnitude greater than the number of devices currently in use, to find bottlenecks and weaknesses in the service.
 
-``Synth`` aims to solve these chicken-and-egg problems by generating realistic IoT test data, allowing you to test and scale your IoT services and applications ahead of device availability.
+    * Manually testing a service with physical devices is far too slow and error-prone and simply doesn’t fit within a modern CI/CD/TDD framework
+    * Maintaining an estate of physical devices for automated testing has some merits – but is impractical at a scale of more than 100 or so devices, and doesn’t scale well across many developers
+    * Therefore there is a need for a tool capable of synthesising virtual devices, at scale. Such emulated devices then comprise a virtual device ‘estate’ which can be thrown at a service to prove that it works correctly at any scale
 
-Synth can...
-************
- * Simulate any number of devices
- * Simulate devices with various functions
- * Generate historical data, e.g. a full year of data
- * Generate live data for interactive or load-testing
- * Push data (historical or live) into IoT services such as AWS IoT and DevicePilot
- * Interactive test and demo your service
- * Generate output files in a variety of formats
+Synth is such a tool. It has the unusual capability to create data both in batch and interactive modes, and seamlessly to morph from one to the other, making it useful for several purposes including: 
 
-Synth's plug-in architecture also makes it easy to modify and extend to suit your own needs.
+    * Generating realistic device datasets: both static and historical time-series
+    * Dynamic testing of services
+    * Demonstrating IoT services interactively, having first generated a plausible history to this moment, without requiring access to real user data which is often subject to data confidentiality.
+
+Synth's plug-in architecture also makes it easy to modify and extend to suit your own needs. Synth was developed as a tool to help test and demonstrate DevicePilot, the cloud service for managing IoT devices, but it’s independent of DevicePilot and can be used with any framework - it comes with an AWS-IoT client too, for example. 
+
+Synth was released under the permissive open-source MIT license in 2017. 
 
 Getting started
 ***************
@@ -38,8 +38,16 @@ Directory structure
 Synth uses various data directories, some of which are in the directory *above* the Synth source code because they contain sensitive data which we don't want to e.g. commit in git.
  * ``../synth_logs``: Synth creates output files here. You'll have to create this directory yourself the first time
  * ``../synth_accounts``: parameter files containing information about how to contact remote services such as IoT clients, and keys for them
- * ``../synth_certs``: keys for 3rd-party services used by some Synth modules (e.g. Google Maps)
+ * ``../synth_certs``: keys for 3rd-party services used by some Synth modules (see Certificates below)
  * ``scenarios``: parameter files defining different simulation scenarios - see below
+
+
+Certificates
+************
+The ../synth_certs directory contains the following files which are private to you:
+    * ssl.crt and ssl.csl: the two SSL certificate files necessary to enable Flask to securely accept and make HTTPS:// connections.
+    * webkey: a single line of characters which for security must be presented as an argument during incoming GET requests to the Synth webserver “/” path (see Web endpoints)
+    * googlemapskey: a single line of characters which will be presented to the Google Maps API when a “placename to (long,lat)’ lookup is done (only if the area_centre/radius parameters are used)
 
 Command-line arguments
 **********************
@@ -82,6 +90,17 @@ Currently three types of Synth client are supported:
  * *aws*: A client which can write into an AWS-IoT account
 
 Clients are plug-ins, loaded by name, so you can add your own client just by defining its class in the synth/clients directory.
+
+For the DevicePilot client, find your DevicePilot access key as follows:
+
+    1. Log on to your DevicePilot account
+    2. Click Settings / My User and find your key in the API Key section
+
+For the AWS client, you can create an AWS access key as follows:
+
+    * Log on to your AWS account
+    * Click IAM / Users / <username>
+    * In the Security tab, click “Create Access Key”
 
 Scenarios
 ---------
@@ -145,43 +164,11 @@ The event can optionally repeat, so for example a simulation which starts with t
         }
     ]
 
-Device Functions
-****************
-Devices are composed of **functions** which are plug-in defined in the **devices** directory. All devices inherit the Basic device function, which has a unique $id but doesn't actually do anything.
-You can specify as many functions as you like. Functions are composable (a device is constructed by inheriting from all specified functions) so functions can interact with each other if necessary.
-A list of currently-available functions and their parameters:
-
-    * ???
-    * ???
-    * ???
-
 
 Contribute!
 ***********
-Synth is an open-source project released under the permissive MIT licence and you are very welcome to contribute to it at https://github.com/devicepilot/synth
+Synth is an open-source project released under the permissive MIT licence. We welcome your contributions and feature requests at https://github.com/devicepilot/synth
 
 Editing these docs
 ******************
 This documentation is built using Sphinx. If you edit any documentation, run ``make html`` to regenerate this HTML documentation.
-
-
-Example files
-*************
-
-Accounts
---------
-
-``OnFStest.json``::
-
-    {
-        "instance_name" : "OnFStest",
-        "web_key" : "dummy",
-        "client" : {
-            "type" : "filesystem",
-            "filename" :"OnFStest"
-        }
-    }
-
-Scenario files
---------------
-[insert some here and document them]

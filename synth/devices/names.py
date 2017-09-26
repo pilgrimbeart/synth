@@ -1,3 +1,19 @@
+"""
+names
+=====
+Provides first name and last name of device owner, chosen randomly hashed by $id.
+
+Arguments::
+
+    {
+    }
+
+Properties::
+
+    first_name : the owner's first name
+    last_name : the owner's last name
+"""
+
 from device import Device
 from helpers import people_names
 

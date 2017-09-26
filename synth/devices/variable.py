@@ -1,5 +1,26 @@
-"""Variable
-   A property whose value is driven by some time function"""
+"""
+variable
+========
+Creates device properties which can be static (if "value" is defined)
+or driven by some timefunction (if "timefunction" is defined)
+
+
+Arguments::
+
+    {
+        "name" : the name of the variable
+        "value" : a static number or string
+        "timefunction" : a timefunction definition
+    }
+
+    -or-
+
+    [an array of the above to create multiple properties]
+
+Properties::
+
+    <name> : (properties are created according to the "name" argument)
+"""
    
 import logging
 from device import Device

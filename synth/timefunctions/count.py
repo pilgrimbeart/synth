@@ -1,4 +1,15 @@
-"""Generates a monotonically-rising count"""
+"""
+count
+=======
+Generates a monotonically rising count at defined intervals.
+
+Arguments::
+
+    {
+        "interval" : the time between counts
+    }
+"""
+
 
 from timefunction import Timefunction
 import isodate

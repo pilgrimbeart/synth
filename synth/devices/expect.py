@@ -1,9 +1,23 @@
-"""EXPECT
-   Plug-in device function which watches-out for expected incoming messages.
-   We're given a time function (i.e. one which returns 0 or 1 at different moments in time)
-   and an event name. Our "window" when we expect to receive exactly one event
-   is each period where the function returns 1.
-   We expect to receive no events when it is returning 0.
+"""
+expect
+======
+Watch-out for expected incoming messages.
+A timefunction definition returns 0 or 1 at different moments in time.
+We expect to receive no events when the timefunction returns 0.
+We expect to receive exactly one event each time the timefunction returns 1.
+Expect also creates a histogram chart of events
+
+Arguments::
+
+    {
+        "timefunction" : defines window when events are expected
+        "event_name" : name of expected incoming events
+        "slack_webhook" : Optionally, a Slack channel to post updates to
+    }
+
+Properties::
+
+    (none)
 """
 
 import logging, datetime

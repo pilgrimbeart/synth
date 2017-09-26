@@ -1,4 +1,15 @@
-"""Combine timefunctions according to a given operator"""
+"""
+mix
+===
+Combine timefunctions according to some operator.
+
+Arguments::
+
+    {
+        "timefunctions" : [] an array of timefunctions
+        "operator" : How to combine the timefunctions ("and" and "mul" currently supported)
+    }
+"""
 
 from timefunction import Timefunction
 from common import importer

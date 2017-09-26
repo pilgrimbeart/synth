@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+"""
+Top-level module for the DevicePilot Synth project.
+Generate and exercise synthetic devices for testing and demoing IoT services.
+"""
 #
-# Top-level module for the SYNTH project
-# Generate and exercise synthetic devices for testing and demoing DevicePilot
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #

@@ -1,3 +1,23 @@
+"""
+battery
+=======
+A battery which runs-out and can be replaced.
+When the battery has run out, communications are inhibited.
+
+Arguments::
+
+    {
+        "life_mu" : the average length of battery life, e.g. "PT5M"
+        "life_sigma" : the random deviation on this number - defaults to none
+        "autoreplace" : set to true to auto-replace the battery when exhausted
+    }
+
+Properties::
+
+    battery : current battery level as an integer percentage
+"""
+
+
 from device import Device
 import random
 import isodate

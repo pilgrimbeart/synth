@@ -1,3 +1,19 @@
+"""
+light
+=====
+Simulates a light sensors, given a device which has a longitude and latitude.
+Reacts appropriately to location on Earth, time-of-day and season-of-year.
+
+Arguments::
+
+    {
+    }
+
+Properties::
+
+    light : updates once an hour with the local light level
+"""
+
 from device import Device
 from helpers.solar import solar
 import random

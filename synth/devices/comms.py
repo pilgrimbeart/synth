@@ -1,3 +1,22 @@
+"""
+comms
+=====
+Simulates unreliable communications between device and service.
+If an RSSI property is available, this is used to further modify the reliability.
+
+Arguments::
+
+    {
+        "reliability" : Either a fraction 0.0..1.0, or a string containing a specification of the trajectory
+        "period" : How often the comms goes up and down - defaults to once a day
+    }
+
+Properties::
+
+    (none)
+"""
+
+
 from device import Device
 import random
 import isodate
@@ -9,7 +28,7 @@ BAD_RSSI = -120.0
 class Comms(Device):
     def __init__(self, instance_name, time, engine, update_callback, params):
         self.ok_comms = True
-        self.comms_reliability = params["comms"].get("reliability", 1.0) # Either a fraction, or a string containing a specification of the trajectory
+        self.comms_reliability = params["comms"].get("reliability", 1.0)
         self.comms_up_down_period = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
         engine.register_event_in(0, self.tick_comms_up_down, self)
         super(Comms,self).__init__(instance_name, time, engine, update_callback, params)   # Set ourselves up before others do, so comms up/down takes effect even on device "boot"
@@ -41,7 +60,6 @@ class Comms(Device):
         delta_time = random.expovariate(1.0 / self.comms_up_down_period)
         delta_time = min(delta_time, self.comms_up_down_period * 100.0) # Limit long tail
         self.engine.register_event_in(delta_time, self.tick_comms_up_down, self)
-
 
 # Model for comms unreliability
 # -----------------------------

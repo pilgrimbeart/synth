@@ -1,4 +1,20 @@
-"""A basic device implementation"""
+"""
+basic
+=====
+This function is inherited by all devices.
+
+Arguments::
+
+    {
+    }
+
+Properties::
+
+    $id - a unique random property which looks like a MAC address
+    is_demo_device - to identify that this is a Synth-created device
+    label - A human-readable label "Thing 0", "Thing 1" etc.
+"""
+
 import random
 import logging
 from device import Device

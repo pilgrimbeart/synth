@@ -1,4 +1,14 @@
-"""Generates sinewaves of defined period"""
+"""
+sinewave
+========
+Generates a sinusoidal wave of programmable period. 32 points are generated per cycle.
+
+Arguments::
+
+    {
+        "period" : the period of the cycle e.g. "PT10M"
+    }
+"""
 
 from timefunction import Timefunction
 import isodate
