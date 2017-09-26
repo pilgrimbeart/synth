@@ -53,13 +53,13 @@ So e.g.::
 
 	python synth OnFStest full_fat_device
 
-will make Synth run the ``scenarios/full_fat_device.json`` scenario on account ``../synth_accounts/FStest.json``.
+will make Synth run the ``scenarios/full_fat_device.json`` scenario on the account defined in ``../synth_accounts/OnFStest.json``.
 
 Whilst accounts and scenarios are generally defined in parameter files as described below, it is also possible to make (or override) simple definitions by specifying JSON directly on the command line as an argument e.g.::
 
 		python synth OnFStest full_fat_device {\"restart_log\" : true}
 
-When Synth runs it emits various hopefully informative log messages. These are time-stamped with the current _simulation_ time, which will not be the current real time (unless Synth has caught-up with real time).
+When Synth runs it emits various hopefully informative log messages. These are time-stamped with the current **simulation** time, which will not be the current real time (unless Synth has caught-up with real time).
 
 Parameter Files
 ***************
@@ -70,7 +70,7 @@ Synth parameter files are JSON structures. To add self-documentation your Synth 
 Accounts
 --------
 These are stored in the ``..\synth_accounts`` directory and are personal to you. See bottom for examples - you'll need to edit these to include your own private keys etc.
-An account file _must_ contain:
+An account file **must** contain:
 
  * "instance_name" : this defines what to call this running instance of Synth. It's used to name log files, and also to distinguish incoming event traffic intended for this particular instance
  * "client" {} : the name of the output client to use and any parameters it requires
@@ -87,12 +87,14 @@ Scenarios
 ---------
 These are stored in the ``scenarios`` directory. A set of examples is provided and you can change or copy these to suit your needs.
 
-An scenario file _must_ contain:
+A scenario file **must** contain:
 
  * "engine" : {} : which simulation engine to use.
  * "events" : {} : events to generate during the simulation run.
 
-Currently the only engine available is "sim", which requires just "start_time" and "end_time" to be defined e.g.::
+Simulation Engines
+------------------
+Currently the only engine available is "sim" which requires just "start_time" and "end_time" to be defined e.g.::
 
     "engine" : {
         "type" : "sim",
@@ -100,26 +102,34 @@ Currently the only engine available is "sim", which requires just "start_time" a
         "end_time" : "PT10S"
     }
 
+You may also specify `end_after_events` to terminate the simulation after a precise number of events have been generated - helpful when constructing precise test scenarios - in which case you probably want to set `"end_time" : null`.
 
-Time
-----
+The `sim` engine is event-driven so it hops from event to event rather than ticking through e.g. milliseconds, so large time spans will simulate quickly if the events are sparse.
+
+`sim` will never let the current simulation time advance past the current real time, because many IoT clients don't like having data from the future posted into them. So when it catches-up with real-time it prints a log message and then drops into real-time simulation, waiting second by second to ensure that it never advances past the current time. Thus `sim` is capable of creating an historical record and then seamlessly moving into real-time interactive simulation, which can be useful for constructing interactive service demos with a history.
+
+A note about Time
+-----------------
 Time/date parameters in Synth are always strings and can be any of::
 
-	"2017-01-01T00:00:00" # An ISO8601 format datetime
-	"now"                 # The current real time. For example, if you set engine { "start" : "now" } then the simulation will start at the current time. Or { "end" : "now" } will finish at the current time.
-	"PT5M"                # An ISO8601 duration, relative to the current simulation time. This for example means "5 minutes later". In some contexts negative durations are allowed e.g. "-PT4H"
-	null	              # For end times, this means "never"
+    "2017-01-01T00:00:00" # An ISO8601 format datetime
+    "now"                 # The current real time. For example, if you set engine `{ "start" : "now" }` then the simulation will start at the current real time. Or { "end" : "now" } will finish at the current time.
+    "PT5M"                # An ISO8601 duration, relative to the current simulation time. This for example means "5 minutes later". Negative durations are allowed in some contexts e.g. "-PT4H"
+    null	              # For end times, this means "never"
+    "when_done"           # For end times, this means "when no further events are pending"
 
 NOTE: Currently ISO8601 durations greater than Days are not correctly supported due to a bug in the <isodate> module.
 
 Events
 ------
-The *events* section of a scenario file is a list of events to trigger during the simulation run. Each requires at least::
+The *events* section of a scenario file is a list of events to trigger during the simulation run. Each event requires at least::
 
-    "at" : "now"	# The time at which the event happens (can be relative)
-    "action" : {}	# The action to conduct. Generally this create_device, but can also be a client-specific method
+    [
+        "at" : "now"	# The time at which the event happens (can be relative)
+        "action" : {}	# The action to conduct. Generally this create_device, but can also be a client-specific method
+    ]
 
-Optionally the event can repeat, so for example to start the simulation (i.e. at relative time PT0S) by creation 10 devices, one every minute::
+The event can optionally repeat, so for example a simulation which starts with the creation of 10 devices, one per minute, would look like this::
 
     "events" : [
         {
@@ -135,10 +145,15 @@ Optionally the event can repeat, so for example to start the simulation (i.e. at
         }
     ]
 
-
 Device Functions
 ****************
+Devices are composed of **functions** which are plug-in defined in the **devices** directory. All devices inherit the Basic device function, which has a unique $id but doesn't actually do anything.
+You can specify as many functions as you like. Functions are composable (a device is constructed by inheriting from all specified functions) so functions can interact with each other if necessary.
+A list of currently-available functions and their parameters:
 
+    * ???
+    * ???
+    * ???
 
 
 Contribute!
@@ -169,3 +184,4 @@ Accounts
 
 Scenario files
 --------------
+[insert some here and document them]
