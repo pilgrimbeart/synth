@@ -35,6 +35,11 @@ class Client:
         pass
 
     @abstractmethod
+    def bulk_upload(self, file_list):
+        """Upload bulk data"""
+        pass
+
+    @abstractmethod
     def tick(self):
         """Called periodically for housekeeping."""
         pass

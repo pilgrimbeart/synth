@@ -38,7 +38,6 @@ Comment lines begin with `***`
 
 .csv files
 ----------
-
 These are Microsoft Excel "comma-separated value" files. Unlike the above file formats, every column must be specified on every row. However if values haven't changed, then the cell can be empty. The first row is a header row. $ts is in epoch-seconds::
     $ts,$id,battery,is_demo_device,label
     1483228800.0,6a-02-d2-4c-5d-31,100,True,Thing 0,

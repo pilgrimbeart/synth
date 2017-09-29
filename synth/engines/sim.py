@@ -32,57 +32,62 @@ from common.conftime import richTime
 
 from engines.engine import Engine
 
-simLock = threading.Lock() # Protects events[] and simTime to make sim thread-safe, as event-injection can happen asynchronously (we can't use Queues because we need peeking)
-# TODO: Get rid of this global
-
 class Sim(Engine):
     """Capable of both historical and real-time simulation,
        and of moving smoothly between the two"""
 
     def __init__(self, params, cb = None, event_count_callback = None):
+        self.sim_lock = threading.Lock() # Protects events[] and sim_time to make sim thread-safe, as event-injection can happen asynchronously (we can't use Queues because we need peeking)
         self.set_start_time_str(params.get("start_time", "now"))
         self.set_end_time_str(params.get("end_time", None))
         self.end_after_events = params.get("end_after_events", None)
-        self.caughtUpCallback = cb
-        self.caughtUp = False
+        self.caught_up_callback = cb
+        self.caught_up = False
         self.event_count_callback = event_count_callback
-        self.events = []     # A sorted list of simulation callbacks: [(epochTime,function,arg), ...]
+        self.events = []     # A sorted list of simulation callbacks: [(epochTime,sortkeycount,function,arg), ...]
+        self.sort_key_count = 0
 
-    def set_now(self,epochSecs):
-        simLock.acquire()
-        self.simTime = epochSecs
-        simLock.release()
+
+    def set_now(self, epochSecs):
+        self.sim_lock.acquire()
+        self.sim_time = epochSecs
+        self.sim_lock.release()
 
     def set_now_str(self,timeString):
         self.set_time(richTime(timeString))
 
     def set_start_time_str(self, timeString):
         t = richTime(timeString)
-        self.startTime = t
+        self.start_time = t
         self.set_now(t)
 
     def set_end_time_str(self,timeString):
         """<timeString> can be:
             None (for never end)
-            'now' to end when simulation reaches current time
+            'now' to end when simulation reaches current time (i.e. current time when simulation was run - otherwise it gets hard to e.g. schedule events for end time!)
             'when_done' to end when no further events are pending
             or else an ISO8601 absolute or relative time"""
-        if timeString in [None, "now", "when_done"]:
-            self.endTime = timeString
+        if timeString in [None, "when_done"]:
+            self.end_time = timeString
+        elif timeString == "now":
+            self.end_time = time.time()
         else:
-            self.endTime = richTime(timeString)
+            self.end_time = richTime(timeString)
 
     def get_start_time(self):
-        return self.startTime
+        return self.start_time
+
+    def get_end_time(self):
+        return self.end_time
     
     def get_now(self):
-        simLock.acquire()
-        t = self.simTime
-        simLock.release()
+        self.sim_lock.acquire()
+        t = self.sim_time
+        self.sim_lock.release()
         return t
 
     def get_now_no_lock(self):
-        return self.simTime
+        return self.sim_time
 
     def get_now_1000(self):
         return int(self.get_now() * 1000)
@@ -92,12 +97,12 @@ class Sim(Engine):
 
     def events_to_come(self):
         """Return False if simulation has definitely ended"""
-        def caughtUp():
-            if not self.caughtUp:
+        def caught_up():
+            if not self.caught_up:
                 logging.info("Caught-up with real time")
-                if self.caughtUpCallback:
-                    self.caughtUpCallback()  # Mustn't create new events, or deadlock will occur
-            self.caughtUp = True
+                if self.caught_up_callback:
+                    self.caught_up_callback()  # Mustn't create new events, or deadlock will occur
+            self.caught_up = True
 
         if self.end_after_events:
             if self.event_count_callback() >= self.end_after_events:
@@ -105,33 +110,33 @@ class Sim(Engine):
                 return False
             
         try:
-            simLock.acquire()       # <--
+            self.sim_lock.acquire()       # <--
             
-            if self.simTime >= time.time() - 1.0:   # Allow a bit of slack because otherwise we might never quite catch-up, because we always wait to ensure we don't
-                caughtUp()
+            if self.sim_time >= time.time() - 1.0:   # Allow a bit of slack because otherwise we might never quite catch-up, because we always wait to ensure we don't
+                caught_up()
 
-            if self.endTime == None:
+            if self.end_time == None:
                 return True
 
-            if self.endTime == "when_done":
+            if self.end_time == "when_done":
                 keep_going = len(self.events)>0
                 if not keep_going:
                     logging.info("No further events")
                 return keep_going
                            
-            if self.endTime=="now":    # Terminate when we've caught-up with real-time
-                if self.simTime >= (time.time()-1.0):   # Allow some slack
-                    caughtUp()
+            if self.end_time=="now":    # Terminate when we've caught-up with real-time
+                if self.sim_time >= (time.time()-1.0):   # Allow some slack
+                    caught_up()
                     logging.info("Caught up with real time")
                     return False
                 return True
 
-            if self.simTime >= self.endTime:
-                logging.info("Reached simulation end time")
+            if self.sim_time >= self.end_time:
+                logging.info("Reached simulation end time with "+str(len(self.events))+" events still in future")
                 return False
             return True
         finally:
-            simLock.release()   # -->
+            self.sim_lock.release()   # -->
             
     def next_event(self):
         """Execute next event
@@ -139,44 +144,47 @@ class Sim(Engine):
            If we have to wait for real time to catch up, then
            new external events can appear asychronously whilst we wait.
            So we wait only a short period and then release so can reassess from scratch again soon (and so any other heartbeats can happen)."""
-        simLock.acquire()           # <---
+        self.sim_lock.acquire()           # <---
         if len(self.events) < 1:
             logging.info("No events pending")
             wait = 1.0
         else:
-            (t,fn,arg) = self.events[0]
+            (t,skc,fn,arg) = self.events[0]
             wait = t - time.time()
             if wait <= 0:
                 self.events.pop(0)
-                simLock.release()   # --->
+                self.sim_lock.release()   # --->
                 self.set_now(t)
                 logging.debug(str(fn.__name__)+"("+str(arg)+")")
                 fn(arg)             # Note that this is likely to itself inject more events, so we must have released lock
                 return
-        simLock.release()           # --->
+        self.sim_lock.release()           # --->
         logging.info("Waiting {:.2f}s for real time".format(wait))
         time.sleep(min(1.0, wait))
         self.set_now(time.time())    # So that any events injected asynchronously will correctly get stamped with current time
 
     def _add_event(self, time, func, arg):
+        """If multiple events are inserted at the same time, we guarnatee they'll get executed in order.
+        We do this by ensuring that the second item in the tuple is a monotonically rising number"""
         if time == 0:
             logging.info("Advisory: Setting event at epoch=0 (not illegal, but often a sign of a mistake)")
         elif time < self.get_now():
             logging.info("Advisory: Setting event in the past (not illegal, but often a sign of a mistake)")
 
-        simLock.acquire()
-        bisect.insort(self.events, (time, func, arg)) # Efficient since we know the list is kept sorted
-        simLock.release()
+        self.sim_lock.acquire()
+        bisect.insort(self.events, (time, self.sort_key_count, func, arg)) # Efficient since we know the list is kept sorted.
+        self.sort_key_count += 1
+        self.sim_lock.release()
 
 ##        try:
-##            simLock.acquire()   # <---
+##            self.sim_lock.acquire()   # <---
 ##            if len(self.events) > 0:    # Avoid sorting whole list if we're just adding to end. But this never happens!
 ##                if self.events[-1] < L[0]:
 ##                    self.events.extend(L)
 ##                    return
 ##            self.events = sorted(self.events + L)   # TODO: Might be more efficient to append and then sort in place?
 ##        finally:
-##            simLock.release()   # --->
+##            self.sim_Lock.release()   # --->
 
           
     def register_event_at(self, time, func, arg=None):
@@ -186,3 +194,7 @@ class Sim(Engine):
         assert deltaTime >= 0
         self._add_event(self.get_now() + deltaTime, func, arg)
 
+    def dump_events(self):
+        logging.info("EVENT QUEUE:")
+        for e in self.events:
+            logging.info(str(e))

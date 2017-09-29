@@ -37,7 +37,6 @@ class Variable(Device):
             elif "timefunction" in params:
                 tf_name = params["timefunction"].keys()[0]
                 var_value = importer.get_class("timefunction", tf_name)(engine, params["timefunction"][tf_name])
-                print "tf_name",tf_name,"var_value",var_value
                 self.set_property(var_name, var_value.state())
                 engine.register_event_at(var_value.next_change(), self.tick_variable, (var_name, var_value))
             else:

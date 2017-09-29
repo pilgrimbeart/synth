@@ -136,7 +136,7 @@ def main():
 
     if not "events" in params:
         logging.warning("No events defined")
-    events = Events(params["instance_name"], params.get("restart_log",False), client, engine, client.update_device, params["events"])
+    events = Events(params["instance_name"], params.get("restart_log",False), client, engine, params["events"])
 
     zeromq_rx.init(postWebEvent)
 

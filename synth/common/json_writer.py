@@ -8,11 +8,15 @@ DEFAULT_DIRECTORY = "../synth_logs/"
 DEFAULT_MAX_EVENTS_PER_FILE = 10000
 
 class Stream():
+    """Write properties into JSON files, splitting by max size.
+       If you access .files_written property then call close() first"""
     def __init__(self, filename, directory = DEFAULT_DIRECTORY, file_mode="wt", max_events_per_file = DEFAULT_MAX_EVENTS_PER_FILE):
         self.file_path = directory + filename
         self.file_mode = file_mode
         self.max_events_per_file = max_events_per_file
         self.file = None
+        self.files_written = []
+        self.file_count = 1
 
     def write_event(self, properties):
         self.check_next_file()
@@ -24,17 +28,15 @@ class Stream():
 
     def move_to_next_file(self):
         """Move to next json file"""
-        if self.file is None:
-            self.file_count = 1
-        else:
+        if self.file is not None:
             self.close()
-            self.file_count += 1
 
         filename = self.file_path + "%05d" % self.file_count + ".json"
         logging.info("Starting new logfile " + filename)
         self.file = open(filename, self.file_mode, 0)
         self.file.write("[\n")
         self.events_in_this_file = 0
+        self.files_written.append(filename)
 
     def check_next_file(self):
         """Check if time to move to next json file"""
@@ -48,7 +50,9 @@ class Stream():
 
     def close(self):
         if self.file is not None:
+            logging.info("Closing JSON file")
             self.file.write("\n]\n")
             self.file.close()
             self.file = None
-
+            self.file_count += 1
+           

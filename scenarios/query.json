@@ -33,14 +33,14 @@
         {
             "at" : "2017-01-01T23:59:59",
             "action": {
-                "devicepilot_sync" : {
+                "client.sync" : {
                 }
             }
         },
         {
             "at" : "PT0S",
             "action": {
-                "devicepilot_testquery" : {
+                "client.test_query" : {
                     "start" : "2017-01-01T00:00:00",
                     "end" : "2017-01-02T00:00:00",
                     "op" : "duration",

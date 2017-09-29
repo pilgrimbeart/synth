@@ -27,11 +27,36 @@ or::
 
 	git clone https://github.com/devicepilot/synth
 
-To check that Synth is installed correctly, do::
+To test that Synth is installed correctly:
 
-   python synth OnFStest full_fat_device
+1) Create an account file at ../synth_accounts/OnFStest containing::
 
-Initially this will fail because you need to create some directories as follows...
+    {
+        "instance_name" : "OnFStest",
+        "client" :
+        {
+            "type" : "filesystem",
+            "filename" :"OnFStest"
+        }
+    }
+
+2) Ensure there's a scenario file in scenarios/10secs containing::
+
+    {
+        "device_count" : 10,
+        "start_time" : "now",
+        "end_time" : "PT10S",
+        "install_timespan" : 10
+    }
+
+3) Now on the command line run::
+
+    python synth OnFStest 10secs
+
+This will run for 10 seconds and create output files including::
+
+    ../synth_logs/OnFStest.evt  - a log of all generated events
+    ../synth_logs/OnFStest.csv  - the output from the 'filesystem' client
 
 Directory structure
 *******************
@@ -139,30 +164,13 @@ Time/date parameters in Synth are always strings and can be any of::
 
 NOTE: Currently ISO8601 durations greater than Days are not correctly supported due to a bug in the <isodate> module.
 
-Events
-------
-The *events* section of a scenario file is a list of events to trigger during the simulation run. Each event requires at least::
+What next
+*********
+Have a look at some scenario files and once you're ready to try modifying and creating them, the following references will be useful:
 
-    [
-        "at" : "now"	# The time at which the event happens (can be relative)
-        "action" : {}	# The action to conduct. Generally this create_device, but can also be a client-specific method
-    ]
-
-The event can optionally repeat, so for example a simulation which starts with the creation of 10 devices, one per minute, would look like this::
-
-    "events" : [
-        {
-        "at" : "PT0S",
-        "repeats" : 10,
-        "interval" : "PT1M",
-        "action": {
-            "create_device" : {
-                "functions" : {
-                    ...
-                }
-            }
-        }
-    ]
+    * :doc:`events_and_actions`
+    * :doc:`device_functions`
+    * :doc:`time_functions`
 
 
 Contribute!

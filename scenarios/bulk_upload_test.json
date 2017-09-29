@@ -2,15 +2,12 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "2017-01-01T00:00:00",
-        "end_time" : null,
-        "end_after_events" : 10
+        "start_time" : "-P30D",
+        "end_time" : "now"
     },
     "events" : [
+        {"action": {"client.mute" : true}},
         {
-            "at" : "PT0S",
-            "repeats" : 1,
-            "interval" : "PT1S",
             "action": {
                 "create_device" : {
                     "functions" : {
@@ -18,13 +15,17 @@
                             "name" : "count",
                             "timefunction" : {
                                 "count" : {
-                                    "interval" : "PT1M"
+                                    "interval" : "PT1H"
                                 }
                             }
                         }
                     }
                 }
             }
-        }
+        },
+        {"at" : "end"},
+        {"action": {"bulk_upload" : { } }},
+        {"action": {"client.mute" : false }},
+        {"action": {"send_top" : { } }}
     ]
 }

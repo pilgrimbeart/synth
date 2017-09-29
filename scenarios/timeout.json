@@ -10,7 +10,7 @@
             "at" : "PT0S",
             "action" :
             {
-                "devicepilot_create_filters" : [
+                "client.create_filters" : [
                     {
                         "$description" : "Down (test)",
                         "where" : "$ts < ago(300)",

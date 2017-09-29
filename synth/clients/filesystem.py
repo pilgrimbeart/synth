@@ -1,4 +1,23 @@
-"""A client for Synth which dumps events to the filesystem as a CSV file"""
+r"""
+Filesystem Client
+=================
+This client posts event data to the local filesystem, and is useful for offline testing of scenarios.
+In addition to the .evt file that Synth emits, the Filesystem client also emits
+a .csv file.
+
+Filesystem Client specification
+-------------------------------
+The client accepts the following parameters
+(usually found in the "On*.json" file in ../synth_accounts)::
+
+    "client" :
+    {
+        "type" : "filesystem",
+        "filename" :"OnFStest"
+    }
+
+There are no Filesystem-specific event actions.
+"""
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #
@@ -57,6 +76,10 @@ class Filesystem(Client):
         pass
     
     def enter_interactive(self):
+        pass
+
+    def bulk_upload(self, file_list):
+        logging.warning("Bulk upload action ignored by filesystem client")
         pass
 
     def tick(self):

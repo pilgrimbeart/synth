@@ -3,14 +3,11 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "2017-01-01T00:00:00",
-        "end_time" : null,
-        "end_after_events" : 10
+        "end_time" : "2017-01-01T00:10:00"
     },
     "events" : [
         {
             "at" : "PT0S",
-            "repeats" : 1,
-            "interval" : "PT1S",
             "action": {
                 "create_device" : {
                     "functions" : {
@@ -24,6 +21,18 @@
                         }
                     }
                 }
+            }
+        },
+        {
+            "at" : "PT0M",
+            "action": {
+                "send_top" : { }
+            }
+        },
+        {
+            "at" : "PT10M",
+            "action": {
+                "send_top" : { }
             }
         }
     ]

@@ -1,6 +1,61 @@
 #!/usr/bin/env python
-#
-# Drive the DevicePilot API
+r"""
+DevicePilot Client
+==================
+This client posts event data into DevicePilot. It is also capable of doing historical bulk uploads and being interactive. It can also delete devices, create DevicePilot filters, events and actions.
+
+DevicePilot Client specification
+--------------------------------
+The client accepts the following parameters (usually found in the "On*.json" file in ../synth_accounts)::
+
+    "client" : {
+        "type" : "devicepilot",
+        "devicepilot_api" : "https://api.devicepilot.com",
+        "devicepilot_key" : "xxxxxxxxxxxxxxxxxxxx", # Your key from DevicePilot Settings page
+        "devicepilot_min_post_period" : "PT10S",    # Optional. Do not post more often than this.
+        "devicepilot_max_items_per_post" : 500,     # Optional. Individual posts cannot be bigger than this (the DP /ingest endpoint has a 1MB payload limit per post)
+        "aws_access_key_id" : "xxxxxxxxxxxxxxxx",   # Optional (AWS credential only required if you use bulk_upload action)
+        "aws_secret_access_key" : "xxxxxxxxxxxxxxxxxxxxx",  # Ditto
+        "aws_region" : "eu-west-1"                          # Ditto
+    }
+
+DevicePilot Client event actions
+--------------------------------
+If you're using the DevicePilot client then the following client-specific actions are available:
+
+Create arbitrary DevicePilot filters::
+
+    "action" :
+    {
+        "client.create_filters" : [
+            {
+                "$description" : "Down (test)",
+                "where" : "$ts < ago(300)",
+                "monitor" : true,
+                "action" : {
+                    "$description": "Notify Synth of timeout (test)",
+                    "body": "{\n\"deviceId\" : \"{device.$id}\",\n\"eventName\" : \"notifyTimeout\"\n}",
+                    "headers": {
+                        "Instancename": "<<<instance_name>>>",
+                        "Key": "<<<web_key>>>"
+                    },
+                    "method": "POST",
+                    "target": "request",
+                    "url": "https://synth.devicepilot.com/event"
+                }
+            }
+        ]
+    }
+
+Synchronise with DevicePilot (i.e. wait until all data ingested into DevicePilot has become available)::
+
+    "action" : { "client.sync" : {} }
+
+"Mute" DevicePilot output (while muted all new events are discarded rather than being sent to DevicePilot)::
+
+    "action" : { "client.mute" : true|false }
+
+"""
 #
 # Copyright (c) 2017 DevicePilot Ltd.
 #
@@ -29,6 +84,7 @@ from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import httplib, urllib
 import isodate
+import boto3 # AWS library for bulk upload
 from clients.client import Client
 from common import ISO8601
 
@@ -55,9 +111,10 @@ class Devicepilot(Client):
     def __init__(self, params):
         """There are two types of queue-throttling:
             1) flush_criterion says "don't post until you have X messages (or X secs have passed)"
-            2) throttle_seconds_per_post says "don't post more than X messages per second
+            2) throttle_seconds_per_post says "ensure X seconds between any post"
         """
         logging.info("Initialising DevicePilot client")
+        self.params = params
         self.url = params["devicepilot_api"]
         self.key = params["devicepilot_key"]
         self.throttle_seconds_per_post = params.get("devicepilot_throttle_seconds_per_post", None)
@@ -66,6 +123,7 @@ class Devicepilot(Client):
         self.min_post_period = isodate.parse_duration(params.get("devicepilot_min_post_period", "PT60S")).total_seconds()
         self.max_items_per_post = params.get("devicepilot_max_items_per_post", 500)
         self.last_post_time = time.time() - self.min_post_period    # Allow first post immediately
+        self.mute = False
         # queue_criterion/limit sets how often we flush messages to DevicePilot API
         # If criterion=="messages" then limit is number of messages, e.g. 1000
         # If criterion=="time" then limit is amount of simulated time passing, e.g. sim.days(30)
@@ -88,7 +146,8 @@ class Devicepilot(Client):
     def update_device(self, device_id, time, properties):
         props = properties.copy()
         props.update({"$id" : device_id, "$ts" : time})
-        self.post_queue.append(props)
+        if not self.mute:
+            self.post_queue.append(props)
         self.flush_post_queue_if_ready()
 
     def get_device(self, device_id):
@@ -107,7 +166,43 @@ class Devicepilot(Client):
         # self.queue_flush_criterion = "interactive"
         # self.queue_flush_limit = 1
         # self.min_post_period = 1
-    
+
+    def bulk_upload(self, file_list):
+        """Upload bulk data"""
+        if "aws_access_key_id" in self.params:
+##            print self.params.get("aws_access_key_id", None)
+##            print self.params.get("aws_secret_access_key", None)
+##            print self.params.get("aws_region", None)
+            client = boto3.client('lambda',
+                        aws_access_key_id=self.params.get("aws_access_key_id", None),
+                        aws_secret_access_key=self.params.get("aws_secret_access_key", None),
+                        region_name=self.params.get("aws_region", None))
+        else:
+            logging.info("bulk_upload: No AWS credentials supplied so using defaults")
+            client = boto3.client('lambda')
+
+        token = 'Token '+self.key
+
+        for count, file_name in enumerate(file_list):
+            logging.info("Bulk uploading "+file_name)
+            points = json.load(open(file_name, "rt"))
+            payload = json.dumps({ 
+                'apiKey': token,
+                'points': points,
+                'last' : (count==len(file_list)-1)
+            })
+            # print "payload in:",payload
+            response = client.invoke(
+                FunctionName='api-digest-staging-inject',
+                InvocationType='RequestResponse',
+                Payload=payload,
+                )
+            ret = response['Payload'].read()
+            assert ret=="{}", ret
+
+    def tick(self):
+        self.flush_post_queue_if_ready()
+
     def close(self):
         logging.info("Closing DevicePilot client. "+str(len(self.post_queue))+" items to flush.")
         while len(self.post_queue):
@@ -115,9 +210,6 @@ class Devicepilot(Client):
             time.sleep(1)
         # self.recalcHistorical(device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
         logging.info("A total of "+str(self.post_count)+" items were posted to DevicePilot")
-
-    def tick(self):
-        self.flush_post_queue_if_ready()
 
     # Optional methods
     
@@ -314,7 +406,7 @@ class Devicepilot(Client):
 
     # PLUG-IN ACTIONS
 
-    def devicepilot_create_filters(self, filters):
+    def PLUGIN_create_filters(self, filters):
         """Create arbitrary DevicePilot filters"""
 ##        print "/savedSearches (aka Filters):"
 ##        print json.dumps(self.get_all_X(SAVEDSEARCH_ENDPOINT), indent=4, sort_keys=True, separators=(',', ': '))
@@ -334,7 +426,7 @@ class Devicepilot(Client):
             if monitor or (action is not None):
                 incident_ID = self.create_incidentconfig(filter_ID, notification_ID)   # When filter matches, do the action
 
-    def devicepilot_testquery(self, params):
+    def PLUGIN_test_query(self, params):
         body = {}
         for p in params:
             if p in ["start","end"]:
@@ -344,7 +436,7 @@ class Devicepilot(Client):
         resp = self.session.post(self.url+"/query", verify=True, headers=set_headers(self.key), data=json.dumps(body))
         assert resp.ok, str(resp.reason) + str(resp.text)
 
-    def devicepilot_sync(self, _):
+    def PLUGIN_sync(self, _):
         """Synchronise Synth with DevicePilot (i.e. wait until data in Synth is consistent)"""
         logging.info("Synchronising with DevicePilot")
         t = time.time()
@@ -360,3 +452,9 @@ class Devicepilot(Client):
             time.sleep(10)
         self.delete_devices_where(where_str)
         logging.info("Synchronised with DevicePilot")
+
+    def PLUGIN_mute(self, mute):
+        """Mute or unmute this client posting to DevicePilot"""
+        self.mute = mute
+        logging.info("DevicePilot mute is now "+str(mute))
+        
