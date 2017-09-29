@@ -1,0 +1,65 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {"action": {"client.mute" : true}},
+        {
+            "repeats" : 30,
+            "interval" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "comms" : {
+                            "reliability" : 0.8,
+                            "period" : "PT1H"
+                        },
+                        "heartbeat" : {
+                            "interval" : "PT1H"
+                        },
+                        "latlong" : {
+                            "area_centre" : "London, UK",
+                            "area_radius" : "Berlin, Germany"
+                        },
+                        "variable" : {
+                            "name" : "revision",
+                            "value" : 1
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 30,
+            "interval" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "comms" : {
+                            "reliability" : 0.9,
+                            "period" : "PT24H"
+                        },
+                        "heartbeat" : {
+                            "interval" : "PT1H"
+                        },
+                        "latlong" : {
+                            "area_centre" : "London, UK",
+                            "area_radius" : "Berlin, Germany"
+                        },
+                        "variable" : {
+                            "name" : "revision",
+                            "value" : 2
+                        }
+                    }
+                }
+            }
+        },
+        {"at" : "end"},
+        {"action": {"bulk_upload" : { } }},
+        {"action": {"client.mute" : false }},
+        {"action": {"client.send_top" : { } }}
+    ]
+}

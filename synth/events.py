@@ -56,12 +56,7 @@ Bulk upload all events generated so far to the client::
     "bulk_upload" : {
     }
 
-Resend to the client the newest-known value of every property of every devices (aka the 'top')::
-
-    "send_top" : {
-    }
-
-Execute any action defined by the current Synth client (e.g. AWS, DevicePilot, filesystem etc.)::
+Execute an action on whichever Synth client is in use (e.g. aws, devicepilot, filesystem etc.)::
 
     "client.<action>" {
         <whatever parameters it expects>
@@ -121,7 +116,7 @@ class Events():
                 logging.error("Ignoring action '"+str(name)+"' as client "+str(client.__class__.__name__)+" does not support it")
 
         def write_event_log(properties):
-            """Write .evt and .json entries, and update top"""
+            """Write .evt and .json entries"""
             s = pendulum.from_timestamp(properties["$ts"]).to_datetime_string()+" "
 
             for k in sorted(properties.keys()):
@@ -136,10 +131,6 @@ class Events():
             self.logfile.write(s)
             self.logtext.append(s)
 
-            self.json_stream.write_event(properties)
-
-            self.update_top(properties)
-
             self.event_count += 1
             
         self.client = client
@@ -151,11 +142,7 @@ class Events():
         self.logfile = open(LOG_DIRECTORY+instance_name+".evt", self.file_mode, 0)    # Unbuffered
         self.logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
 
-        self.json_stream = json_writer.Stream(instance_name)
-
         self.logtext = []   # TODO: Probably a Bad Idea to store this in memory. Instead when we want this we should probably close the logfile, read it and then re-open it. We store as an array because appending to a large string gets very slow
-
-        self.top_devices = {}
 
         at_time = engine.get_now()
         for event in eventList:
@@ -174,7 +161,7 @@ class Events():
             interval = event.get("interval","PT0S")
 
             while repeats > 0:
-                # Built-in actions (yes, these should really be plug-in too!)
+                # Built-in actions. TODO: Make these plug-in too?
                 if action is None:
                     pass
                 elif "create_device" in action:
@@ -185,19 +172,12 @@ class Events():
                     engine.register_event_at(at_time,
                                              query_action,
                                              action["query"])
-                elif "bulk_upload" in action:
-                    engine.register_event_at(at_time,
-                                             self.bulk_upload,
-                                             0)
-                elif "send_top" in action:
-                    engine.register_event_at(at_time,
-                                             self.send_top,
-                                             0)
                 else:   # Plug-in actions
                     name = action.keys()[0]
                     if not name.startswith("client."):
                         logging.error("Ignoring unrecognised action "+name)
-                    engine.register_event_at(at_time,
+                    else:
+                        engine.register_event_at(at_time,
                                              client_action,
                                              (name[7:], action[name]))
 ##                    
@@ -213,44 +193,3 @@ class Events():
     def flush(self):
         """Call at exit to clean up."""
         self.logfile.flush()
-        self.json_stream.close()
-
-    def update_top(self, new_properties):
-        """ 'top' means the latest-known value of each property, for each device.
-            The structure of top is:
-                A set of devices
-                    Each of which is a set of properties
-                        Each of which is a (time, value) tuple """
-        new_id = new_properties["$id"]
-        new_ts = new_properties["$ts"]
-        if not new_id in self.top_devices:
-            self.top_devices[new_id] = {}
-        existing_props = self.top_devices[new_id]
-        for new_prop, new_value in new_properties.iteritems():
-            if new_prop not in existing_props:
-                existing_props[new_prop] = (new_ts, new_value)
-            else:
-                existing_ts = existing_props[new_prop][0]
-                if new_ts >= existing_ts:   # Only update if timestamp is newer
-                    existing_props[new_prop] = (new_ts, new_value)
-
-##        print "update_top():"
-##        print "new_properties:"
-##        print json.dumps(new_properties, indent=4, sort_keys=True)
-##        print "so top now:"
-##        print json.dumps(self.top_devices, indent=4, sort_keys=True)        
-
-    def send_top(self, _):
-        """Send top (latest) value of all properties on all devices to the client"""
-        logging.info("Send_top")
-        for dev, proptuples in self.top_devices.iteritems():
-            props = {}
-            for name,time_and_value in proptuples.iteritems():  # Assemble normal properties set (without times)
-                props[name] = time_and_value[1]
-            logging.info("Resending latest property values (of which there are "+str(len(props))+") for device "+str(dev))
-            print props
-            self.client.update_device(props["$id"], props["$ts"], props)
-
-    def bulk_upload(self, _):
-        self.json_stream.close()    # Close off final file 
-        self.client.bulk_upload(self.json_stream.files_written)

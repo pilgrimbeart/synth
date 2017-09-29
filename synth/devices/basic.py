@@ -75,7 +75,7 @@ class Basic(Device):
             changed = True
         else:
             changed = False
-        
+
         new_props = { prop_name : value, "$id" : self.properties["$id"], "$ts" : self.engine.get_now() }
         self.properties.update(new_props)
         if changed or always_send:

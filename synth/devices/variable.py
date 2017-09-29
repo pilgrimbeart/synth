@@ -4,7 +4,6 @@ variable
 Creates device properties which can be static (if "value" is defined)
 or driven by some timefunction (if "timefunction" is defined)
 
-
 Arguments::
 
     {

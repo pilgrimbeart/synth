@@ -1,0 +1,53 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P100D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "repeats" : 1,
+            "interval" : "P1D",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "battery" : {
+                            "life_mu" : "P100D",
+                            "life_sigma" : "P20D",
+                            "autoreplace" : false
+                        },
+                        "button" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT2H"
+                                }
+                            }
+                        },
+                        "comms" : {
+                            "reliability" : 0.8,
+                            "period" : "PT1H"
+                        },
+                        "firmware" : {
+                        },
+                        "heartbeat" : {
+                            "interval" : "PT1H"
+                        },
+                        "latlong" : {
+                            "area_centre" : "London, UK",
+                            "area_radius" : "Berlin, Germany"
+                        },
+                        "light" : {
+                        },
+                        "names" : {
+                        },
+                        "variable" : {
+                            "name" : "revision",
+                            "value" : 1
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

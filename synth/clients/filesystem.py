@@ -43,6 +43,7 @@ import logging
 import json
 from clients.client import Client
 from common import evt2csv
+from common import json_writer
 
 SEP = "!"
 
@@ -53,9 +54,10 @@ class Filesystem(Client):
         to write a CSV file which includes a column header for each property.
         So we use evt2csv to accumulate and write at the end.
     """
-    def __init__(self, params):
+    def __init__(self, instance_name, params):
         self.params = params
         self.events = {} # A dict of events in a format handled by evt2csv
+        self.json_stream = json_writer.Stream(instance_name)
 
     def add_device(self, device_id, time, properties):
         self.update_device(device_id, time, properties)
@@ -64,6 +66,7 @@ class Filesystem(Client):
         properties["$id"] = device_id # Ensure we always specify these
         properties["$ts"] = time
         evt2csv.insert_properties(self.events, properties)
+        self.json_stream.write_event(properties)
         return True
 
     def get_device(self):
@@ -87,6 +90,7 @@ class Filesystem(Client):
     
     def close(self):
         """Called to clean up on exiting."""
+        self.json_stream.close()
         logging.info("Preparing CSV file")
         csv = evt2csv.convert_to_csv(self.events)
         logging.info("Writing CSV file")

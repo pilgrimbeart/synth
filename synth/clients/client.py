@@ -5,6 +5,10 @@ class Client:
     __metaclass__ = ABCMeta
 
     @abstractmethod
+    def __init__(self, instance_name, params):
+        pass
+
+    @abstractmethod
     def add_device(self, device_id, time, properties):
         """Add a device (if exists then overwrite) and update its properties."""
         pass

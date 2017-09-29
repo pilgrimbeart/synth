@@ -126,7 +126,7 @@ def main():
     if not "client" in params:
         logging.error("No client defined to receive simulation results")
         return
-    client = importer.get_class('client', params['client']['type'])(params['client'])
+    client = importer.get_class('client', params['client']['type'])(params['instance_name'], params['client'])
 
     if not "engine" in params:
         logging.error("No simulation engine defined")
@@ -187,7 +187,7 @@ def main():
     if err_str=="":
         exit(0)
     exit(-1)
-    
+
 if __name__ == "__main__":
 ##    import cProfile, pstats
 ##    cProfile.run('main()', 'profiling')

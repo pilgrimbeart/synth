@@ -14,7 +14,8 @@ The client accepts the following parameters (usually found in the "On*.json" fil
         "devicepilot_key" : "xxxxxxxxxxxxxxxxxxxx", # Your key from DevicePilot Settings page
         "devicepilot_min_post_period" : "PT10S",    # Optional. Do not post more often than this.
         "devicepilot_max_items_per_post" : 500,     # Optional. Individual posts cannot be bigger than this (the DP /ingest endpoint has a 1MB payload limit per post)
-        "aws_access_key_id" : "xxxxxxxxxxxxxxxx",   # Optional (AWS credential only required if you use bulk_upload action)
+        "devicepilot_mode" : "bulk|interactive",    # In bulk mode, events are written to DevicePilot in bulk. In interactive mode they are written one-by-one (this mode is entered automatically when real-time is reached)
+        "aws_access_key_id" : "xxxxxxxxxxxxxxxx",   # Optional (AWS credential only required if you use bulk mode)
         "aws_secret_access_key" : "xxxxxxxxxxxxxxxxxxxxx",  # Ditto
         "aws_region" : "eu-west-1"                          # Ditto
     }
@@ -51,10 +52,6 @@ Synchronise with DevicePilot (i.e. wait until all data ingested into DevicePilot
 
     "action" : { "client.sync" : {} }
 
-"Mute" DevicePilot output (while muted all new events are discarded rather than being sent to DevicePilot)::
-
-    "action" : { "client.mute" : true|false }
-
 """
 #
 # Copyright (c) 2017 DevicePilot Ltd.
@@ -87,6 +84,8 @@ import isodate
 import boto3 # AWS library for bulk upload
 from clients.client import Client
 from common import ISO8601
+from common import top
+from common import json_writer
 
 SAVEDSEARCH_ENDPOINT = "/savedSearches"         # UI calls these "filters"
 INCIDENTCONFIG_ENDPOINT = "/incidentConfigs"    # UI calls these "event configurations"
@@ -108,7 +107,7 @@ def set_headers(token):
     return headers
 
 class Devicepilot(Client):
-    def __init__(self, params):
+    def __init__(self, instance_name, params):
         """There are two types of queue-throttling:
             1) flush_criterion says "don't post until you have X messages (or X secs have passed)"
             2) throttle_seconds_per_post says "ensure X seconds between any post"
@@ -117,13 +116,16 @@ class Devicepilot(Client):
         self.params = params
         self.url = params["devicepilot_api"]
         self.key = params["devicepilot_key"]
+        self.mode = params.get("devicepilot_mode", "bulk")  # Either "bulk" or "interactive"
         self.throttle_seconds_per_post = params.get("devicepilot_throttle_seconds_per_post", None)
         # self.queue_flush_criterion = params.get("queue_criterion","messages") # or "time" or "interactive"
         # self.queue_flush_limit = params.get("queue_limit",500)
         self.min_post_period = isodate.parse_duration(params.get("devicepilot_min_post_period", "PT60S")).total_seconds()
         self.max_items_per_post = params.get("devicepilot_max_items_per_post", 500)
         self.last_post_time = time.time() - self.min_post_period    # Allow first post immediately
-        self.mute = False
+        self.json_stream = json_writer.Stream(instance_name)
+        self.top = top.top()
+
         # queue_criterion/limit sets how often we flush messages to DevicePilot API
         # If criterion=="messages" then limit is number of messages, e.g. 1000
         # If criterion=="time" then limit is amount of simulated time passing, e.g. sim.days(30)
@@ -146,9 +148,12 @@ class Devicepilot(Client):
     def update_device(self, device_id, time, properties):
         props = properties.copy()
         props.update({"$id" : device_id, "$ts" : time})
-        if not self.mute:
+        if self.mode == "interactive":
             self.post_queue.append(props)
-        self.flush_post_queue_if_ready()
+            self.flush_post_queue_if_ready()
+        else:
+            self.json_stream.write_event(props)
+        self.top.update(props)
 
     def get_device(self, device_id):
         pass
@@ -160,15 +165,23 @@ class Devicepilot(Client):
         pass
 
     def enter_interactive(self):
-        logging.info("DevicePilot client entering (interactive,1sec) mode")
+        if self.mode == "interactive":
+            return
+        logging.info("DevicePilot client entering interactive mode")
         self.flush_post_queue_if_ready()
         # self.recalcHistorical(anId)
         # self.queue_flush_criterion = "interactive"
         # self.queue_flush_limit = 1
         # self.min_post_period = 1
+        self.bulk_upload()
+        self.mode = "interactive"   # Must do this before we try to send top!
+        self.send_top()
 
-    def bulk_upload(self, file_list):
+    def bulk_upload(self):
         """Upload bulk data"""
+        self.json_stream.close()    # Close off current file
+        file_list = self.json_stream.files_written
+
         if "aws_access_key_id" in self.params:
 ##            print self.params.get("aws_access_key_id", None)
 ##            print self.params.get("aws_secret_access_key", None)
@@ -200,15 +213,23 @@ class Devicepilot(Client):
             ret = response['Payload'].read()
             assert ret=="{}", ret
 
+    def send_top(self):
+        """Send top (latest) value of all properties on all devices to the client"""
+        logging.info("DevicePilot sending top values")
+        for props in self.top.get():
+            self.update_device(props["$id"], props["$ts"], props)
+
     def tick(self):
         self.flush_post_queue_if_ready()
 
     def close(self):
-        logging.info("Closing DevicePilot client. "+str(len(self.post_queue))+" items to flush.")
+        logging.info("Closing DevicePilot client")
+        self.json_stream.close()
+        self.enter_interactive()    # Ensure that bulk uploads are done
+        logging.info(str(len(self.post_queue))+" items to flush")
         while len(self.post_queue):
             self.flush_post_queue_if_ready()
             time.sleep(1)
-        # self.recalcHistorical(device.devices[0].properties["$id"])  # Nasty hack, need any old id in order to make a valid post
         logging.info("A total of "+str(self.post_count)+" items were posted to DevicePilot")
 
     # Optional methods
@@ -452,9 +473,3 @@ class Devicepilot(Client):
             time.sleep(10)
         self.delete_devices_where(where_str)
         logging.info("Synchronised with DevicePilot")
-
-    def PLUGIN_mute(self, mute):
-        """Mute or unmute this client posting to DevicePilot"""
-        self.mute = mute
-        logging.info("DevicePilot mute is now "+str(mute))
-        
