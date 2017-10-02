@@ -27,9 +27,14 @@ or::
 
 	git clone https://github.com/devicepilot/synth
 
+
+then::
+
+    pip install -r requirements.txt
+
 To test that Synth is installed correctly:
 
-1) Create an account file at ../synth_accounts/OnFStest containing::
+1) Create an account file `../synth_accounts/OnFStest.json` containing::
 
     {
         "instance_name" : "OnFStest",
@@ -40,7 +45,7 @@ To test that Synth is installed correctly:
         }
     }
 
-2) Ensure there's a scenario file in scenarios/10secs containing::
+2) Ensure there's a scenario file in `scenarios/10secs` containing::
 
     {
         "device_count" : 10,
@@ -49,7 +54,7 @@ To test that Synth is installed correctly:
         "install_timespan" : 10
     }
 
-3) Now on the command line run::
+3) Now on the command line, from the top-level Synth directory (i.e. the one which contains the README file) run::
 
     python synth OnFStest 10secs
 

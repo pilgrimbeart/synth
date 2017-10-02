@@ -203,7 +203,7 @@ class Devicepilot(Client):
         token = 'Token '+self.key
 
         for count, file_name in enumerate(file_list):
-            logging.info("Bulk uploading "+file_name+" ("+str(count)+"/"+str(len(file_list)))
+            logging.info("Bulk uploading "+file_name+" ("+str(count+1)+"/"+str(len(file_list))+")")
             points = json.load(open(file_name, "rt"))
             payload = json.dumps({ 
                 'apiKey': token,
