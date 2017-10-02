@@ -5,17 +5,19 @@ Scatters devices on the surface of the Earth in a realistic way according to pop
 If no arguments are provided, devices are scattered across the whole Earth.
 Uses a Google Maps API.
 
-Arguments::
+Configurable parameters::
 
     {
         "area_centre" : e.g. "London, UK"
         "area_radius" : e.g. "Manchester, UK"
     }
 
-Properties::
+Device properties created::
 
-    latitude : latitude in degrees as a floating-point number
-    longitude : longitude in degrees as a floating-point number
+    {
+        "latitude" : latitude in degrees as a floating-point number
+        "longitude" : longitude in degrees as a floating-point number
+    }
 """
 
 from device import Device

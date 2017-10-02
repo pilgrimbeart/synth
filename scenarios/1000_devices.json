@@ -1,0 +1,34 @@
+{
+    "restart_log" : true,
+    "engine" :
+    {
+        "type" : "sim",
+        "start_time" : "-PT1000H",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 1000,
+            "interval" : "PT1H",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "light" : {
+                        },
+                        "latlong" : {
+                        },
+                        "variable" : {
+                            "name" : "count",
+                            "timefunction" : {
+                                "count" : {
+                                    "interval" : "PT12H"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -4,7 +4,7 @@ variable
 Creates device properties which can be static (if "value" is defined)
 or driven by some timefunction (if "timefunction" is defined)
 
-Arguments::
+Configurable parameters::
 
     {
         "name" : the name of the variable
@@ -16,9 +16,12 @@ Arguments::
 
     [an array of the above to create multiple properties]
 
-Properties::
+Device properties created::
 
-    <name> : (properties are created according to the "name" argument)
+    {
+        <name> : (properties are created according to the "name" argument)
+    }
+    
 """
    
 import logging

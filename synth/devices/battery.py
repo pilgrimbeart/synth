@@ -4,7 +4,7 @@ battery
 A battery which runs-out and can be replaced.
 When the battery has run out, communications are inhibited.
 
-Arguments::
+Configurable parameters::
 
     {
         "life_mu" : the average length of battery life, e.g. "PT5M"
@@ -12,9 +12,12 @@ Arguments::
         "autoreplace" : set to true to auto-replace the battery when exhausted
     }
 
-Properties::
+Device properties created::
 
-    battery : current battery level as an integer percentage
+    {
+        "battery" : current battery level as an integer percentage
+    }
+
 """
 
 

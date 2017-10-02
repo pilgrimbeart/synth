@@ -7,7 +7,7 @@ We expect to receive no events when the timefunction returns 0.
 We expect to receive exactly one event each time the timefunction returns 1.
 Expect also creates a histogram chart of events
 
-Arguments::
+Configurable parameters::
 
     {
         "timefunction" : defines window when events are expected
@@ -15,9 +15,11 @@ Arguments::
         "slack_webhook" : Optionally, a Slack channel to post updates to
     }
 
-Properties::
+Device properties created::
 
-    (none)
+    {
+    }
+
 """
 
 import logging, datetime

@@ -4,14 +4,17 @@ firmware
 Provides a device firmware revision, which can be change by incoming "upgradeFirmware" events,
 and rolled-back to factory firmware by incoming "factoryReset" events.
 
-Arguments::
+Configurable parameters::
 
     {
     }
 
-Properties::
+Device properties created::
 
-    firmware : The current firmware of the device.
+    {
+        "firmware" : The current firmware of the device
+    }
+
 """
 
 from device import Device

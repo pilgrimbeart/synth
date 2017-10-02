@@ -4,16 +4,18 @@ comms
 Simulates unreliable communications between device and service.
 If an RSSI property is available, this is used to further modify the reliability.
 
-Arguments::
+Configurable parameters::
 
     {
         "reliability" : Either a fraction 0.0..1.0, or a string containing a specification of the trajectory
         "period" : How often the comms goes up and down - defaults to once a day
     }
 
-Properties::
+Device properties created::
 
-    (none)
+    {
+    }
+    
 """
 
 

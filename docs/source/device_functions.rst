@@ -5,7 +5,7 @@ Devices are composed of **functions** which are Python plug-ins in the **devices
 
 Available functions
 -------------------
-Each function optionally takes some parameters (typically from the scenario file) and optionally creates and manages some device properties.
+Each function optionally takes some parameters (typically specified in a scenario .json file) and optionally creates and manages some device properties.
 
 .. automodule:: synth.devices.basic
 .. automodule:: synth.devices.battery

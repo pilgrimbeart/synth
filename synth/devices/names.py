@@ -3,15 +3,18 @@ names
 =====
 Provides first name and last name of device owner, chosen randomly hashed by $id.
 
-Arguments::
+Configurable parameters::
 
     {
     }
 
-Properties::
+Device properties created::
 
-    first_name : the owner's first name
-    last_name : the owner's last name
+    {
+        "first_name" : the owner's first name
+        "last_name" : the owner's last name
+    }
+    
 """
 
 from device import Device

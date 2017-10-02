@@ -3,16 +3,18 @@ basic
 =====
 This function is inherited by all devices.
 
-Arguments::
+Configurable parameters::
 
     {
     }
 
-Properties::
+Device properties created::
 
-    $id - a unique random property which looks like a MAC address
-    is_demo_device - to identify that this is a Synth-created device
-    label - A human-readable label "Thing 0", "Thing 1" etc.
+    {
+        "$id" : a unique random property which looks like a MAC address
+        "is_demo_device" : to identify that this is a Synth-created device
+        "label" : A human-readable label "Thing 0", "Thing 1" etc.
+    }
 """
 
 import random

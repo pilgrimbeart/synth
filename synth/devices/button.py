@@ -3,15 +3,18 @@ button
 ======
 Presses a button on the device, according to some timefunction.
 
-Arguments::
+Configurable parameters::
 
     {
         "timefunction" : A time function specification.
     }
 
-Properties::
+Device properties created::
 
-    button_press : Sent as a 1 on every button press
+    {
+        "button_press" : Sent as a 1 on every button press
+    }
+    
 """
    
 import logging

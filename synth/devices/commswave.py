@@ -4,15 +4,17 @@ commswave
 Takes device communications up and down according to a timefunction.
 Comms will be working whenever the timefunction returns non-zero.
 
-Arguments::
+Configurable parameters::
 
     {
         "timefunction" : A timefunction definition
     }
 
-Properties::
+Device properties created::
 
-    (none)
+    {
+    }
+
 """
 
 from device import Device
