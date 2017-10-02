@@ -11,6 +11,7 @@ Synth
    :caption: Contents:
 
    introduction
+   clients
    events_and_actions
    device_functions
    time_functions

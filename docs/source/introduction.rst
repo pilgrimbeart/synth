@@ -108,24 +108,9 @@ An account file **must** contain:
  * "instance_name" : this defines what to call this running instance of Synth. It's used to name log files, and also to distinguish incoming event traffic intended for this particular instance
  * "client" {} : the name of the output client to use and any parameters it requires
 
-Currently three types of Synth client are supported:
-
- * *filesystem*: A client which writes .csv files into the ../synth_logs directory. Because this doesn't access the Internet it functions offline and is good for experimenting with Synth.
- * *devicepilot*: A client which can write into a DevicePilot account using the /ingest endpoint. It can also delete devices and perform various other DevicePilot-specific functions such as setting-up filters, actions etc.. Note that large historical data is better bulk-uploaded by generating JSON files rather than 
- * *aws*: A client which can write into an AWS-IoT account
-
-Clients are plug-ins, loaded by name, so you can add your own client just by defining its class in the synth/clients directory.
-
-For the DevicePilot client, find your DevicePilot access key as follows:
-
-    1. Log on to your DevicePilot account
-    2. Click Settings / My User and find your key in the API Key section
-
-For the AWS client, you can create an AWS access key as follows:
-
-    * Log on to your AWS account
-    * Click IAM / Users / <username>
-    * In the Security tab, click “Create Access Key”
+Clients
+-------
+Clients take synth output and send it into some IoT system to simulate devices. Several Synth :doc:`clients` are supported. Clients are plug-ins, loaded by name, so you can add your own client just by defining its class in the synth/clients directory.
 
 Scenarios
 ---------
@@ -133,12 +118,12 @@ These are stored in the ``scenarios`` directory. A set of examples is provided a
 
 A scenario file **must** contain:
 
- * "engine" : {} : which simulation engine to use.
- * "events" : {} : events to generate during the simulation run.
+ * "engine" : {} : which simulation client engine to use
+ * "events" : {} : events to generate during the simulation run
 
 Simulation Engines
 ------------------
-Currently the only engine available is "sim" which requires just "start_time" and "end_time" to be defined e.g.::
+Simulation engines are the heart of Synth. Currently the only engine available is "sim" which requires just "start_time" and "end_time" to be defined e.g.::
 
     "engine" : {
         "type" : "sim",
@@ -168,10 +153,10 @@ What next
 *********
 Have a look at some scenario files and once you're ready to try modifying and creating them, the following references will be useful:
 
+    * :doc:`clients`
     * :doc:`events_and_actions`
     * :doc:`device_functions`
     * :doc:`time_functions`
-
 
 Contribute!
 ***********

@@ -4,6 +4,12 @@ DevicePilot Client
 ==================
 This client posts event data into DevicePilot. It is also capable of doing historical bulk uploads and being interactive. It can also delete devices, create DevicePilot filters, events and actions.
 
+To find your DevicePilot access key:
+
+    1. Log on to your DevicePilot account
+    2. Click Settings / My User and find your key in the API Key section
+
+
 DevicePilot Client specification
 --------------------------------
 The client accepts the following parameters (usually found in the "On*.json" file in ../synth_accounts)::
@@ -197,7 +203,7 @@ class Devicepilot(Client):
         token = 'Token '+self.key
 
         for count, file_name in enumerate(file_list):
-            logging.info("Bulk uploading "+file_name)
+            logging.info("Bulk uploading "+file_name+" ("+str(count)+"/"+str(len(file_list)))
             points = json.load(open(file_name, "rt"))
             payload = json.dumps({ 
                 'apiKey': token,

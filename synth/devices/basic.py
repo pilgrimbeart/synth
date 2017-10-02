@@ -34,7 +34,7 @@ class Basic(Device):
         self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
         self.properties["label"] = "Thing "+str(Basic.device_number)
         self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down)
-        logging.info("Created device "+self.properties["$id"])
+        logging.info("Created device " + str(Basic.device_number) + " : " + self.properties["$id"])
         Basic.device_number = Basic.device_number + 1
         
     def external_event(self, event_name, arg):
