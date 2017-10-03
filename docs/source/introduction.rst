@@ -67,18 +67,10 @@ This will run for 10 seconds and create output files including::
 Directory structure
 *******************
 Synth uses various data directories, some of which are in the directory *above* the Synth source code because they contain sensitive data which we don't want to e.g. commit in git.
- * ``../synth_logs``: Synth creates output files here. You'll have to create this directory yourself the first time
- * ``../synth_accounts``: parameter files containing information about how to contact remote services such as IoT clients, and keys for them
- * ``../synth_certs``: keys for 3rd-party services used by some Synth modules (see Certificates below)
  * ``scenarios``: parameter files defining different simulation scenarios - see below
+ * ``../synth_accounts``: parameter files containing information about how to contact remote services such as IoT clients, and keys for them
+ * ``../synth_logs``: Synth creates output files here
 
-
-Certificates
-************
-The ../synth_certs directory contains the following files which are private to you:
-    * ssl.crt and ssl.csl: the two SSL certificate files necessary to enable Flask to securely accept and make HTTPS:// connections.
-    * webkey: a single line of characters which for security must be presented as an argument during incoming GET requests to the Synth webserver “/” path (see Web endpoints)
-    * googlemapskey: a single line of characters which will be presented to the Google Maps API when a “placename to (long,lat)’ lookup is done (only if the area_centre/radius parameters are used)
 
 Command-line arguments
 **********************
@@ -91,6 +83,8 @@ Arguments are generally taken to be the names of corresponding JSON files in eit
 	python synth OnFStest full_fat_device
 
 will make Synth run the ``scenarios/full_fat_device.json`` scenario on the account defined in ``../synth_accounts/OnFStest.json``.
+
+Synth also loads the file ``../synth_accounts/default.json`` at startup, if it exists, and this is where you can put universal parameters such as your Google Maps API key.
 
 Whilst accounts and scenarios are generally defined in parameter files as described below, it is also possible to make (or override) simple definitions by specifying JSON directly on the command line as an argument e.g.::
 
@@ -111,6 +105,10 @@ An account file **must** contain:
 
  * "instance_name" : this defines what to call this running instance of Synth. It's used to name log files, and also to distinguish incoming event traffic intended for this particular instance
  * "client" {} : the name of the output client to use and any parameters it requires
+
+Certificates
+************
+The ../synth_accounts directory may also contain ``ssl.crt`` and ``ssl.key`` files the two SSL certificate files necessary to enable Flask to securely accept and make HTTPS:// connections (so you only need these files if you're using inbound web events e.g. from DevicePilot)
 
 Clients
 -------
