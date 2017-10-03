@@ -19,20 +19,15 @@ Synth was released under the permissive open-source MIT license in 2017.
 
 Getting started
 ***************
-Synth currently requires Python 2.7.x. To see what Python version is installed type::
+To see what Python version you have installed type::
 
     python -V
 
-If you're on some other Python version then we recommend using `venv` to install Synth in a Python 2.7 environment.
+Synth requires Python 2.7.x so if you're on some other Python version then we recommend using `venv` to create a Python 2.7 environment into which to install Synth.
 
-To install Synth either::
-
-	pip install git:github.com/devicepilot/synth
-
-or::
+To install Synth type::
 
 	git clone https://github.com/devicepilot/synth
-
 
 then::
 
@@ -91,9 +86,7 @@ Synth accepts any number of arbitrary command-line parameters::
 
 	python synth {args}
 
-Arguments are generally taken to be the names of corresponding JSON files in either the ``synth_accounts`` or ``scenarios`` directories. The convention (but it's only a convention) is to name account files ``On*`` and list them first.
-
-So e.g.::
+Arguments are generally taken to be the names of corresponding JSON files in either the ``synth_accounts`` or ``scenarios`` directories. The convention (but it's only a convention) is to name account files ``On*`` and list them first::
 
 	python synth OnFStest full_fat_device
 
