@@ -29,7 +29,7 @@ from device import Device
 from common import importer
 
 class Variable(Device):
-    def __init__(self, instance_name, time, engine, update_callback, params):
+    def __init__(self, instance_name, time, engine, update_callback, context, params):
         """A property whose value is static or driven by some time function."""
         def create_var(params):
             var_name = params["name"]
@@ -45,7 +45,7 @@ class Variable(Device):
                 assert False,"variable " + var_name + " must have either value or timefunction"
             self.variables.append( (var_name, var_value) )
 
-        super(Variable, self).__init__(instance_name, time, engine, update_callback, params)
+        super(Variable, self).__init__(instance_name, time, engine, update_callback, context, params)
         self.variables = [] # List of (name, value) and <value> may be a static value or a timefunction 
         if type(params["variable"]) == dict:
             create_var(params["variable"])

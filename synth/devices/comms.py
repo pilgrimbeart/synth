@@ -28,12 +28,12 @@ GOOD_RSSI = -50.0
 BAD_RSSI = -120.0
 
 class Comms(Device):
-    def __init__(self, instance_name, time, engine, update_callback, params):
+    def __init__(self, instance_name, time, engine, update_callback, context, params):
         self.ok_comms = True
         self.comms_reliability = params["comms"].get("reliability", 1.0)
         self.comms_up_down_period = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
         engine.register_event_in(0, self.tick_comms_up_down, self)
-        super(Comms,self).__init__(instance_name, time, engine, update_callback, params)   # Set ourselves up before others do, so comms up/down takes effect even on device "boot"
+        super(Comms,self).__init__(instance_name, time, engine, update_callback, context, params)   # Set ourselves up before others do, so comms up/down takes effect even on device "boot"
 
     def comms_ok(self):
         return super(Comms, self).comms_ok() and self.ok_comms

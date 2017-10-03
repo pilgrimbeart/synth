@@ -11,6 +11,7 @@ Configurable parameters::
         "area_centre" : e.g. "London, UK"       } optional, but both must be specified if either are
         "area_radius" : e.g. "Manchester, UK"   } 
         "map_file" : e.g. "devicepilot_logo" - optional
+        "google_maps_key" : "xyz" } optional. Often defined in ..\synth_accounts\default
     }
 
 Device properties created::
@@ -29,8 +30,8 @@ class Latlong(Device):
     map_file = None
     pp = None
     
-    def __init__(self, instance_name, time, engine, update_callback, params):
-        super(Latlong,self).__init__(instance_name, time, engine, update_callback, params)        
+    def __init__(self, instance_name, time, engine, update_callback, context, params):
+        super(Latlong,self).__init__(instance_name, time, engine, update_callback, context, params)
         self.area_centre = params["latlong"].get("area_centre", None)
         self.area_radius = params["latlong"].get("area_radius", None)
         self.map_file = params["latlong"].get("map_file", None)
@@ -41,7 +42,8 @@ class Latlong(Device):
         area = None
         if self.area_centre != None:
             area = [self.area_centre, self.area_radius]
-        (lon,lat) = Latlong.pp.pick_point(area)
+        google_maps_key = context.get("google_maps_key", None)
+        (lon,lat) = Latlong.pp.pick_point(area, google_maps_key)
         self.set_properties( { 'latitude' : lat, 'longitude' : lon } )
 
     def comms_ok(self):

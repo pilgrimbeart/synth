@@ -109,7 +109,7 @@ def mkdir_p(path):
 
 
 class Events():
-    def __init__(self, instance_name, restart_log, client, engine, eventList):
+    def __init__(self, client, engine, context, eventList):
         """<params> is a list of events"""
         def callback(device_id, time, properties):
             write_event_log(properties)
@@ -144,7 +144,10 @@ class Events():
             self.logtext.append(s)
 
             self.event_count += 1
-            
+
+        instance_name = context["instance_name"]
+        restart_log = context.get("restart_log",True)
+        
         self.client = client
         self.event_count = 0
 
@@ -180,7 +183,7 @@ class Events():
                 elif "create_device" in action:
                     engine.register_event_at(at_time,
                                              device_factory.create_device,
-                                             (instance_name, client, engine, callback, action["create_device"]))
+                                             (instance_name, client, engine, callback, context, action["create_device"]))
                 elif "query" in action:
                     engine.register_event_at(at_time,
                                              query_action,

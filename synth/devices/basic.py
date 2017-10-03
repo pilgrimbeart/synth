@@ -24,7 +24,7 @@ from common import importer
 
 class Basic(Device):
     device_number = 0
-    def __init__(self, instance_name, time, engine, update_callback, params):
+    def __init__(self, instance_name, time, engine, update_callback, context, params):
         self.instance_name = instance_name
         self.creation_time = time
         self.engine = engine

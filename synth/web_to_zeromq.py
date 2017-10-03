@@ -69,6 +69,10 @@ import zmq # pip install pyzmq-static
 WEB_PORT = 443 # HTTPS. If < 1000 then this process must be run with elevated privileges
 ZEROMQ_PORT = 5556
 
+CERT_DIRECTORY = "../synth_accounts/"
+
+DEFAULTS_FILE = "../synth_accounts/default.json"
+
 zeromqSocket = None # Global, but we create it in the app context so we don't have inter-process issues
 lastPingTime = multiprocessing.Value('d', time.time())
 PING_TIMEOUT = 60*5 # We expect to get pinged every N seconds
@@ -200,7 +204,11 @@ def whatIsRunning():
 
     logging.info("Got web request to /")
     lastPingTime.value = time.time()
-    magicKey=open("../synth_certs/webkey","rt").read().strip()
+    try:
+        magicKey=json.loads(open(DEFAULTS_FILE,"rt").read())["web_check_key"]
+    except:
+        logging.error("Unable to find web_check_key parameter in "+DEFAULTS_FILE)
+        raise
     if magicKey not in request.args:
         abort(403)
     zeromqSocket.send(json.dumps({"action": "ping"}))   # Propagate pings into ZeroMQ for liveness logging throughout rest of system
@@ -217,7 +225,8 @@ def startWebServer():
        By default Flask serves to 127.0.0.1 which is local loopback (not externally-visible), so use 0.0.0.0 for externally-visible
        We run entire Flask server as a distinct process so we can terminate it if it fails (can't terminate threads in Python)"""
     logging.info("Starting Flask web server process, listening on port "+str(WEB_PORT))    # If port < 1000 then this process must be run with elevated privileges
-    p = multiprocessing.Process(target=app.run, kwargs={"threaded":True, "host":"0.0.0.0", "port":WEB_PORT, "ssl_context":('../synth_certs/ssl.crt', '../synth_certs/ssl.key')})
+    p = multiprocessing.Process(target=app.run,
+                                kwargs={"threaded":True, "host":"0.0.0.0", "port":WEB_PORT, "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')})
     p.daemon = True
     p.start()
     return p

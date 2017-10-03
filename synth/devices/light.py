@@ -22,8 +22,8 @@ from helpers.solar import solar
 import random
 
 class Light(Device):
-    def __init__(self, instance_name, time, engine, update_callback, params):
-        super(Light,self).__init__(instance_name, time, engine, update_callback, params)
+    def __init__(self, instance_name, time, engine, update_callback, context, params):
+        super(Light,self).__init__(instance_name, time, engine, update_callback, context, params)
         engine.register_event_in(0, self.tick_light, self)
 
     def comms_ok(self):

@@ -71,11 +71,16 @@ def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/d
             a[key] = b[key]
     return a
 
-def readParamfile(filename):
+def readParamfile(filename, fail_silently=False):
+    s = "{}"
     try:
         s = open("scenarios/"+filename+".json","rt").read()
     except:
-        s = open("../synth_accounts/"+filename+".json","rt").read()
+        try:
+            s = open("../synth_accounts/"+filename+".json","rt").read()
+        except:
+            if not fail_silently:
+                raise
     return s
 
 def remove_C_comments(string):
@@ -102,7 +107,16 @@ def get_params():
             raise ValueError("undefined macro: %s" % s)
         return params[s]
 
+    def load_param_file(file, params, fail_silently=False):
+        logging.info("Loading parameter file "+file)
+        s = readParamfile(file, fail_silently)
+        s = remove_C_comments(s) # Remove Javascript-style comments
+        s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
+        s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
+        params = merge(params, json.loads(s))
+        
     params = {}
+    load_param_file("default", params, fail_silently=True)
     for arg in sys.argv[1:]:
         if arg.startswith("{"):
             logging.info("Setting parameters "+arg)
@@ -112,12 +126,7 @@ def get_params():
             (key,value) = arg.split("=",1)  # split(,1) so that "a=b=c" means "a = b=c"
             params = merge(params, { key : value })
         else:
-            logging.info("Loading parameter file "+arg)
-            s = readParamfile(arg)
-            s = remove_C_comments(s) # Remove Javascript-style comments
-            s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
-            s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
-            params = merge(params, json.loads(s))
+            load_param_file(arg, params)
     return params    
 
 def main():
@@ -153,7 +162,7 @@ def main():
 
     if not "events" in params:
         logging.warning("No events defined")
-    events = Events(params["instance_name"], params.get("restart_log",False), client, engine, params["events"])
+    events = Events(client, engine, params, params["events"])
 
     zeromq_rx.init(postWebEvent)
 

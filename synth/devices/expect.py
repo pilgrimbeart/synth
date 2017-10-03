@@ -45,8 +45,8 @@ class Expect(Device):
     score_log = []  # List of (time, score)
     slack_initialised = False
     
-    def __init__(self, instance_name, time, engine, update_callback, params):
-        super(Expect,self).__init__(instance_name, time, engine, update_callback, params)
+    def __init__(self, instance_name, time, engine, update_callback, context, params):
+        super(Expect,self).__init__(instance_name, time, engine, update_callback, context, params)
         tf = params["expect"]["timefunction"]
         self.expected_timefunction = importer.get_class("timefunction", tf.keys()[0])(engine, tf[tf.keys()[0]])
         self.expected_event_name = params["expect"]["event_name"]

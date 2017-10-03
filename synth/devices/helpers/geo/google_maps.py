@@ -25,8 +25,6 @@
 import json, httplib, urllib
 import logging
 
-GM_KEY_PATH = "../synth_certs/googlemapskey"
-
 def set_headers():
     """Sets the headers for sending to the DM server.
 
@@ -38,14 +36,12 @@ def set_headers():
 
 # ==== Google Maps API ====
 geo_cache = {}
-def address_to_lon_lat(address):
+def address_to_lon_lat(address, google_maps_api_key=None):
     global geo_cache
     if address in geo_cache:
         return geo_cache[address]    # Avoid thrashing Google (expensive!)
 
     (lng,lat) = (None, None)
-
-    google_maps_api_key = open(GM_KEY_PATH,"rt").read().strip()
 
     logging.info("Looking up "+str(address)+" in Google Maps")
     #try:

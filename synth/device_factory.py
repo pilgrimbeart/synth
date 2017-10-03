@@ -40,15 +40,15 @@ def compose_class(class_names):
 
 def create_device(args):
     global devices
-    (instance_name, client, engine, update_callback, params) = args
+    (instance_name, client, engine, update_callback, context, params) = args
     
     device_num = num_devices()
 
     if "functions" in params:
         C = compose_class(params["functions"].keys())        # Create a composite device class from all the given class names
-        d = C(instance_name, engine.get_now(), engine, update_callback, params["functions"])   # Instantiate it
+        d = C(instance_name, engine.get_now(), engine, update_callback, context, params["functions"])   # Instantiate it
     else:
-        d = Basic(instance_name, engine.get_now(), engine, update_callback, params)
+        d = Basic(instance_name, engine.get_now(), engine, update_callback, context, params)
     client.add_device(d.properties["$id"], engine.get_now(), d.properties)
 
     if get_device_by_property("$id", d.properties["$id"]) != None:

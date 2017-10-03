@@ -22,8 +22,8 @@ import random
 import logging
 
 class Firmware(Device):
-    def __init__(self, instance_name, time, engine, update_callback, params):
-        super(Firmware,self).__init__(instance_name, time, engine, update_callback, params)
+    def __init__(self, instance_name, time, engine, update_callback, context, params):
+        super(Firmware,self).__init__(instance_name, time, engine, update_callback, context, params)
         fw = random.choice(["0.51","0.52","0.6","0.6","0.6","0.7","0.7","0.7","0.7"])
         self.set_properties({'factoryFirmware' : fw, 'firmware' : fw } )
 

@@ -21,8 +21,8 @@ from device import Device
 from helpers import people_names
 
 class Names(Device):
-    def __init__(self, instance_name, time, engine, update_callback, params):
-        super(Names,self).__init__(instance_name, time, engine, update_callback, params)
+    def __init__(self, instance_name, time, engine, update_callback, context, params):
+        super(Names,self).__init__(instance_name, time, engine, update_callback, context, params)
         self.set_properties(
             { 'first_name' : people_names.first_name(self.properties["$id"]),
               'last_name' :  people_names.last_name(self.properties["$id"]) } )

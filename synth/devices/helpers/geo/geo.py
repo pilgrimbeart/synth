@@ -54,7 +54,7 @@ class point_picker():
         if population_map is None:
             population_map = DEFAULT_POP_MAP
         else:
-            logging.info("Using population map "+str(population_map))
+            logging.info("Using custom population map "+str(population_map))
         # Load map
         module_local_dir = os.path.dirname(__file__)
         im = Image.open(os.path.join(module_local_dir, population_map))
@@ -69,7 +69,7 @@ class point_picker():
         # logging.info("Image size is "+str(self.arr.nbytes / (1024*1024))+" MB")
 
         
-    def set_area(self, area):
+    def set_area(self, area, google_maps_key):
         """If <area> is defined it must be two strings: ["centre","edge"].
         Each string is an address (e.g. "Cambridge, UK") which is looked-up to get lat/lon.
         These are then used to define the centre and edge of an allowable circle to pick within"""
@@ -79,7 +79,7 @@ class point_picker():
         # . The circle is a lon/lat circle. So on most map projections it will look circular over the equator, but an increasingly vertical oval towards the poles (e.g. UK).
         self.area = area
 
-        area_centre, area_edge = address_to_lon_lat(area[0]), address_to_lon_lat(area[1])
+        area_centre, area_edge = address_to_lon_lat(area[0], google_maps_key), address_to_lon_lat(area[1], google_maps_key)
         self.area_centre_xy, self.area_edge_xy = self.lon_lat_to_xy(area_centre), self.lon_lat_to_xy(area_edge)
         self.area_radius_pixels = math.sqrt(math.pow(self.area_centre_xy[0]-self.area_edge_xy[0], 2) + math.pow(self.area_centre_xy[1]-self.area_edge_xy[1],2))
 
@@ -110,14 +110,14 @@ class point_picker():
 
         return (x,y)
         
-    def pick_point(self, area=None):
+    def pick_point(self, area=None, google_maps_key=None):
         """Returns a (latitude,longitude) point, on population map, within area"""
         global MINLON,MAXLON,MINLAT,MAXLAT,MINX,MAXX,MINY,MAXY
 
         if area==None:
             self.area = None
         else:
-            self.set_area(area)
+            self.set_area(area, google_maps_key)
         
         while True:
             if self.area:
