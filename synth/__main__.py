@@ -78,6 +78,22 @@ def readParamfile(filename):
         s = open("../synth_accounts/"+filename+".json","rt").read()
     return s
 
+def remove_C_comments(string):
+    """Remove C and C++ comments (therefore also Javascript comments)"""
+    # As per https://stackoverflow.com/questions/2319019/using-regex-to-remove-comments-from-source-files#18381470
+    pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)"
+    # first group captures quoted strings (double or single)
+    # second group captures comments (//single-line or /* multi-line */)
+    regex = re.compile(pattern, re.MULTILINE|re.DOTALL)
+    def _replacer(match):
+        # if the 2nd group (capturing comments) is not None,
+        # it means we have captured a non-quoted (real) comment string.
+        if match.group(2) is not None:
+            return "" # so we will return empty to remove the comment
+        else: # otherwise, we will return the 1st group
+            return match.group(1) # captured quoted-string
+    return regex.sub(_replacer, string)
+
 def get_params():
     """Read command-line to ingest parameters and parameter files"""
     def macro(matchobj):
@@ -98,7 +114,7 @@ def get_params():
         else:
             logging.info("Loading parameter file "+arg)
             s = readParamfile(arg)
-            s = re.sub("//.*$", "", s, flags=re.MULTILINE) # Remove Javascript-style comments
+            s = remove_C_comments(s) # Remove Javascript-style comments
             s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
             s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
             params = merge(params, json.loads(s))

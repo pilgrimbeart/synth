@@ -1,0 +1,14 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P7D",
+        "end_time" : "now"
+    },
+    "events" : [
+        { "at" : "PT0S", "repeats" : 10, "action": { "create_device" : { "functions" : { "heartbeat" : { "interval" : "PT1H" },
+            "comms" : { "reliability" : 1.0 }, "latlong" : { "area_centre" : "Westminster, London, UK", "area_radius" : "Kings Cross, London, UK" }, "variable" : { "name" : "customer", "value" : "Westminster" }  }}}},
+        { "at" : "PT0S", "repeats" : 10, "action": { "create_device" : { "functions" : { "heartbeat" : { "interval" : "PT1H" },
+            "comms" : { "reliability" : 0.8 }, "latlong" : { "area_centre" : "Cambridge, Cambs, UK", "area_radius" : "Royston, Herts, UK" }, "variable" : { "name" : "customer", "value" : "Cambs" }  }}}}
+    ]
+}
