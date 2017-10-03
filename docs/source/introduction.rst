@@ -100,7 +100,7 @@ When Synth runs it emits various hopefully informative log messages. These are t
 
 Parameter Files
 ***************
-Synth parameter files are JSON structures. To add self-documentation your Synth files you can use Python-style #comments, though as this is not standard JSON it's probably better practice to just add redundant comment parameters which Synth will ignore thus::
+Synth parameter files are JSON structures. To add self-documentation your Synth files you can add comments using C, Javascript or Python syntax, though as this is not standard JSON it's probably better practice to just add redundant comment parameters which Synth will ignore, thus::
 
 	{ "comment" : "this is a comment" }
 
@@ -154,6 +154,20 @@ Have a look at some scenario files and once you're ready to try modifying and cr
 Contribute!
 ***********
 Synth is an open-source project released under the permissive MIT licence. We welcome your contributions and feature requests at https://github.com/devicepilot/synth
+
+Copyright (c) 2017 DevicePilot Ltd.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 Editing these docs
 ******************

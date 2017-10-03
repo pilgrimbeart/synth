@@ -1,0 +1,24 @@
+{
+    "restart_log" : true,
+    "engine" :
+    {
+        "type" : "sim",
+        "start_time" : "-PT10S",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 1000,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "latlong" : {
+                            "map_file" : "devicepilot_logo.jpg"
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

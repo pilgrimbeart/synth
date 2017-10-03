@@ -30,6 +30,7 @@ DEFAULT_POP_MAP = "dnb_land_ocean_ice.2012.13500x6750_grey.jpg"
 
 # import logging # Emitting any log messages in this module suppresses all other log output - I have NO idea why
 import os, sys
+import logging
 from PIL import Image # To get this on Linux, suggest using "sudo apt-get install python-imaging"
 Image.MAX_IMAGE_PIXELS = 1000000000 # We're dealing with large images, so prevent DecompressionBomb errors
 import numpy
@@ -49,7 +50,11 @@ MAXY = -100000
 
 class point_picker():
     """This uses a huge amount of memory. So strongly recommend deleting after use.""" 
-    def __init__(self, population_map=DEFAULT_POP_MAP):
+    def __init__(self, population_map=None):
+        if population_map is None:
+            population_map = DEFAULT_POP_MAP
+        else:
+            logging.info("Using population map "+str(population_map))
         # Load map
         module_local_dir = os.path.dirname(__file__)
         im = Image.open(os.path.join(module_local_dir, population_map))

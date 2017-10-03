@@ -202,9 +202,11 @@ class Devicepilot(Client):
 
         token = 'Token '+self.key
 
+        total_events = 0
         for count, file_name in enumerate(file_list):
             logging.info("Bulk uploading "+file_name+" ("+str(count+1)+"/"+str(len(file_list))+")")
             points = json.load(open(file_name, "rt"))
+            total_events += len(points)
             payload = json.dumps({ 
                 'apiKey': token,
                 'points': points,
@@ -218,6 +220,7 @@ class Devicepilot(Client):
                 )
             ret = response['Payload'].read()
             assert ret=="{}", ret
+        logging.info("Bulk upload completed ("+str(total_events)+" events in total)")
 
     def send_top(self):
         """Send top (latest) value of all properties on all devices to the client"""
