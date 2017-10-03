@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 r"""
-DevicePilot Client
+DevicePilot client
 ==================
 This client posts event data into DevicePilot. It is also capable of doing historical bulk uploads and being interactive. It can also delete devices, create DevicePilot filters, events and actions.
 
@@ -10,7 +10,7 @@ To find your DevicePilot access key:
     2. Click Settings / My User and find your key in the API Key section
 
 
-DevicePilot Client specification
+DevicePilot client specification
 --------------------------------
 The client accepts the following parameters (usually found in the "On*.json" file in ../synth_accounts)::
 
@@ -26,7 +26,7 @@ The client accepts the following parameters (usually found in the "On*.json" fil
         "aws_region" : "eu-west-1"                          # Ditto
     }
 
-DevicePilot Client event actions
+DevicePilot client event actions
 --------------------------------
 If you're using the DevicePilot client then the following client-specific actions are available:
 

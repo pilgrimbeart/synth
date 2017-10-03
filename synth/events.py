@@ -2,7 +2,7 @@
 """
 Events
 ======
-The *events* section of a scenario file is a list of events to trigger during the simulation run. Each event requires at least::
+The *events* section of a scenario file is a list of events to trigger during the simulation run. An event is typically specified by::
 
         "at" : "2017-01-01T00:00:00"	# The time at which the event happens (can be relative)
         "action" : {}	# The action to conduct. Generally this create_device, but can also be a client-specific method
@@ -19,7 +19,7 @@ For convenience:
 
 (*) The `sim` engine guarantees that events which are scheduled for the same time will be executed in the order that they are defined.
 
-Optionally, an event can repeat, so for example the scneario below starts with the creation of 10 devices, one per minute::
+Optionally, an event can repeat, so for example the scenario below starts with the creation of 10 devices, one per minute::
 
     "events" : [
         {
@@ -84,6 +84,7 @@ Execute an action on whichever Synth client is in use (e.g. aws, devicepilot, fi
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os, errno
 from datetime import datetime
 import logging
 import json
@@ -95,6 +96,17 @@ from common import ISO8601
 from common import json_writer
 
 LOG_DIRECTORY = "../synth_logs/"
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+        logging.info("Created log directory "+LOG_DIRECTORY)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
 
 class Events():
     def __init__(self, instance_name, restart_log, client, engine, eventList):
@@ -136,6 +148,7 @@ class Events():
         self.client = client
         self.event_count = 0
 
+        mkdir_p(LOG_DIRECTORY)
         self.file_mode = "at"
         if restart_log:
             self.file_mode = "wt"

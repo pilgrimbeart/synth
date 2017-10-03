@@ -12,6 +12,7 @@ Synth
 
    introduction
    clients
+   about_time
    events_and_actions
    device_functions
    time_functions

@@ -19,6 +19,12 @@ Synth was released under the permissive open-source MIT license in 2017.
 
 Getting started
 ***************
+Synth currently requires Python 2.7.x. To see what Python version is installed type::
+
+    python -V
+
+If you're on some other Python version then we recommend using `venv` to install Synth in a Python 2.7 environment.
+
 To install Synth either::
 
 	pip install git:github.com/devicepilot/synth
@@ -142,22 +148,11 @@ The `sim` engine is event-driven so it hops from event to event rather than tick
 
 `sim` will never let the current simulation time advance past the current real time, because many IoT clients don't like having data from the future posted into them. So when it catches-up with real-time it prints a log message and then drops into real-time simulation, waiting second by second to ensure that it never advances past the current time. Thus `sim` is capable of creating an historical record and then seamlessly moving into real-time interactive simulation, which can be useful for constructing interactive service demos with a history.
 
-A note about Time
------------------
-Time/date parameters in Synth are always strings and can be any of::
-
-    "2017-01-01T00:00:00" # An ISO8601 format datetime
-    "now"                 # The current real time. For example, if you set engine `{ "start" : "now" }` then the simulation will start at the current real time. Or { "end" : "now" } will finish at the current time.
-    "PT5M"                # An ISO8601 duration, relative to the current simulation time. This for example means "5 minutes later". Negative durations are allowed in some contexts e.g. "-PT4H"
-    null	              # For end times, this means "never"
-    "when_done"           # For end times, this means "when no further events are pending"
-
-NOTE: Currently ISO8601 durations greater than Days are not correctly supported due to a bug in the <isodate> module.
-
 What next
 *********
 Have a look at some scenario files and once you're ready to try modifying and creating them, the following references will be useful:
 
+    * :doc:`about_time`
     * :doc:`clients`
     * :doc:`events_and_actions`
     * :doc:`device_functions`

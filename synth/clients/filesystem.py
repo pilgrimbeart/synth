@@ -1,11 +1,11 @@
 r"""
-Filesystem Client
+Filesystem client
 =================
 This client posts event data to the local filesystem, and is useful for offline testing of scenarios.
 In addition to the .evt file that Synth emits, the Filesystem client also emits
 a .csv file.
 
-Filesystem Client specification
+Filesystem client specification
 -------------------------------
 The client accepts the following parameters
 (usually found in the "On*.json" file in ../synth_accounts)::
@@ -16,7 +16,7 @@ The client accepts the following parameters
         "filename" :"OnFStest"
     }
 
-There are no Filesystem-specific event actions.
+There are no client event actions specific to the Filesystem client.
 """
 #
 # Copyright (c) 2017 DevicePilot Ltd.
