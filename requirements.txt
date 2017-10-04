@@ -12,3 +12,4 @@ mock
 pytest_mock
 requests_mock
 pendulum
+plotly
