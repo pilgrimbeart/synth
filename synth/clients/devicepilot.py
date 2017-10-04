@@ -58,6 +58,19 @@ Synchronise with DevicePilot (i.e. wait until all data ingested into DevicePilot
 
     "action" : { "client.sync" : {} }
 
+Query DevicePilot (you'll probably want to do a client.sync first). Parameters are passed straight through to the `/query` endpoint, so you can use all the combinations that that supports. ::
+
+    "action": {
+        "client.query" : {
+            "start" : "2017-01-01T00:00:00",
+            "end" : "2017-01-02T00:00:00",
+            "op" : "duration",
+            "valueFilterStr" : "$ts > ago(86400)",
+            "expect" : { <optionally define this parameter to throw an error if the query result doesn't match> }
+        }
+    }
+
+
 """
 #
 # Copyright (c) 2017 DevicePilot Ltd.
@@ -171,17 +184,23 @@ class Devicepilot(Client):
         pass
 
     def enter_interactive(self):
-        if self.mode == "interactive":
+        self.set_mode("interactive")
+
+    def set_mode(self, mode):
+        if self.mode == mode:
             return
-        logging.info("DevicePilot client entering interactive mode")
-        self.flush_post_queue_if_ready()
-        # self.recalcHistorical(anId)
-        # self.queue_flush_criterion = "interactive"
-        # self.queue_flush_limit = 1
-        # self.min_post_period = 1
-        self.bulk_upload()
-        self.mode = "interactive"   # Must do this before we try to send top!
-        self.send_top()
+        logging.info("DevicePilot client changing mode from "+str(self.mode)+" to "+str(mode))
+        if mode=="interactive":
+            self.flush_post_queue_if_ready()
+            # self.recalcHistorical(anId)
+            # self.queue_flush_criterion = "interactive"
+            # self.queue_flush_limit = 1
+            # self.min_post_period = 1
+            self.bulk_upload()
+            self.mode = "interactive"   # Must do this before we try to send top!
+            self.send_top()
+        self.mode = mode
+        
 
     def bulk_upload(self):
         """Upload bulk data"""
@@ -334,16 +353,32 @@ class Devicepilot(Client):
         resp = self.session.put(self.url + '/propertySummaries', headers=set_headers(self.key)) # Tell DP that we should regen property summaries
         
     def delete_all_devices(self):
-        logging.info("Deleting all devices on this account...")
-        resp = self.session.delete(self.url + "/devices", headers=set_headers(self.key))
+        assert ("api-staging" in self.url) or ("api-development" in self.url), "Refusing to delete all devices, because "+self.url+" is not a development/staging account"
+
+        logging.info("Deleting all devices on this account")
+        for i in range(3):
+            resp = self.session.delete(self.url + "/devices", headers=set_headers(self.key))
+            if resp.ok:
+                break
+            else:
+                logging.warning("Delete returned an error (not unusual, so retrying) "+str(resp.reason) + " : " + str(resp.text))
+        assert resp.ok, resp.reason + " : " + resp.text
         logging.info("All devices deleted")
 
-    def delete_devices_where(self, whereStr): 
-        logging.info("Deleting all devices where "+whereStr)
+        logging.info("Deleting all device properties on this account")
+        resp = self.session.delete(self.url + "/properties", headers=set_headers(self.key))
+        assert resp.ok, resp.reason + " : " + resp.text
+        logging.info("All device properties deleted")
+
+    def delete_devices_where(self, whereStr, suppress_log_messages = False): 
+        if not suppress_log_messages:
+            logging.info("Deleting all devices where "+whereStr)
         devs = self.get_devices_where(whereStr)
-        logging.info("    "+str(len(devs))+" devices to delete")
+        if not suppress_log_messages:
+            logging.info("    "+str(len(devs))+" devices to delete")
         for dev in devs:
-            logging.info("Deleting "+str(dev["$urn"]))
+            if not suppress_log_messages:
+                logging.info("Deleting "+str(dev["$urn"]))
             resp = self.session.delete(self.url + dev["$urn"], headers=set_headers(self.key))
             if not resp.ok:
                 logging.error(str(resp.reason) + ":" + str(resp.text))
@@ -456,19 +491,37 @@ class Devicepilot(Client):
             if monitor or (action is not None):
                 incident_ID = self.create_incidentconfig(filter_ID, notification_ID)   # When filter matches, do the action
 
-    def PLUGIN_test_query(self, params):
+    def PLUGIN_query(self, params):
         body = {}
         for p in params:
-            if p in ["start","end"]:
+            if p in ["expect"]:
+                pass
+            elif p in ["start","end"]:
                 body.update({p : ISO8601.to_epoch_seconds(params[p])*1000}),   # TODO: Needs * 1000 for ms?
             else:
                 body.update({p : params[p]})
+        logging.info("DevicePilot query:\n"+json.dumps(body, sort_keys=True, indent=4, separators=(',', ': ')))
         resp = self.session.post(self.url+"/query", verify=True, headers=set_headers(self.key), data=json.dumps(body))
         assert resp.ok, str(resp.reason) + str(resp.text)
+        result = json.loads(resp.text)
+        logging.info("Query returned:\n"+json.dumps(result, sort_keys=True, indent=4, separators=(',', ': ')))
+
+        if "expect" in params:
+            expected = params["expect"]
+            if result == expected:
+                logging.info("Query returned expected result - PASS")
+            else:
+                logging.info("Expected result:\n"+json.dumps(expected, sort_keys=True, indent=4, separators=(',', ': ')))
+                assert False, "Query did not return expected result - FAIL"
+
+    def PLUGIN_set_mode(self, mode):
+        self.set_mode(mode)
 
     def PLUGIN_sync(self, _):
         """Synchronise Synth with DevicePilot (i.e. wait until data in Synth is consistent)"""
         logging.info("Synchronising with DevicePilot")
+        self.set_mode("interactive")
+
         t = time.time()
         device_id = "SyncDevice"+str(int(t))
         self.add_device(device_id, t, properties={})
@@ -478,7 +531,12 @@ class Devicepilot(Client):
             devs = self.get_devices_where(where_str)
             if devs != []:
                 break
-            logging.info("Waiting to sync")
+            logging.info("Waiting to sync (waited " + str(int(time.time()-t)) + "s so far)")
             time.sleep(10)
-        self.delete_devices_where(where_str)
+        self.delete_devices_where(where_str, suppress_log_messages=True)
         logging.info("Synchronised with DevicePilot")
+
+    def PLUGIN_DELETE_ALL_DEVICES(self, _):
+        """Delete all devices DevicePilot. We use an uppercase name to make it more obvious in scenario files! """
+        self.delete_all_devices()
+
