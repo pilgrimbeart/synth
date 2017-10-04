@@ -7,6 +7,7 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 import plotly
 import random, logging, datetime
+import os, errno
 
 DIRECTORY = "../synth_logs/plots/"
 
@@ -90,7 +91,18 @@ def plot_score_log(score_log):
 
     return plotly.offline.plot(fig, output_type = 'div', auto_open=False)
 
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+        logging.info("Created log directory "+path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
 def write_page(instance_name, divs):
+    mkdir_p(DIRECTORY)
     filename = DIRECTORY+instance_name+'.html'
     logging.info("Writing plot "+filename)
     f = open(filename,"wt")

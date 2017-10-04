@@ -100,7 +100,7 @@ LOG_DIRECTORY = "../synth_logs/"
 def mkdir_p(path):
     try:
         os.makedirs(path)
-        logging.info("Created log directory "+LOG_DIRECTORY)
+        logging.info("Created log directory "+path)
     except OSError as exc:
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
