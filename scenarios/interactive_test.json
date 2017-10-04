@@ -1,0 +1,13 @@
+{
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-PT10S",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "action" : { "client.set_mode" : "interactive" }
+        }
+    ]
+}

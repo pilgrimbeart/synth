@@ -206,6 +206,9 @@ class Devicepilot(Client):
         """Upload bulk data"""
         self.json_stream.close()    # Close off current file
         file_list = self.json_stream.files_written
+        if len(file_list) == 0:
+            logging.info("Nothing to bulk upload")
+            return
 
         if "aws_access_key_id" in self.params:
 ##            print self.params.get("aws_access_key_id", None)
