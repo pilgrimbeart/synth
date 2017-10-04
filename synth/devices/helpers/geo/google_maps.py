@@ -46,7 +46,11 @@ def address_to_lon_lat(address, google_maps_api_key=None):
     logging.info("Looking up "+str(address)+" in Google Maps")
     #try:
     conn = httplib.HTTPSConnection("maps.google.com")   # Must now use SSL
-    URL = '/maps/api/geocode/json' + '?' + urllib.urlencode({'key':google_maps_api_key}) + '&' + urllib.urlencode({'address':address})
+    URL = '/maps/api/geocode/json' + '?' + urllib.urlencode({'address':address})
+    if google_maps_api_key is None:
+        logging.info("No Google Maps key so Google maps API may limit your requests")
+    else:
+        URL += '&' + urllib.urlencode({'key':google_maps_api_key})
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
     result = resp.read()
