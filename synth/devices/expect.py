@@ -35,7 +35,7 @@ DUPLICATE_EVENT_IN_WINDOW = 'DUPLICATE_EVENT'   # We got a duplicate event withi
 EVENT_OUTSIDE_WINDOW = 'OUTSIDE_WINDOW'         # We got an event unexpectedly outside the window
 MISSING_EVENT = 'MISSING_EVENT'                 # We failed to get any event within the window
 
-REPORT_PERIOD_S = 60*60
+REPORT_PERIOD_S = 60
 HISTO_BINS = 20
 
 class Expect(Device):
