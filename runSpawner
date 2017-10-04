@@ -1,4 +1,4 @@
 command="python -u synth/spawner.py"
 echo $command
 pkill -f "$command"
-nohup $command >> ../synth_logs/spawner.out 2>&1 &
+nohup $command > ../synth_logs/spawner.out 2>&1 &

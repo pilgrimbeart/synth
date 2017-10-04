@@ -50,9 +50,14 @@ def address_to_lon_lat(address, google_maps_api_key=None):
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
     result = resp.read()
-    data = json.loads(result)
-    # print "For address "+address+" response from maps.google.com is "+str(data)
-    geo = data["results"][0]["geometry"]["location"]
+    try:
+        data = json.loads(result)
+        # print "For address "+address+" response from maps.google.com is "+str(data)
+        geo = data["results"][0]["geometry"]["location"]
+    except:
+        logging.error(URL)
+        logging.error(json.dumps(data))
+        raise
     (lng,lat) = (geo["lng"], geo["lat"])
     ##    except:
     ##        print "FAILED to do Google Maps lookup on location "+str(address)

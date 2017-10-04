@@ -63,7 +63,7 @@ resulting in an action specification which looks something like this::
 from flask import Flask, request, abort
 from flask_cors import CORS, cross_origin
 import multiprocessing, subprocess
-import json, time, logging, sys, re
+import json, time, logging, sys, re, datetime
 import zmq # pip install pyzmq-static
 
 WEB_PORT = 443 # HTTPS. If < 1000 then this process must be run with elevated privileges
@@ -199,18 +199,23 @@ def whatIsRunning():
     """We expect Pingdom to regularly ping this route to reset the heartbeat."""
     global lastPingTime
     global zeromqSocket
+
+    logging.info("Got web request to /")
+
     if zeromqSocket == None:
         createSocket()
 
-    logging.info("Got web request to /")
     lastPingTime.value = time.time()
     try:
         magicKey=json.loads(open(DEFAULTS_FILE,"rt").read())["web_check_key"]
     except:
         logging.error("Unable to find web_check_key parameter in "+DEFAULTS_FILE)
         raise
+
     if magicKey not in request.args:
+        logging.error("Incorrect or missing magic key in request")
         abort(403)
+        
     zeromqSocket.send(json.dumps({"action": "ping"}))   # Propagate pings into ZeroMQ for liveness logging throughout rest of system
     try:
         x = subprocess.check_output("ps uax | grep 'python' | grep -v grep", shell=True)
@@ -224,9 +229,10 @@ def startWebServer():
     """Doing app.run() with "threaded=True" starts a new thread for each incoming request, improving crash resilience
        By default Flask serves to 127.0.0.1 which is local loopback (not externally-visible), so use 0.0.0.0 for externally-visible
        We run entire Flask server as a distinct process so we can terminate it if it fails (can't terminate threads in Python)"""
-    logging.info("Starting Flask web server process, listening on port "+str(WEB_PORT))    # If port < 1000 then this process must be run with elevated privileges
-    p = multiprocessing.Process(target=app.run,
-                                kwargs={"threaded":True, "host":"0.0.0.0", "port":WEB_PORT, "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')})
+    logging.info("Starting web server at "+datetime.datetime.now().ctime())
+    args = {"threaded":True, "host":"0.0.0.0", "port":WEB_PORT, "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')}
+    logging.info("Starting Flask server with args : "+json.dumps(args))
+    p = multiprocessing.Process(target=app.run, kwargs=args)
     p.daemon = True
     p.start()
     return p
