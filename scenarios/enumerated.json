@@ -2,7 +2,7 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "1980-01-01T00:00:00",
+        "start_time" : "-P360D",
         "end_time" : null,
         "end_after_events" : 100000
     },
@@ -10,7 +10,7 @@
         {
             "at" : "PT0S",
             "interval" : "PT0S",
-            "repeats" : 100,
+            "repeats" : 2000,
             "action": {
                 "create_device" : {
                     "functions" : {

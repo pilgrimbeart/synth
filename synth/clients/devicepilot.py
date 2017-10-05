@@ -223,6 +223,8 @@ class Devicepilot(Client):
             logging.info("Nothing to bulk upload")
             return
 
+        t = time.time()
+        
         if "aws_access_key_id" in self.params:
 ##            print self.params.get("aws_access_key_id", None)
 ##            print self.params.get("aws_secret_access_key", None)
@@ -255,7 +257,7 @@ class Devicepilot(Client):
                 )
             ret = response['Payload'].read()
             assert ret=="{}", ret
-        logging.info("Bulk upload completed ("+str(total_events)+" events in total)")
+        logging.info("Bulk upload completed (total of "+str(total_events)+" events at "+str(int(total_events / (time.time()-t)))+" events/s)")
 
     def send_top(self):
         """Send top (latest) value of all properties on all devices to the client"""
