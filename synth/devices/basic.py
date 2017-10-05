@@ -33,7 +33,7 @@ class Basic(Device):
         self.properties["$id"] = "-".join([format(random.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
         self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
         self.properties["label"] = "Thing "+str(Basic.device_number)
-        self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down)
+        self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down).
         logging.info("Created device " + str(Basic.device_number+1) + " : " + self.properties["$id"])
         Basic.device_number = Basic.device_number + 1
         

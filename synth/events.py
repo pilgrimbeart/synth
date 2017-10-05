@@ -88,7 +88,6 @@ import device_factory
 from common import query
 from common import evt2csv
 from common import ISO8601
-from common import json_writer
 
 LOG_DIRECTORY = "../synth_logs/"
 
@@ -105,8 +104,8 @@ def mkdir_p(path):
 
 class Events():
     def __init__(self, client, engine, context, eventList):
-        """<params> is a list of events"""
-        def callback(device_id, time, properties):
+        """<params> is a list of events. Note that our .event_count property is read from outside."""
+        def update_callback(device_id, time, properties):
             write_event_log(properties)
             client.update_device(device_id, time, properties)
 
@@ -123,7 +122,7 @@ class Events():
                 logging.error("Ignoring action '"+str(name)+"' as client "+str(client.__class__.__name__)+" does not support it")
 
         def write_event_log(properties):
-            """Write .evt and .json entries"""
+            """Write .evt entry"""
             s = pendulum.from_timestamp(properties["$ts"]).to_datetime_string()+" "
 
             for k in sorted(properties.keys()):
@@ -178,7 +177,7 @@ class Events():
                 elif "create_device" in action:
                     engine.register_event_at(at_time,
                                              device_factory.create_device,
-                                             (instance_name, client, engine, callback, context, action["create_device"]))
+                                             (instance_name, client, engine, update_callback, context, action["create_device"]))
                 elif "query" in action:
                     engine.register_event_at(at_time,
                                              query_action,

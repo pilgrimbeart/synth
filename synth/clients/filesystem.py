@@ -60,7 +60,8 @@ class Filesystem(Client):
         self.json_stream = json_writer.Stream(instance_name)
 
     def add_device(self, device_id, time, properties):
-        self.update_device(device_id, time, properties)
+        # self.update_device(device_id, time, properties) - NO, this will cause duplicate creation events to be written to JSON file
+        pass
 
     def update_device(self, device_id, time, properties):
         properties["$id"] = device_id # Ensure we always specify these
@@ -92,7 +93,6 @@ class Filesystem(Client):
         """Called to clean up on exiting."""
         self.json_stream.close()
         logging.info("Preparing CSV file")
-        print "self.events=",self.events
         csv = evt2csv.convert_to_csv(self.events)
         logging.info("Writing CSV file")
         filename = "../synth_logs/"+self.params["filename"]+".csv"

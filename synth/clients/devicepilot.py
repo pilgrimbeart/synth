@@ -171,19 +171,21 @@ class Devicepilot(Client):
         self.session.mount('http://', HTTPAdapter(max_retries=retries))
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
-    def add_device(self, device_id, time, properties):
-        self.update_device(device_id, time, properties)
-        pass
-    
-    def update_device(self, device_id, time, properties):
+    def _send_update(self, device_id, time, properties, record):
         props = properties.copy()
         props.update({"$id" : device_id, "$ts" : time})
+        self.top.update(props)
         if self.mode == "interactive":
             self.post_queue.append(props)
-            self.flush_post_queue_if_ready()
-        else:
+            self.flush_post_queue_if_ready()        
+        if (self.mode == "bulk") and (record):
             self.json_stream.write_event(props)
-        self.top.update(props)
+
+    def add_device(self, device_id, time, properties):
+        self._send_update(device_id, time, properties, False)
+
+    def update_device(self, device_id, time, properties):
+        self._send_update(device_id, time, properties, True)
 
     def get_device(self, device_id):
         pass
@@ -284,9 +286,12 @@ class Devicepilot(Client):
     def post_device(self, device, historical=False):
         # DevicePilot API accepts either a single JSON object, or an array of such
         # If <historical> is true, DevicePilot doesn't calculate any dependent events (so e.g. won't send alerts)
+
         self.last_post_time = time.time()
         
         body = json.dumps(device)
+
+        # logging.info(body)
         
         if isinstance(device, list):
             self.post_count += len(device)

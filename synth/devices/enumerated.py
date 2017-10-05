@@ -13,6 +13,9 @@ Configurable parameters::
         "sigmas" :      [a,corresponding,set,of,      standard-deviations] (optional, e.g. "PT1H" means the period will vary randomly with 1 standard deviation of 1 hour)
     }
 
+If sigmas are not specified, they default to 50% of the periods to create a good amount of random spread. If you want to remove all randomness, specify sigmas of "PT0S".
+
+
 Device properties created::
 
     {
@@ -27,6 +30,8 @@ import random
 import isodate
 import logging
 
+DEFAULT_SIGMA_RATIO = 0.1   # If no sigma specified, it defaults to this fraction of the period
+
 class Enumerated(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         """Create a property with enumerated events"""
@@ -34,18 +39,23 @@ class Enumerated(Device):
         p = params["enumerated"]
         self.enumerated_name = p["name"]
         self.enumerated_values = p["values"]
-        self.enumerated_periods = p["periods"]
-        self.enumerated_sigmas = p.get("sigmas", None)
+        periods = p["periods"]
+        sigmas = p.get("sigmas", None)
 
-        assert len(self.enumerated_values)==len(self.enumerated_periods), "In enumerated device specification, number of periods must match number of values"
-        if self.enumerated_sigmas is not None:
-            assert len(self.enumerated_values)==len(self.enumerated_sigmas), "In enumerated device specification, number of sigmas must match number of values"
+        assert len(periods)==len(self.enumerated_values), "In enumerated device specification, number of periods must match number of values"
+        if sigmas is not None:
+            assert len(sigmas)==len(self.enumerated_values), "In enumerated device specification, number of sigmas must match number of values"
 
         # Convert to seconds
+        self.enumerated_periods = []
+        if sigmas is None:
+            self.enumerated_sigmas = None
+        else:
+            self.enumerated_sigmas = []
         for i in range(len(self.enumerated_values)):
-            self.enumerated_periods[i] = isodate.parse_duration(self.enumerated_periods[i]).total_seconds()
+            self.enumerated_periods.append(isodate.parse_duration(periods[i]).total_seconds())
             if self.enumerated_sigmas is not None:
-                self.enumerated_sigmas[i] = isodate.parse_duration(self.enumerated_sigmas[i]).total_seconds()
+                self.enumerated_sigmas.append(isodate.parse_duration(sigmas[i]).total_seconds())
 
         for i in range(len(self.enumerated_values)):
             self.schedule_next_event(i)
@@ -55,6 +65,8 @@ class Enumerated(Device):
         sigma = 0
         if self.enumerated_sigmas:
             sigma = self.enumerated_sigmas[index]
+        else:
+            sigma = period * DEFAULT_SIGMA_RATIO
         dt = random.normalvariate(period, sigma)
         dt = min(dt, period + 2*sigma)
         dt = max(dt, period - 2*sigma)

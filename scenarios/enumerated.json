@@ -2,21 +2,24 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "2000-01-01T00:00:00",
+        "start_time" : "1980-01-01T00:00:00",
         "end_time" : null,
-        "end_after_events" : 100
+        "end_after_events" : 100000
     },
     "events" : [
         {
             "at" : "PT0S",
+            "interval" : "PT0S",
+            "repeats" : 100,
             "action": {
                 "create_device" : {
                     "functions" : {
                         "enumerated" : {
                             "name" : "event",
-                            "values" : ["alarm", "battery low", "cover removed"],
-                            "periods" : ["P30D", "P100D", "P360D"],
-                            "sigmas" : ["P10D", "P50D", "P180D" ]
+                            "values" : ["alarm", "battery low", "mains loss", "cover removed", "hardware fault", "calibration error", "sensor needs cleaning", "internal fault", "link interference", "over-temperature"],
+                            "periods" : ["P30D", "P100D",       "P10D",       "P60D",          "P360D",          "P100D",             "P200D",                 "P500D",          "P13D",              "P500D"]
+//                            "values" : ["test"],
+//                            "periods" : ["P1D"]
                         }
                     }
                 }
