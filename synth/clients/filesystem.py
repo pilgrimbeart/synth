@@ -92,6 +92,7 @@ class Filesystem(Client):
         """Called to clean up on exiting."""
         self.json_stream.close()
         logging.info("Preparing CSV file")
+        print "self.events=",self.events
         csv = evt2csv.convert_to_csv(self.events)
         logging.info("Writing CSV file")
         filename = "../synth_logs/"+self.params["filename"]+".csv"

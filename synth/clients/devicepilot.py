@@ -70,6 +70,17 @@ Query DevicePilot (you'll probably want to do a client.sync first). Parameters a
         }
     }
 
+The DevicePilot client has two modes of pushing events into DevicePilot:
+
+    * `bulk` mode generates JSON files locally, and then does a bulk-upload to DevicePilot (via AWS)
+    * `interactive` mode send events directly into the /ingest DevicePilot API (slower, but will trigger actions and is interactive)
+
+The client default to `bulk` mode, and automatically changes to `interactive` mode either at the end of the simulation, or when real-time is reached, whichever comes first.
+If you want to change to `interactive` mode within your simulation, you can use the "set_mode" command::
+
+    "action" : {
+        "set_mode" : "bulk|interactive"
+    }
 
 """
 #

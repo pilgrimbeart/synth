@@ -1,7 +1,7 @@
-Device Functions
+Device functions
 ================
 
-Devices are composed of **functions** which are Python plug-ins in the **devices** directory. All devices inherit the Basic device function. You can specify as many functions for a device as you like. Functions are composable (a device is constructed by inheriting from all specified functions) so functions can interact with each other if necessary.
+Devices are composed of **functions** (each of which is a Python plug-in located in the **synth/devices** directory. All devices inherit the Basic device function. You can specify as many functions for a device as you like. Functions are composable (a device is constructed by inheriting from all specified functions) so functions can interact with each other if necessary.
 
 Each function optionally takes some parameters (typically specified in a scenario .json file) and optionally creates and manages some device properties.
 
@@ -10,6 +10,7 @@ Each function optionally takes some parameters (typically specified in a scenari
 .. automodule:: synth.devices.button
 .. automodule:: synth.devices.comms
 .. automodule:: synth.devices.commswave
+.. automodule:: synth.devices.enumerated
 .. automodule:: synth.devices.expect
 .. automodule:: synth.devices.firmware
 .. automodule:: synth.devices.heartbeat

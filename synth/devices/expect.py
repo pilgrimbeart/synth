@@ -5,7 +5,7 @@ Watch-out for expected incoming messages.
 A timefunction definition returns 0 or 1 at different moments in time.
 We expect to receive no events when the timefunction returns 0.
 We expect to receive exactly one event each time the timefunction returns 1.
-Expect also creates a histogram chart of events
+Expect also creates a histogram chart of events, available on the webserver at /plots/<instancename>.html
 
 Configurable parameters::
 

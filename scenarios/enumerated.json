@@ -1,0 +1,26 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "2000-01-01T00:00:00",
+        "end_time" : null,
+        "end_after_events" : 100
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "enumerated" : {
+                            "name" : "event",
+                            "values" : ["alarm", "battery low", "cover removed"],
+                            "periods" : ["P30D", "P100D", "P360D"],
+                            "sigmas" : ["P10D", "P50D", "P180D" ]
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

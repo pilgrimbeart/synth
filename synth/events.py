@@ -45,15 +45,10 @@ Create a device::
         }
     }
 
-Run a query on historical data::
+Get Synth to run a query on the historical data it has just generated [TODO: code not yet complete!]::
 
     "query" : {
         "expression" : "$ts < ago(30)"
-    }
-
-Bulk upload all events generated so far to the client::
-
-    "bulk_upload" : {
     }
 
 Execute an action on whichever Synth client is in use (e.g. aws, devicepilot, filesystem etc.)::

@@ -37,6 +37,11 @@
                                 }
                             }
                         },
+                        "enumerated" : {
+                            "name" : "event",
+                            "values" : ["alarm", "battery low", "cover removed"],
+                            "periods" : ["P30D", "P100D", "P360D"]
+                        },
                         "expect" : {
                             "event_name" : "notifyTimeout",
                             "timefunction" : {

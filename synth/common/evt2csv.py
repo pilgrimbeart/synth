@@ -29,7 +29,7 @@ import logging
 import json
 
 SEP = "!"
-TIME_FORMAT = "%012.3f" # leading zeroes allow sorted() to time-sort, milli-second precision
+TIME_FORMAT = "%016.3f" # leading zeroes allow sorted() to time-sort, milli-second precision
 
 def insert_properties(the_dict, properties):
     """Update an event dict."""
