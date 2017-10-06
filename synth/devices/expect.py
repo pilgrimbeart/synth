@@ -108,7 +108,7 @@ class Expect(Device):
     def add_event(self, t, event):
         rel_t = t - self.creation_time  # Convert to relative time
         Expect.event_log.append( (rel_t, self.properties["$id"], event) )
-        self.dump_events()
+        # self.dump_events()
         
     def dump_events(self):
         s = ""
