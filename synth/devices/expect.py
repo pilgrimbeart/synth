@@ -158,6 +158,9 @@ class Expect(Device):
 
     def output_plot(self):
         histo = self.create_histo()
+        (e,d,o,m) = (sum(histo[2][0]), sum(histo[2][1]), sum(histo[2][2]), sum(histo[2][3]))
+        logging.info("Received events: Expected:"+str(e)+" Duplicate:"+str(d)+" Outside:"+str(o)+" Missing:"+str(m))
+        logging.info("So E+D+O="+str(e+d+o)+" events received so far")
         div1 = plotting.plot_histo(histo[0], histo[1], histo[2])
         div2 = plotting.plot_score_log(Expect.score_log)
         plotting.write_page(self.instance_name, [div1, div2])
