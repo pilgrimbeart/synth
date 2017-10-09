@@ -35,6 +35,11 @@ from events import Events
 import device_factory
 import zeromq_rx
 
+SCENARIO_DIR = "scenarios/"
+ACCOUNTS_DIR = "../synth_accounts/"
+LOG_DIR = "../synth_logs/"
+LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
+
 g_get_sim_time = None   # TODO: Find a more elegant way for logging to discover simulation time
 
 # Set up Python logger to report simulated time
@@ -45,14 +50,17 @@ def in_simulated_time(self,secs=None):
         t = 0
     return ISO8601.epoch_seconds_to_datetime(t).timetuple()  # Logging might be emitted within sections where simLock is acquired, so we accept a small chance of duff time values in log messages, in order to allow diagnostics without deadlock
 
-def initLogging():
+def init_logging(base_name):
+    logging.getLogger('').handlers = [] # Because of the (dumb) way that the logging module is built, if anyone, anywhere, during e.g. import, calls basicConfig, then we're screwed
     logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(levelname)s %(message)s',
+                    format=LOG_FORMAT,
                     datefmt='%Y-%m-%dT%H:%M:%S'
                     )
-    logging.Formatter.converter=in_simulated_time # Make logger use simulated time
+    logging.Formatter.converter = in_simulated_time # Make logger use simulated time
 
-initLogging()
+    file_handler = logging.FileHandler(filename=LOG_DIR + base_name + ".out", mode="w")
+    file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    h2 = logging.getLogger().addHandler(file_handler)
 
 def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge/7205107#7205107
     """Deep merge dict <b> into dict <a>, overwriting a with b for any overlaps"""
@@ -74,10 +82,10 @@ def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/d
 def readParamfile(filename, fail_silently=False):
     s = "{}"
     try:
-        s = open("scenarios/"+filename+".json","rt").read()
+        s = open(SCENARIO_DIR+filename+".json","rt").read()
     except:
         try:
-            s = open("../synth_accounts/"+filename+".json","rt").read()
+            s = open(ACCOUNTS_DIR+filename+".json","rt").read()
         except:
             if not fail_silently:
                 raise
@@ -140,10 +148,11 @@ def main():
 
     def event_count_callback():
         return events.event_count
-    
-    logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
-    
+
     params = get_params()
+    assert "instance_name" in params, "The parameter instance_name has not been defined, but this is required for logfile naming"
+    init_logging(params["instance_name"])
+    logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
     logging.info("Parameters:\n"+json.dumps(params, sort_keys=True, indent=4, separators=(',', ': ')))
 
     Tstart = time.time()
