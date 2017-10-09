@@ -36,7 +36,7 @@ EVENT_OUTSIDE_WINDOW = 'OUTSIDE_WINDOW'         # We got an event unexpectedly o
 MISSING_EVENT = 'MISSING_EVENT'                 # We failed to get any event within the window
 
 REPORT_PERIOD_S = 60
-HISTO_BINS = 20
+HISTO_BINS = 100
 
 OUTPUT_DIRECTORY = "../synth_logs/"
 
