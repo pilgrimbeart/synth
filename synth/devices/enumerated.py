@@ -60,6 +60,16 @@ class Enumerated(Device):
         for i in range(len(self.enumerated_values)):
             self.schedule_next_event(i)
 
+    def comms_ok(self):
+        return super(Enumerated, self).comms_ok()
+
+    def external_event(self, event_name, arg):
+        super(Enumerated, self).external_event(event_name, arg)
+
+    def close(self):
+        super(Enumerated,self).close()
+
+
     def schedule_next_event(self, index):
         period = self.enumerated_periods[index]
         sigma = 0
@@ -76,3 +86,4 @@ class Enumerated(Device):
     def change_enumerated_value(self, index):
         self.set_property(self.enumerated_name, self.enumerated_values[index])
         self.schedule_next_event(index)
+

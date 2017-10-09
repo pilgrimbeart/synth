@@ -33,8 +33,8 @@ class Commswave(Device):
     def external_event(self, event_name, arg):
         super(Commswave, self).external_event(event_name, arg)
 
-    def close(self, err_str):
-        super(Commswave,self).close(err_str)
+    def close(self):
+        super(Commswave,self).close()
 
     # Private methods
 

@@ -86,8 +86,8 @@ class Expect(Device):
         else:
             logging.info("Doesn't match expected event name "+str(self.expected_event_name))
 
-    def close(self, err_str):
-        super(Expect,self).close(err_str)
+    def close(self):
+        super(Expect,self).close()
 
     # Private methods
     

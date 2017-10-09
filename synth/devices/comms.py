@@ -41,8 +41,8 @@ class Comms(Device):
     def external_event(self, event_name, arg):
         super(Comms, self).external_event(event_name, arg)
 
-    def close(self, err_str):
-        super(Comms,self).close(err_str)
+    def close(self):
+        super(Comms,self).close()
 
     # Private methods
 

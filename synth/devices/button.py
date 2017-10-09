@@ -35,8 +35,8 @@ class Button(Device):
     def external_event(self, event_name, arg):
         super(Button, self).external_event(event_name, arg)
 
-    def close(self, err_str):
-        super(Button, self).close(err_str)
+    def close(self):
+        super(Button, self).close()
 
     # Private methods
 

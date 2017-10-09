@@ -2,7 +2,7 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-PT24H",
+        "start_time" : "-PT15M",
         "end_time" : "now"
     },
     "events" : [

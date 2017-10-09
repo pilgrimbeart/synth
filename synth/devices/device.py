@@ -21,5 +21,5 @@ class Device(object):
 
     # noinspection PyUnusedLocal
     @abstractmethod
-    def close(self, err_str):
+    def close(self):
         pass

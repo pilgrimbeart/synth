@@ -33,6 +33,6 @@ class Names(Device):
     def external_event(self, event_name, arg):
         super(Names,self).external_event(event_name, arg)
 
-    def close(self, err_str):
-        super(Names,self).close(err_str)
+    def close(self):
+        super(Names,self).close()
 

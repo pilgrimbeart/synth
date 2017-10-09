@@ -59,8 +59,8 @@ class Variable(Device):
     def external_event(self, event_name, arg):
         super(Variable, self).external_event(event_name, arg)
 
-    def close(self, err_str):
-        super(Variable, self).close(err_str)
+    def close(self):
+        super(Variable, self).close()
 
     # Private methods
 
