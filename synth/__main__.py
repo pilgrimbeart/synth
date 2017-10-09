@@ -26,7 +26,8 @@ Generate and exercise synthetic devices for testing and demoing IoT services.
 # SOFTWARE.
 
 import logging
-import math, time, sys, json, threading, subprocess, re, traceback
+import time, sys, json, re, traceback
+import requests, httplib
 import random   # Might want to replace this with something we control
 from datetime import datetime
 from common import ISO8601
@@ -41,6 +42,8 @@ LOG_DIR = "../synth_logs/"
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 
 g_get_sim_time = None   # TODO: Find a more elegant way for logging to discover simulation time
+g_slack_webhook = None
+g_instance_name = None
 
 # Set up Python logger to report simulated time
 def in_simulated_time(self,secs=None):
@@ -50,7 +53,10 @@ def in_simulated_time(self,secs=None):
         t = 0
     return ISO8601.epoch_seconds_to_datetime(t).timetuple()  # Logging might be emitted within sections where simLock is acquired, so we accept a small chance of duff time values in log messages, in order to allow diagnostics without deadlock
 
-def init_logging(base_name):
+def init_logging(params):
+    global g_slack_webhook
+    
+    # Log to console
     logging.getLogger('').handlers = [] # Because of the (dumb) way that the logging module is built, if anyone, anywhere, during e.g. import, calls basicConfig, then we're screwed
     logging.basicConfig(level=logging.INFO,
                     format=LOG_FORMAT,
@@ -58,9 +64,25 @@ def init_logging(base_name):
                     )
     logging.Formatter.converter = in_simulated_time # Make logger use simulated time
 
-    file_handler = logging.FileHandler(filename=LOG_DIR + base_name + ".out", mode="w")
+    # Log to file
+    file_handler = logging.FileHandler(filename=LOG_DIR + params["instance_name"] + ".out", mode="w")
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
     h2 = logging.getLogger().addHandler(file_handler)
+
+    # Log to Slack
+    g_slack_webhook = params.get("slack_webhook", None)
+
+def post_to_slack(text):
+    if g_slack_webhook is not None:
+        text = "{:%Y-%m-%d %H:%M:%S}".format(datetime.now()) + " GMT " + text
+        payload = {"text" : text,
+                   "as_user" : False,
+                   "username" : "Synth "+g_instance_name,
+                   }
+        try:
+            response = requests.post(g_slack_webhook, data=json.dumps(payload), headers={'Content-Type': 'application/json'})
+        except httplib.HTTPException as err:
+            logging.error("post_to_slack() failed: "+str(err))
 
 def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge/7205107#7205107
     """Deep merge dict <b> into dict <a>, overwriting a with b for any overlaps"""
@@ -139,6 +161,7 @@ def get_params():
 
 def main():
     global g_get_sim_time
+    global g_instance_name
     
     def postWebEvent(webParams):    # CAUTION: Called asynchronously from the web server thread
         if "action" in webParams:
@@ -150,10 +173,12 @@ def main():
         return events.event_count
 
     params = get_params()
-    assert "instance_name" in params, "The parameter instance_name has not been defined, but this is required for logfile naming"
-    init_logging(params["instance_name"])
+    assert "instance_name" in params, "The parameter 'instance_name' has not been defined, but this is required for logfile naming"
+    g_instance_name = params["instance_name"]
+    init_logging(params)
     logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
     logging.info("Parameters:\n"+json.dumps(params, sort_keys=True, indent=4, separators=(',', ': ')))
+    post_to_slack("Started")
 
     Tstart = time.time()
     random.seed(12345)  # Ensure reproduceability
@@ -174,30 +199,6 @@ def main():
     events = Events(client, engine, params, params["events"])
 
     zeromq_rx.init(postWebEvent)
-
-    # Set up the world
-    
-##    if dp:
-##        if params["initial_action"]=="deleteExisting":      # Recreate world from scratch
-##            dp.deleteAllDevices()   # !!! TODO: Delete properties too.
-##        if params["initial_action"]=="deleteDemo":  # Delete only demo devices (slow)
-##            dp.deleteDevicesWhere('(is_demo_device == true)')
-##        if params["initial_action"]=="loadExisting":       # Load existing world
-##            for d in dp.getDevices():
-##                device_factory.device(d)
-##    if aws:
-##        if params["initial_action"] in ["deleteExisting", "deleteDemo"]:
-##            aws.deleteDemoDevices()
-##        # Loading device state from AWS not yet supported
-##
-##    if "device_setup" in params:
-##        if params["device_setup"]=="whitelees":
-##            whitelees.deviceSetup()
-##        else:
-##            print "Unrecognised device_setup:",params["device_setup"]
-##            exit(-1)
-##    else:
-##        if params["initial_action"] != "loadExisting":
 
     logging.info("Simulation starts")
 
@@ -220,7 +221,9 @@ def main():
     logging.info("Elapsed real time: "+str(int(time.time()-Tstart))+" seconds")
 
     if err_str=="":
+        post_to_slack("Finished OK")
         exit(0)
+    post_to_slack(err_str)
     exit(-1)
 
 if __name__ == "__main__":

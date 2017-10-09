@@ -105,6 +105,8 @@ An account file **must** contain:
 
  * "instance_name" : this defines what to call this running instance of Synth. It's used to name log files, and also to distinguish incoming event traffic intended for this particular instance
  * "client" {} : the name of the output client to use and any parameters it requires
+ * "web_key" : optionally, the key to authenticate web clients 
+ * "slack_webhook" : optionally, the webhook handle for a Slack channel to report key events on
 
 Certificates
 ************

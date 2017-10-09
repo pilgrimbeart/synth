@@ -59,8 +59,7 @@
                                     "delay" : "-PT5M",
                                     "comment" : "5 min window immediately after timeout"
                                 }
-                            },
-                            "slack_webhook" : "https://hooks.slack.com/services/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"
+                            }
                         }
                     }
                 }

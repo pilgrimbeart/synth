@@ -12,8 +12,7 @@ Configurable parameters::
     {
         "timefunction" : defines window when events are expected
         "event_name" : name of expected incoming events
-        "required_score_percent" : Optionally, a minimum quality score to achieve by test end (otherwise raise an error)
-        "slack_webhook" : Optionally, a Slack channel to post updates to
+        "required_score_percent" : Optionally, raise an error if this minimum quality score isn't achieved by test end
     }
 
 Device properties created::
@@ -46,7 +45,6 @@ class Expect(Device):
     # Note below are all CLASS variables, not instance variables, because we only want one of them across all devices
     event_log = []  # List of (event_time, event_time_relative, event_time_modulo, deviceID, event_type) - across all devices
     score_log = []  # List of (time, score)
-    slack_initialised = False
     
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Expect,self).__init__(instance_name, time, engine, update_callback, context, params)
@@ -55,12 +53,7 @@ class Expect(Device):
         self.expected_event_name = params["expect"]["event_name"]
         self.expected_instance_name = context["instance_name"]
         self.expected_required_score = params["expect"].get("required_score_percent", None)
-
-        self.slack_webhook = params["expect"].get("slack_webhook", None)
-        if not Expect.slack_initialised:    # Only do this for first device registered
-            self.post_to_slack("Started")
-            self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
-            Expect.slack_initialised = True
+        self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
 
         self.seen_event_in_this_window = False
 
@@ -91,12 +84,6 @@ class Expect(Device):
             logging.info("Doesn't match expected event name "+str(self.expected_event_name))
 
     def close(self, err_str):
-        if Expect.slack_initialised:
-            if err_str=="":
-                self.post_to_slack("Finished OK")
-            else:
-                self.post_to_slack(err_str)
-            Expect.slack_initialised = False
         super(Expect,self).close(err_str)
 
     # Private methods
@@ -175,23 +162,10 @@ class Expect(Device):
             f.write(','.join(map(str, L))+"\n")
         f.close()
         
-    def post_to_slack(self, text):
-        if self.slack_webhook is not None:
-            text = "{:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()) + " GMT " + text
-            payload = {"text" : text,
-                       "as_user" : False,
-                       "username" : "Synth "+self.instance_name,
-                       }
-            try:
-                response = requests.post(self.slack_webhook, data=json.dumps(payload), headers={'Content-Type': 'application/json'})
-            except httplib.HTTPException as err:
-                logging.error("expect.post_to_slack() failed: "+str(err))
-
     def tick_send_report(self, _):
         Expect.score_log.append( (self.engine.get_now(), self.score() * 100) )
 
         self.output_plot()
         self.write_stats()
-        # self.post_to_slack("Synth histogram of expected vs. actual: "+url)
         self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
         
