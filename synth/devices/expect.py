@@ -45,6 +45,7 @@ class Expect(Device):
     # Note below are all CLASS variables, not instance variables, because we only want one of them across all devices
     event_log = []  # List of (event_time, event_time_relative, event_time_modulo, deviceID, event_type) - across all devices
     score_log = []  # List of (time, score)
+    tick_initialised = False
     
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Expect,self).__init__(instance_name, time, engine, update_callback, context, params)
@@ -53,7 +54,9 @@ class Expect(Device):
         self.expected_event_name = params["expect"]["event_name"]
         self.expected_instance_name = context["instance_name"]
         self.expected_required_score = params["expect"].get("required_score_percent", None)
-        self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
+        if not Expect.tick_initialised:
+            self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
+            Expect.tick_initialised = True
 
         self.seen_event_in_this_window = False
 
