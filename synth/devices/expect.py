@@ -12,6 +12,7 @@ Configurable parameters::
     {
         "timefunction" : defines window when events are expected
         "event_name" : name of expected incoming events
+        "required_score_percent" : Optionally, a minimum quality score to achieve by test end (otherwise raise an error)
         "slack_webhook" : Optionally, a Slack channel to post updates to
     }
 
@@ -53,6 +54,7 @@ class Expect(Device):
         self.expected_timefunction = importer.get_class("timefunction", tf.keys()[0])(engine, tf[tf.keys()[0]])
         self.expected_event_name = params["expect"]["event_name"]
         self.expected_instance_name = context["instance_name"]
+        self.expected_required_score = params["expect"].get("required_score_percent", None)
 
         self.slack_webhook = params["expect"].get("slack_webhook", None)
         if not Expect.slack_initialised:    # Only do this for first device registered
@@ -170,7 +172,7 @@ class Expect(Device):
         f = open(OUTPUT_DIRECTORY+self.expected_instance_name+"_expected.csv","wt")
         f.write("Absolute time, elapsed time, modulo time, Device ID, Event type\n")
         for L in Expect.event_log:
-            f.write(','.join(map(str, L)))
+            f.write(','.join(map(str, L))+"\n")
         f.close()
         
     def post_to_slack(self, text):
