@@ -131,6 +131,10 @@ class Expect(Device):
 
         return sum
 
+    def modulo_fraction(rel_time):
+        """Wrap time (relative to start) around our window"""
+        return (float(rel_time) % period) / period
+
     def create_histo(self):
         """Plot logged events as a set of histograms."""
         histo_in_window = [0] * HISTO_BINS
@@ -139,7 +143,7 @@ class Expect(Device):
         histo_missing_event = [0] * HISTO_BINS
         period = self.expected_timefunction.period()
         for L in Expect.event_log:
-            modulo_time = (float(L[1]) % period) / period # Normalise time to 0..1
+            modulo_time = self.modulo_fraction(L[1]) # Normalise time to 0..1
             bin = int(HISTO_BINS * modulo_time)
             if L[3]==EVENT_IN_WINDOW:
                 histo_in_window[bin] += 1
@@ -170,9 +174,13 @@ class Expect(Device):
 
     def write_stats(self):
         f = open(OUTPUT_DIRECTORY+self.expected_instance_name+"_expected.csv","wt")
-        f.write("Time, Time relative to window, Device ID, Event type\n")
+        f.write("Absolute time, elapsed time, modulo time, Device ID, Event type\n")
         for L in Expect.event_log:
-            f.write(json.dumps(L[0]) + "," + json.dumps(L[1]) + "," + json.dumps(L[2]) + "," + json.dumps(L[3]) + "\n")
+            f.write(json.dumps(L[0]) + "," +
+                    json.dumps(L[1]) + "," +
+                    json.dumps(self.modulo_fraction(L[1])) + "," +
+                    json.dumps(L[2]) + "," +
+                    json.dumps(L[3]) + "\n")
         f.close()
         
     def post_to_slack(self, text):
