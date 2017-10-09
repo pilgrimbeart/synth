@@ -172,7 +172,7 @@ class Expect(Device):
         f = open(OUTPUT_DIRECTORY+self.expected_instance_name+"_expected.csv","wt")
         f.write("Time, Time relative to window, Device ID, Event type")
         for L in Expect.event_log:
-            f.write(L[0] + "," + L[1] + "," + L[2] + "," + L[3] + "\n")
+            f.write(json.dumps(L[0]) + "," + json.dumps(L[1]) + "," + json.dumps(L[2]) + "," + json.dumps(L[3]) + "\n")
         f.close()
         
     def post_to_slack(self, text):
