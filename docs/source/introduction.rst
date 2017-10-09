@@ -46,30 +46,24 @@ To test that Synth is installed correctly:
         }
     }
 
-2) Ensure there's a scenario file in `scenarios/10secs` containing::
+2) Note that in the `scenarios/` directory there's a file called `10secs.json`.
 
-    {
-        "device_count" : 10,
-        "start_time" : "now",
-        "end_time" : "PT10S",
-        "install_timespan" : 10
-    }
-
-3) Now on the command line, from the top-level Synth directory (i.e. the one which contains the README file) run::
+3) On the command line, from the top-level Synth directory (i.e. the one which contains the README file) run::
 
     python synth OnFStest 10secs
 
 This will run for 10 seconds and create output files including::
 
-    ../synth_logs/OnFStest.evt  - a log of all generated events
+    ../synth_logs/OnFStest.out  - a copy of the log messages
+    ../synth_logs/OnFStest.evt  - a list of generated events
     ../synth_logs/OnFStest.csv  - the output from the 'filesystem' client
 
 Directory structure
 *******************
-Synth uses various data directories, some of which are in the directory *above* the Synth source code because they contain sensitive data which we don't want to e.g. commit in git.
- * ``scenarios``: parameter files defining different simulation scenarios - see below
- * ``../synth_accounts``: parameter files containing information about how to contact remote services such as IoT clients, and keys for them
- * ``../synth_logs``: Synth creates output files here
+Synth uses various data directories:
+ * ``scenarios/``: parameter files defining different simulation scenarios - see below
+ * ``../synth_accounts/``: parameter files containing information about how to contact remote services such as IoT clients, and keys for them. This is above the main directory so this sensitive information isn't accidentally included in a git commit. 
+ * ``../synth_logs/``: Synth creates output files here. This is above the main directory because it's all verbose output which we don't want to accidentally include in a git commit.
 
 
 Command-line arguments
@@ -78,19 +72,21 @@ Synth accepts any number of arbitrary command-line parameters::
 
 	python synth {args}
 
-Arguments are generally taken to be the names of corresponding JSON files in either the ``synth_accounts`` or ``scenarios`` directories. The convention (but it's only a convention) is to name account files ``On*`` and list them first::
+Arguments are generally taken to be the names of corresponding JSON files in either the ``../synth_accounts`` or ``scenarios`` directories. The convention (but it's only a convention) is to name account files ``On*`` and list them first::
 
 	python synth OnFStest full_fat_device
 
-will make Synth run the ``scenarios/full_fat_device.json`` scenario on the account defined in ``../synth_accounts/OnFStest.json``.
+makes Synth run the ``scenarios/full_fat_device.json`` scenario on the account defined in ``../synth_accounts/OnFStest.json``.
 
-Synth also loads the file ``../synth_accounts/default.json`` at startup, if it exists, and this is where you can put universal parameters such as your Google Maps API key.
+Before loading anything, Synth loads the file ``../synth_accounts/default.json`` at startup, if it exists, and this is where you can put universal parameters such as your Google Maps API key.
 
-Whilst accounts and scenarios are generally defined in parameter files as described below, it is also possible to make (or override) simple definitions by specifying JSON directly on the command line as an argument e.g.::
+Synth merges the JSON files in the order given, so although they'll generally not contain overlapping information, if you *want* to override a parameter then you can do so.
+
+Whilst accounts and scenarios are generally defined in parameter files as described below, it is also possible to make (and override) simple definitions by specifying JSON directly on the command line as an argument e.g.::
 
 		python synth OnFStest full_fat_device {\"restart_log\" : true}
 
-When Synth runs it emits various hopefully informative log messages. These are time-stamped with the current **simulation** time, which will not be the current real time (unless Synth has caught-up with real time).
+When Synth runs it emits informative log messages and errors. These are time-stamped with the current **simulation** time, which will not be the current real time (unless Synth has caught-up with real time).
 
 Parameter Files
 ***************
@@ -100,17 +96,20 @@ Synth parameter files are JSON structures. To add self-documentation your Synth 
 
 Accounts
 --------
-These are stored in the ``..\synth_accounts`` directory and are personal to you. See bottom for examples - you'll need to edit these to include your own private keys etc.
+These are stored in the ``../synth_accounts/`` directory and are personal to you. See bottom for examples - you'll need to edit these to include your own private keys etc.
 An account file **must** contain:
 
  * "instance_name" : this defines what to call this running instance of Synth. It's used to name log files, and also to distinguish incoming event traffic intended for this particular instance
  * "client" {} : the name of the output client to use and any parameters it requires
- * "web_key" : optionally, the key to authenticate web clients 
- * "slack_webhook" : optionally, the webhook handle for a Slack channel to report key events on
+
+Optionally it can also contain:
+
+ * "web_key" : the key to authenticate web clients 
+ * "slack_webhook" : the webhook handle for a Slack channel to report key events on
 
 Certificates
 ************
-The ../synth_accounts directory may also contain ``ssl.crt`` and ``ssl.key`` files the two SSL certificate files necessary to enable Flask to securely accept and make HTTPS:// connections (so you only need these files if you're using inbound web events e.g. from DevicePilot)
+The ../synth_accounts/ directory may also contain ``ssl.crt`` and ``ssl.key``, the SSL certificate files necessary to enable Flask to securely accept and make HTTPS:// connections (so you only need these files if you're using inbound web events e.g. from DevicePilot)
 
 Clients
 -------
@@ -118,12 +117,12 @@ Clients take synth output and send it into some IoT system to simulate devices. 
 
 Scenarios
 ---------
-These are stored in the ``scenarios`` directory. A set of examples is provided and you can change or copy these to suit your needs.
+These are stored in the ``scenarios/`` directory. A set of examples is provided and you can change or copy these to suit your needs.
 
 A scenario file **must** contain:
 
  * "engine" : {} : which simulation client engine to use
- * "events" : {} : events to generate during the simulation run
+ * "events" : [] : events to generate during the simulation run
 
 Simulation Engines
 ------------------
