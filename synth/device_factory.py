@@ -84,7 +84,7 @@ def external_event(params):
     global devices
     body = params["body"]
     try:
-        logging.info("external Event received: "+str(params))
+        logging.debug("external Event received: "+str(params))
         for d in devices:
             if d.properties["$id"] == body["deviceId"]:
                 arg = body.get("arg", None)
