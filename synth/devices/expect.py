@@ -45,18 +45,18 @@ class Expect(Device):
     # Note below are all CLASS variables, not instance variables, because we only want one of them across all devices
     event_log = []  # List of (event_time, event_time_relative, event_time_modulo, deviceID, event_type) - across all devices
     score_log = []  # List of (time, score)
-    tick_initialised = False
-    
+    initialised = False # Enables class to initialise things only once
+ 
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Expect,self).__init__(instance_name, time, engine, update_callback, context, params)
         tf = params["expect"]["timefunction"]
         self.expected_timefunction = importer.get_class("timefunction", tf.keys()[0])(engine, tf[tf.keys()[0]])
         self.expected_event_name = params["expect"]["event_name"]
         self.expected_instance_name = context["instance_name"]
-        self.expected_required_score = params["expect"].get("required_score_percent", None)
-        if not Expect.tick_initialised:
+        self.expected_required_score_percent = params["expect"].get("required_score_percent", None)
+        if not Expect.initialised:
             self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
-            Expect.tick_initialised = True
+            Expect.initialised = True
 
         self.seen_event_in_this_window = False
 
@@ -88,6 +88,16 @@ class Expect(Device):
 
     def close(self):
         super(Expect,self).close()
+        if Expect.initialised:
+            Expect.initialised = False
+            if self.expected_required_score_percent is not None:
+                actual_score_percent = self.score() * 100
+                logging.info("Expect required_score_percent=" + str(self.expected_required_score_percent) +
+                             " actual_score_percent="+str(actual_score_percent))
+                if actual_score_percent >= self.expected_required_score_percent:
+                    logging.info("Expect score PASSED")
+                else:
+                    assert False, "Expect score FAILED"
 
     # Private methods
     

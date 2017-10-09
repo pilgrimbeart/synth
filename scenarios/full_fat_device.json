@@ -2,7 +2,7 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-PT15M",
+        "start_time" : "-PT10M",
         "end_time" : "now"
     },
     "events" : [
@@ -52,7 +52,7 @@
                                     "comment" : "5 min window immediately after timeout"
                                 }
                             },
-                            "slack_webhook" : "https://hooks.slack.com/services/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"
+                            "required_score_percent" : 100
                         },
                         "firmware" : {
                         },
