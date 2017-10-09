@@ -38,10 +38,12 @@ MISSING_EVENT = 'MISSING_EVENT'                 # We failed to get any event wit
 REPORT_PERIOD_S = 60
 HISTO_BINS = 20
 
+OUTPUT_DIRECTORY = "../synth_logs/"
+
 class Expect(Device):
     """A device function which expects to receive events at certain times, and logs when it does/doesn't."""
     # Note below are all CLASS variables, not instance variables, because we only want one of them across all devices
-    event_log = []  # List of (event_time_relative, deviceID, event_type) - across all devices
+    event_log = []  # List of (event_time, event_time_relative, deviceID, event_type) - across all devices
     score_log = []  # List of (time, score)
     slack_initialised = False
     
@@ -50,6 +52,7 @@ class Expect(Device):
         tf = params["expect"]["timefunction"]
         self.expected_timefunction = importer.get_class("timefunction", tf.keys()[0])(engine, tf[tf.keys()[0]])
         self.expected_event_name = params["expect"]["event_name"]
+        self.expected_instance_name = context["instance_name"]
 
         self.slack_webhook = params["expect"].get("slack_webhook", None)
         if not Expect.slack_initialised:    # Only do this for first device registered
@@ -107,13 +110,13 @@ class Expect(Device):
 
     def add_event(self, t, event):
         rel_t = t - self.creation_time  # Convert to relative time
-        Expect.event_log.append( (rel_t, self.properties["$id"], event) )
+        Expect.event_log.append( (t, rel_t, self.properties["$id"], event) )
         # self.dump_events()
         
     def dump_events(self):
         s = ""
         for L in Expect.event_log:
-            s += str(L[0]) + "," + str(L[1]) + "," + str(L[2]) + "\n"
+            s += str(L[0]) + "," + str(L[1]) + "," + str(L[2]) + str(L[3]) + "\n"
         logging.info("Log of (un)expected events:\n"+s)
 
     def score(self):
@@ -122,7 +125,7 @@ class Expect(Device):
             return 1.0
         sum = 0
         for L in Expect.event_log:
-            if L[2]==EVENT_IN_WINDOW:
+            if L[3]==EVENT_IN_WINDOW:
                 sum += 1
         sum = sum / float(len(Expect.event_log))
 
@@ -136,15 +139,15 @@ class Expect(Device):
         histo_missing_event = [0] * HISTO_BINS
         period = self.expected_timefunction.period()
         for L in Expect.event_log:
-            modulo_time = (float(L[0]) % period) / period # Normalise time to 0..1
+            modulo_time = (float(L[1]) % period) / period # Normalise time to 0..1
             bin = int(HISTO_BINS * modulo_time)
-            if L[2]==EVENT_IN_WINDOW:
+            if L[3]==EVENT_IN_WINDOW:
                 histo_in_window[bin] += 1
-            elif L[2]==DUPLICATE_EVENT_IN_WINDOW:
+            elif L[3]==DUPLICATE_EVENT_IN_WINDOW:
                 histo_duplicate_event[bin] += 1
-            elif L[2]==EVENT_OUTSIDE_WINDOW:
+            elif L[3]==EVENT_OUTSIDE_WINDOW:
                 histo_outside_window[bin] += 1
-            elif L[2]==MISSING_EVENT:
+            elif L[3]==MISSING_EVENT:
                 histo_missing_event[bin] += 1
             else:
                 assert False
@@ -164,6 +167,13 @@ class Expect(Device):
         div1 = plotting.plot_histo(histo[0], histo[1], histo[2])
         div2 = plotting.plot_score_log(Expect.score_log)
         plotting.write_page(self.instance_name, [div1, div2])
+
+    def write_stats(self):
+        f = open(OUTPUT_DIRECTORY+self.expected_instance_name+"_expected.csv","wt")
+        f.write("Time, Time relative to window, Device ID, Event type")
+        for L in Expect.event_log:
+            f.write(L[0] + "," + L[1] + "," + L[2] + "," + L[3] + "\n")
+        f.close()
         
     def post_to_slack(self, text):
         if self.slack_webhook is not None:
@@ -181,6 +191,7 @@ class Expect(Device):
         Expect.score_log.append( (self.engine.get_now(), self.score() * 100) )
 
         self.output_plot()
+        self.write_stats()
         # self.post_to_slack("Synth histogram of expected vs. actual: "+url)
         self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
         
