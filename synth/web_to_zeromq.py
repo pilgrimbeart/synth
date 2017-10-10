@@ -90,7 +90,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 def create_socket():
     global g_zeromq_socket
-    logging.info("Initialising ZeroMQ to publish to TCP port "+str(ZEROMQ_PORT)+ "with buffer size " + str(ZEROMQ_BUFFER))
+    logging.info("Initialising ZeroMQ to publish to TCP port "+str(ZEROMQ_PORT)+ " with buffer size " + str(ZEROMQ_BUFFER))
     context = zmq.Context()
     g_zeromq_socket = context.socket(zmq.PUB)
     g_zeromq_socket.bind("tcp://*:%s" % ZEROMQ_PORT)
@@ -130,6 +130,7 @@ def event():
         }
     logging.info(str(packet))
     socket_send(packet)
+    logging.info("FINISHED SENDING OK")
     return "ok"
 
 def getAndCheckKey(req):
