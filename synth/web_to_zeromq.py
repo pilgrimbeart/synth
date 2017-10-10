@@ -254,13 +254,13 @@ def start_web_server():
     return p
 
 if __name__ == "__main__":
-    socket_send({"action": "announce", "severity" : logging.INFO, "message" : "Flask Web Server starting"}))
+    socket_send({"action": "announce", "severity" : logging.INFO, "message" : "Flask Web Server starting"})
     server = start_web_server()
     while True:
         time.sleep(1)
         if time.time()-g_last_ping_time.value > PING_TIMEOUT:
             logging.critical("Web server not detecting pings - restarting")
-            socket_send({"action": "announce", "severity" : logging.CRITICAL, "message" : "*** Flask Web Server died - restarting"}))
+            socket_send({"action": "announce", "severity" : logging.CRITICAL, "message" : "*** Flask Web Server died - restarting"})
             server.terminate()
             server = start_web_server()
             time.sleep(60)
