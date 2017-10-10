@@ -3,7 +3,7 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
-        "end_time" : null
+        "end_time" : "+PT10M"
     },
     "events" : [
         {
@@ -13,7 +13,7 @@
                 "client.create_filters" : [
                     {
                         "$description" : "Down (test)",
-                        "where" : "$ts < ago(300)",
+                        "where" : "$ts < ago(120)", // Timeout at 2 minutes
                         "monitor" : true,
                         "action" : {
                             "$description": "Notify Synth of timeout (test)",
@@ -32,8 +32,8 @@
         },
         {
             "at" : "PT0S",
-            "repeats" : 10,
-            "interval" : "PT1S",
+            "repeats" : 500,
+            "interval" : "PT0S",
             "comment" : "A device with periodic comms outages",
             "action": {
                 "create_device" : {
@@ -44,9 +44,10 @@
                         "commswave" : {
                             "timefunction" : {
                                 "pulsewave" : {
-                                    "interval" : "PT20M",
+                                    "interval" : "PT10M",
+                                    "transition" : "PT2M",
                                     "invert" : true,
-                                    "comment" : "So devices will be sending heartbeats for first 10 minutes, then timeout"
+                                    "comment" : "Send heartbeats for 2 minutes, then timeout"
                                 }
                             }
                         },
@@ -54,10 +55,9 @@
                             "event_name" : "notifyTimeout",
                             "timefunction" : {
                                 "pulsewave" : {
-                                    "interval" : "PT20M",
-                                    "transition" : "PT15M",
-                                    "delay" : "-PT5M",
-                                    "comment" : "5 min window immediately after timeout"
+                                    "interval" : "PT10M",
+                                    "transition" : "PT4M",
+                                    "comment" : "Expect a timeout after 4 minutes"
                                 }
                             }
                         }
@@ -67,14 +67,12 @@
         },
         {
             "at" : "PT0S",
-            "repeats" : 1,
-            "interval" : "PT1S",
-            "comment" : "A device that's always posting, to prevent old DP timeout logic bug",
+            "comment" : "A device that's always posting, to keep DP now() moving forwards",
             "action": {
                 "create_device" : {
                     "functions" : {
                         "heartbeat" : {
-                            "interval" : "PT60S"
+                            "interval" : "PT10S"
                         }
                     }
                 }

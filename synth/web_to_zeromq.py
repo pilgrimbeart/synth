@@ -62,7 +62,12 @@ resulting in an action specification which looks something like this::
 
 # It seems generally accepted that API POSTs should take no more than 2 seconds, so we need
 # to be pretty responsive. So we run Flask in Threaded mode, and protect child code for re-entrancy
-# where necessary
+# where necessary.
+#
+# We also run Flask in its own *Process*.
+# WARNING: it appears that if you binding ZMQ to a socket on multiple processes
+# then the second one fails *silently*! So don't call socket_send() from the parent
+# process, or Flask's ZMQ sends will all fail silently.
 
 from flask import Flask, request, abort
 from flask_cors import CORS, cross_origin
@@ -130,7 +135,6 @@ def event():
         }
     logging.info(str(packet))
     socket_send(packet)
-    logging.info("FINISHED SENDING OK")
     return "ok"
 
 def getAndCheckKey(req):
@@ -251,7 +255,7 @@ def start_web_server():
     g_lock = threading.Lock()
     args = {"threaded":True, "host":"0.0.0.0", "port":WEB_PORT, "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')}
     logging.info("Starting Flask server with args : "+json.dumps(args))
-    # socket_send({"action": "announce", "severity" : logging.INFO, "message" : "Flask Web Server starting"})
+    # socket_send({"action": "announce", "severity" : logging.INFO, "message" : "Flask Web Server starting"}) # No, using the ZeroMQ socket from this process buggers it for the other process
     p = multiprocessing.Process(target=app.run, kwargs=args)
     p.daemon = True
     p.start()
