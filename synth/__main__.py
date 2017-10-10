@@ -168,6 +168,8 @@ def main():
             if webParams["action"] == "event":
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
                     engine.register_event_in(0, device_factory.external_event, webParams)
+            elif webParams["action"] == "announce":
+                logging.log(webParams["severity"], "[broadcast message] "+webParams["message"])
 
     def event_count_callback():
         return events.event_count

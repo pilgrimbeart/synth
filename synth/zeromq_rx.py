@@ -24,11 +24,13 @@ import sys, threading, logging, traceback, json, time
 import zmq
 
 ZEROMQ_PORT = 5556
+ZEROMQ_BUFFER = 100000
 
 # Socket to talk to server
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
 socket.connect ("tcp://localhost:%s" % ZEROMQ_PORT)
+socket.set_hwm(ZEROMQ_BUFFER)
 
 topicfilter = ""    # ZeroMQ will do filtering for us, but only on client side
 socket.setsockopt(zmq.SUBSCRIBE, topicfilter)

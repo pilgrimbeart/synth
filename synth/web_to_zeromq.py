@@ -60,42 +60,64 @@ resulting in an action specification which looks something like this::
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# It seems generally accepted that API POSTs should take no more than 2 seconds, so we need
+# to be pretty responsive. So we run Flask in Threaded mode, and protect child code for re-entrancy
+# where necessary
+
 from flask import Flask, request, abort
 from flask_cors import CORS, cross_origin
-import multiprocessing, subprocess
+import multiprocessing, subprocess, threading
 import json, time, logging, sys, re, datetime
 import zmq # pip install pyzmq-static
 
 WEB_PORT = 443 # HTTPS. If < 1000 then this process must be run with elevated privileges
+PING_TIMEOUT = 60*5 # We expect to get pinged every N seconds
 ZEROMQ_PORT = 5556
+ZEROMQ_BUFFER = 100000
 
 CERT_DIRECTORY = "../synth_accounts/"
 
 DEFAULTS_FILE = "../synth_accounts/default.json"
 
-zeromqSocket = None # Global, but we create it in the app context so we don't have inter-process issues
-lastPingTime = multiprocessing.Value('d', time.time())
-PING_TIMEOUT = 60*5 # We expect to get pinged every N seconds
+g_zeromq_socket = None # Global, but we create it in the app context so we don't have inter-process issues
+g_lock = none
+g_last_ping_time = multiprocessing.Value('d', time.time())
 
 app = Flask(__name__)
 CORS(app)   # Make Flask tell browser that cross-origin requests are OK
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
-def createSocket():
-    global zeromqSocket
-    logging.info("Initialising ZeroMQ to publish to port "+str(ZEROMQ_PORT))
+def create_socket():
+    global g_zeromq_socket
+    logging.info("Initialising ZeroMQ to publish to TCP port "+str(ZEROMQ_PORT)+ "with buffer size " + str(ZEROMQ_BUFFER))
     context = zmq.Context()
-    zeromqSocket = context.socket(zmq.PUB)
-    zeromqSocket.bind("tcp://*:%s" % ZEROMQ_PORT)
+    g_zeromq_socket = context.socket(zmq.PUB)
+    g_zeromq_socket.bind("tcp://*:%s" % ZEROMQ_PORT)
+    g_zeromq_socket.set_hwm(ZEROMQ_BUFFER)
 
+def socket_send(json_msg):
+    global g_lock, g_zeromq_socket
+    t = time.time()
+    
+    g_lock.acquire()
+    try:
+        if g_zeromq_socket == None:
+            create_socket()
+        g_zeromq_socket.send(json.dumps(json_msg))
+    except:
+        logging.error("ERROR in socket_send")
+    finally:
+        g_lock.release()
+
+    elapsed = time.time() - t
+    if elapsed > 0.1:
+        logging.error("****** SLOW POSTING *******")
+        logging.error("Took "+str(elapsed)+"s to post event")
+    
 @app.route("/event", methods=['POST','GET'])
 def event():
     """Accept an incoming event and route it to a Synth instance."""
-    global zeromqSocket
-    t = time.time()
-    if zeromqSocket == None:
-        createSocket()
 
     logging.info("Got web request to /event")
     h = {}
@@ -107,11 +129,7 @@ def event():
         "body" : request.get_json(force=True)
         }
     logging.info(str(packet))
-    zeromqSocket.send(json.dumps(packet))
-    elapsed = time.time() - t
-    logging.info("Event sent in "+str(elapsed)+" seconds")
-    if elapsed > 0.5:
-        logging.error("****** SLOW POSTING *******")
+    socket_send(packet)
     return "ok"
 
 def getAndCheckKey(req):
@@ -147,10 +165,6 @@ def getAndCheckApi(req):
 @app.route("/spawn", methods=['GET'])
 def spawn():
     """Start a new Synth instance."""
-    global zeromqSocket
-    if zeromqSocket == None:
-        createSocket()
-
     logging.info("Got web request to /spawn")
     dpKey = getAndCheckKey(request)
     if dpKey==None:
@@ -159,7 +173,7 @@ def spawn():
     dpApi = getAndCheckApi(request)
 
     packet = { "action" : "spawn", "key" : dpKey, "api" : dpApi }
-    zeromqSocket.send(json.dumps(packet))
+    socket_send(packet)
     logging.info("Sent packet "+str(packet))
     time.sleep(1)   # If client next immediately tests <is_running>, this will vastly increase chances of that working
     return "ok"
@@ -202,15 +216,11 @@ def isRunning():
 @app.route("/")
 def whatIsRunning():
     """We expect Pingdom to regularly ping this route to reset the heartbeat."""
-    global lastPingTime
-    global zeromqSocket
+    global g_last_ping_time
 
     logging.info("Got web request to /")
 
-    if zeromqSocket == None:
-        createSocket()
-
-    lastPingTime.value = time.time()
+    g_last_ping_time.value = time.time()
     try:
         magicKey=json.loads(open(DEFAULTS_FILE,"rt").read())["web_check_key"]
     except:
@@ -221,7 +231,7 @@ def whatIsRunning():
         logging.error("Incorrect or missing magic key in request")
         abort(403)
         
-    zeromqSocket.send(json.dumps({"action": "ping"}))   # Propagate pings into ZeroMQ for liveness logging throughout rest of system
+    socket_send({"action": "ping"})   # Propagate pings into ZeroMQ for liveness logging throughout rest of system
     try:
         x = subprocess.check_output("ps uax | grep 'python' | grep -v grep", shell=True)
         x += "<br>"
@@ -230,12 +240,13 @@ def whatIsRunning():
             return "Nothing"
     return "<pre>"+x.replace("\n","<br>")+"</pre>"
         
-def startWebServer():
+def start_web_server():
     """Doing app.run() with "threaded=True" starts a new thread for each incoming request, improving crash resilience. However this then means that everything here (and everything it calls) has to be re-entrant. So don't do that.
        By default Flask serves to 127.0.0.1 which is local loopback (not externally-visible), so use 0.0.0.0 for externally-visible
        We run entire Flask server as a distinct process so we can terminate it if it fails (can't terminate threads in Python)"""
     logging.info("Starting web server at "+datetime.datetime.now().ctime())
-    args = {"threaded":False, "host":"0.0.0.0", "port":WEB_PORT, "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')}
+    g_lock = threading.Lock()
+    args = {"threaded":True, "host":"0.0.0.0", "port":WEB_PORT, "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')}
     logging.info("Starting Flask server with args : "+json.dumps(args))
     p = multiprocessing.Process(target=app.run, kwargs=args)
     p.daemon = True
@@ -243,11 +254,13 @@ def startWebServer():
     return p
 
 if __name__ == "__main__":
-    server = startWebServer()
+    socket_send({"action": "announce", "severity" : logging.INFO, "message" : "Flask Web Server starting"}))
+    server = start_web_server()
     while True:
         time.sleep(1)
-        if time.time()-lastPingTime.value > PING_TIMEOUT:
+        if time.time()-g_last_ping_time.value > PING_TIMEOUT:
             logging.critical("Web server not detecting pings - restarting")
+            socket_send({"action": "announce", "severity" : logging.CRITICAL, "message" : "*** Flask Web Server died - restarting"}))
             server.terminate()
-            server = startWebServer()
+            server = start_web_server()
             time.sleep(60)
