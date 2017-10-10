@@ -79,8 +79,8 @@ CERT_DIRECTORY = "../synth_accounts/"
 
 DEFAULTS_FILE = "../synth_accounts/default.json"
 
-g_zeromq_socket = None # Global, but we create it in the app context so we don't have inter-process issues
-g_lock = none
+g_zeromq_socket = None # Global, protected via g_lock
+g_lock = None
 g_last_ping_time = multiprocessing.Value('d', time.time())
 
 app = Flask(__name__)
