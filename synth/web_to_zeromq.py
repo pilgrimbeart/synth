@@ -248,13 +248,13 @@ def start_web_server():
     g_lock = threading.Lock()
     args = {"threaded":True, "host":"0.0.0.0", "port":WEB_PORT, "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')}
     logging.info("Starting Flask server with args : "+json.dumps(args))
+    socket_send({"action": "announce", "severity" : logging.INFO, "message" : "Flask Web Server starting"})
     p = multiprocessing.Process(target=app.run, kwargs=args)
     p.daemon = True
     p.start()
     return p
 
 if __name__ == "__main__":
-    socket_send({"action": "announce", "severity" : logging.INFO, "message" : "Flask Web Server starting"})
     server = start_web_server()
     while True:
         time.sleep(1)
