@@ -93,6 +93,7 @@ def createSocket():
 def event():
     """Accept an incoming event and route it to a Synth instance."""
     global zeromqSocket
+    t = time.time()
     if zeromqSocket == None:
         createSocket()
 
@@ -107,6 +108,10 @@ def event():
         }
     logging.info(str(packet))
     zeromqSocket.send(json.dumps(packet))
+    elapsed = time.time() - t
+    logging.info("Event sent in "+str(elapsed)+" seconds")
+    if elapsed > 0.5:
+        logging.error("****** SLOW POSTING *******")
     return "ok"
 
 def getAndCheckKey(req):
