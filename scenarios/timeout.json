@@ -3,11 +3,11 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
-        "end_time" : "+PT10M"
+        "end_time" : "+PT60M"
     },
     "events" : [
         {
-            "at" : "PT0S",
+            "action" : { "client.delete_all_filters" : {} },
             "action" :
             {
                 "client.create_filters" : [
@@ -38,13 +38,15 @@
             "action": {
                 "create_device" : {
                     "functions" : {
-                        "variable" : {
-                            "name" : "count",
-                            "timefunction" : {
-                                "count" : {
-                                    "interval" : "PT10S"
-                                }
-                            }
+                        //"variable" : {
+                        //    "name" : "count",
+                        //    "timefunction" : {
+                        //        "count" : {
+                        //            "interval" : "PT10S"
+                        //        }
+                        //    }
+                        "heartbeat" : {
+                            "interval" : "PT60S"
                         },
                         "commswave" : {
                             "timefunction" : {
@@ -65,6 +67,7 @@
                                     "comment" : "Expect a timeout after 4 minutes"
                                 }
                             },
+                            "ignore_start" : "PT2M",
                             "required_score_percent" : 100
                         }
                     }
@@ -77,13 +80,15 @@
             "action": {
                 "create_device" : {
                     "functions" : {
-                        "variable" : {
-                            "name" : "count",
-                            "timefunction" : {
-                                "count" : {
-                                    "interval" : "PT10S"
-                                }
-                            }
+                        // "variable" : {
+                        //     "name" : "count",
+                        //     "timefunction" : {
+                        //         "count" : {
+                        //             "interval" : "PT10S"
+                        //         }
+                        //     }
+                        "heartbeat" : {
+                            "interval" : "PT10S"
                         }
                     }
                 }
