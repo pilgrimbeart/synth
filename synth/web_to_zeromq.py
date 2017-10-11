@@ -112,6 +112,8 @@ def socket_send(json_msg):
         g_zeromq_socket.send(json.dumps(json_msg))
     except:
         logging.error("ERROR in socket_send")
+        logging.critical(traceback.format_exc())
+        raise
     finally:
         g_lock.release()
 
@@ -245,7 +247,7 @@ def whatIsRunning():
             return "Nothing"
     return "<pre>"+x.replace("\n","<br>")+"</pre>"
         
-def start_web_server():
+def start_web_server(restart):
     """Doing app.run() with "threaded=True" starts a new thread for each incoming request, improving crash resilience. However this then means that everything here (and everything it calls) has to be re-entrant. So don't do that.
        By default Flask serves to 127.0.0.1 which is local loopback (not externally-visible), so use 0.0.0.0 for externally-visible
        We run entire Flask server as a distinct process so we can terminate it if it fails (can't terminate threads in Python)"""
@@ -253,7 +255,11 @@ def start_web_server():
     global g_lock
     logging.info("Starting web server at "+datetime.datetime.now().ctime())
     g_lock = threading.Lock()
-    args = {"threaded":True, "host":"0.0.0.0", "port":WEB_PORT, "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')}
+    args = {    "threaded":True,
+                "host":"0.0.0.0",
+                "port":WEB_PORT,
+                "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')
+            }
     logging.info("Starting Flask server with args : "+json.dumps(args))
     # socket_send({"action": "announce", "severity" : logging.INFO, "message" : "Flask Web Server starting"}) # No, using the ZeroMQ socket from this process buggers it for the other process
     p = multiprocessing.Process(target=app.run, kwargs=args)
@@ -262,12 +268,12 @@ def start_web_server():
     return p
 
 if __name__ == "__main__":
-    server = start_web_server()
+    server = start_web_server(restart=False)
     while True:
         time.sleep(1)
         if time.time()-g_last_ping_time.value > PING_TIMEOUT:
             logging.critical("Web server not detecting pings - restarting")
-            socket_send({"action": "announce", "severity" : logging.CRITICAL, "message" : "*** Flask Web Server died - restarting"})
             server.terminate()
-            server = start_web_server()
+            time.sleep(5)
+            server = start_web_server(restart=True)
             time.sleep(60)

@@ -117,7 +117,7 @@ class Expect(Device):
     def score(self):
         """Return a quality score of between 0.0 and 1.0."""
         if len(Expect.event_log)==0:
-            return 1.0
+            return 0.0
         sum = 0
         for L in Expect.event_log:
             if L[4]==EVENT_IN_WINDOW:
