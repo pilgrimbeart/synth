@@ -5,6 +5,7 @@ profiling
 ### Synth sensitive & output files (shouldn't be here but sometimes people create symlinks)
 synth_logs/
 synth_accounts/
+nohup.out
 
 ### Python template
 # Byte-compiled / optimized / DLL files
