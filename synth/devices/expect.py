@@ -12,6 +12,7 @@ Configurable parameters::
     {
         "timefunction" : defines window when events are expected
         "event_name" : name of expected incoming events
+        "ignore_start" : define a (one-off) period e.g. "PT1M" during which events will be ignored. Useful for ignoring e.g. timeouts generated at start of simulation.
         "required_score_percent" : Optionally, raise an error if this minimum quality score isn't achieved by test end
     }
 
