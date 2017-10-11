@@ -53,6 +53,7 @@ class Expect(Device):
         self.expected_timefunction = importer.get_class("timefunction", tf.keys()[0])(engine, tf[tf.keys()[0]])
         self.expected_event_name = params["expect"]["event_name"]
         self.expected_instance_name = context["instance_name"]
+        self.expected_ignore_start = isodate.parse_duration(params["expect"].get("ignore_start", "PT0S")).total_seconds()
         self.expected_required_score_percent = params["expect"].get("required_score_percent", None)
         if not Expect.initialised:
             self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
@@ -73,16 +74,19 @@ class Expect(Device):
     def external_event(self, event_name, arg):
         super(Expect,self).external_event(event_name, arg)
         if event_name==self.expected_event_name:
-            logging.info("Expect.py acting on event "+event_name+" on device "+self.properties["$id"])
-            t = self.engine.get_now()
-            if self.expected_timefunction.state(t):
-                if self.seen_event_in_this_window:
-                    self.add_event(t,DUPLICATE_EVENT_IN_WINDOW)
-                else:
-                    self.add_event(t,EVENT_IN_WINDOW)
-                    self.seen_event_in_this_window = True
+            if self.engine.get_now() - self.creation_time < self.ignore_start:
+                logging.info("Expect ignoring event within ignore_start window")
             else:
-                self.add_event(t,EVENT_OUTSIDE_WINDOW)
+                logging.info("Expect acting on event "+event_name+" on device "+self.properties["$id"])
+                t = self.engine.get_now()
+                if self.expected_timefunction.state(t):
+                    if self.seen_event_in_this_window:
+                        self.add_event(t,DUPLICATE_EVENT_IN_WINDOW)
+                    else:
+                        self.add_event(t,EVENT_IN_WINDOW)
+                        self.seen_event_in_this_window = True
+                else:
+                    self.add_event(t,EVENT_OUTSIDE_WINDOW)
         else:
             logging.info("Doesn't match expected event name "+str(self.expected_event_name))
 
