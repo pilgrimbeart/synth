@@ -6,14 +6,8 @@
         "end_time" : "+PT60M"
     },
     "events" : [
-<<<<<<< HEAD
-        {
-            "action" : { "client.delete_all_filters" : {} },
-            "action" :
-=======
-        {   "action" : { "client.delete_all_filters" : {} } },
-        {   "action" :
->>>>>>> 367a1edf12b30ac02615d48d54fe4c182b71910e
+        { "action" : { "client.delete_all_filters" : {} }},
+        { "action" :
             {
                 "client.create_filters" : [
                     {
@@ -72,7 +66,7 @@
                                     "comment" : "Expect a timeout after 4 minutes"
                                 }
                             },
-                            "ignore_start" : "PT2M",
+                            "ignore_start" : "PT4M",
                             "required_score_percent" : 100
                         }
                     }

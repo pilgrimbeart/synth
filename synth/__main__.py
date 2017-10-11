@@ -174,6 +174,7 @@ def main():
     def event_count_callback():
         return events.event_count
 
+    logging.getLogger().setLevel(logging.INFO)
     params = get_params()
     assert "instance_name" in params, "The parameter 'instance_name' has not been defined, but this is required for logfile naming"
     g_instance_name = params["instance_name"]

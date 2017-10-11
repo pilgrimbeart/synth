@@ -24,7 +24,7 @@ Device properties created::
 """
 
 import logging, datetime
-import pendulum
+import pendulum, isodate
 import requests, httplib, json
 from device import Device
 from common import importer
@@ -75,7 +75,7 @@ class Expect(Device):
     def external_event(self, event_name, arg):
         super(Expect,self).external_event(event_name, arg)
         if event_name==self.expected_event_name:
-            if self.engine.get_now() - self.creation_time < self.ignore_start:
+            if self.engine.get_now() - self.creation_time < self.expected_ignore_start:
                 logging.info("Expect ignoring event within ignore_start window")
             else:
                 logging.info("Expect acting on event "+event_name+" on device "+self.properties["$id"])
