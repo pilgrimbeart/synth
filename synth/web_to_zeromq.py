@@ -246,7 +246,9 @@ def whatIsRunning():
     except:
             return "Nothing"
     return "<pre>"+x.replace("\n","<br>")+"</pre>"
-        
+
+# DO NOT CALL socket_send() BELOW HERE, OR YOU WILL BORK IT
+
 def start_web_server(restart):
     """Doing app.run() with "threaded=True" starts a new thread for each incoming request, improving crash resilience. However this then means that everything here (and everything it calls) has to be re-entrant. So don't do that.
        By default Flask serves to 127.0.0.1 which is local loopback (not externally-visible), so use 0.0.0.0 for externally-visible
@@ -261,7 +263,6 @@ def start_web_server(restart):
                 "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')
             }
     logging.info("Starting Flask server with args : "+json.dumps(args))
-    # socket_send({"action": "announce", "severity" : logging.INFO, "message" : "Flask Web Server starting"}) # No, using the ZeroMQ socket from this process buggers it for the other process
     p = multiprocessing.Process(target=app.run, kwargs=args)
     p.daemon = True
     p.start()
