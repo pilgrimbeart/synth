@@ -6,9 +6,14 @@
         "end_time" : "+PT60M"
     },
     "events" : [
+<<<<<<< HEAD
         {
             "action" : { "client.delete_all_filters" : {} },
             "action" :
+=======
+        {   "action" : { "client.delete_all_filters" : {} } },
+        {   "action" :
+>>>>>>> 367a1edf12b30ac02615d48d54fe4c182b71910e
             {
                 "client.create_filters" : [
                     {
