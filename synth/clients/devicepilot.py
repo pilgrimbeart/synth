@@ -54,7 +54,11 @@ Create arbitrary DevicePilot filters::
         ]
     }
 
-Synchronise with DevicePilot (i.e. wait until all data ingested into DevicePilot has become available)::
+Delete all DevicePilot filters::
+
+    "action" : { "client.delete_all_filters" : {} }
+
+Synchronise with DevicePilot (i.e. wait until all data we've posted into DevicePilot has been ingested and is now available)::
 
     "action" : { "client.sync" : {} }
 
@@ -511,6 +515,15 @@ class Devicepilot(Client):
                 notification_ID = self.create_notification(action)    # Add notification to this monitor
             if monitor or (action is not None):
                 incident_ID = self.create_incidentconfig(filter_ID, notification_ID)   # When filter matches, do the action
+
+    def PLUGIN_delete_all_filters(self, _):
+        logging.info("Deleting all DevicePilot filters")
+        # (we could probably just do a single delete of /savedSearches endpoint instead of deleting one-by-one)
+        filters = self.get_all_X(SAVEDSEARCH_ENDPOINT)
+        for F in filters:
+            logging.info("Deleting filter "+F["$description"])
+            resp = self.session.delete(self.url + F["$id"], headers=set_headers(self.key))
+            assert resp.ok, str(resp.reason) + str(resp.text)
 
     def PLUGIN_query(self, params):
         body = {}

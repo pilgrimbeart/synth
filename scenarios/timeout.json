@@ -6,9 +6,8 @@
         "end_time" : "+PT10M"
     },
     "events" : [
-        {
-            "at" : "PT0S",
-            "action" :
+        {   "action" : { "client.delete_all_filters" : {} } },
+        {   "action" :
             {
                 "client.create_filters" : [
                     {
