@@ -3,7 +3,7 @@
 	"engine": {
 		"type": "sim",
 		"start_time": "now",
-		"end_time": "+PT24M"	// End exactly as next button-press due
+		"end_time": "+PT10M"
 	},
 	"events": [
 		{
@@ -31,24 +31,27 @@
 		}, {
 			"at": "PT0S",
 			"repeats": 500,
-			"interval": "PT0S",
+			"interval": "PT0H",
 			"action": {
 				"create_device": {
 					"functions": {
+						"heartbeat": {
+							"interval": "PT30S"
+						},
 						"variable": [
 							{
 								"name": "count",
 								"timefunction": {
 									"count": {
-										"interval": "PT1M"
+										"interval": "PT30S"
 									}
 								}
 							}, {
 								"name": "button",
 								"timefunction": {
 									"pulsewave": {
-										"interval": "PT6M",
-										"transition" : "PT1M"
+										"interval": "PT60S",
+										"transition": "PT30S"
 									}
 								}
 							}
@@ -57,26 +60,16 @@
 							"event_name": "notifyButtonPress2",
 							"timefunction": {
 								"pulsewave": {
-									"interval": "PT6M",
-									"transition" : "PT1M"
+									"interval": "PT60S",
+									"transition": "PT30S"
 								}
 							},
-							"required_score_percent" : 100
+							"slack_webhook": "https://hooks.slack.com/services/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"
 						}
 					}
 				}
 			}
-		}, {
-			"action": {
-				"create_device": {
-					"functions": {
-               					"heartbeat" : {
-							"interval" : "PT10S" 
-						}
-					}
-				}
-			}
-                }
+		}
 	]
 }
 

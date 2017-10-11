@@ -20,7 +20,8 @@
                             "periods" : ["P30D", "P100D",       "P10D",       "P60D",          "P360D",          "P100D",             "P200D",                 "P500D",          "P13D",              "P500D"]
 //                            "values" : ["test"],
 //                            "periods" : ["P1D"]
-                        }
+                        },
+                        "latlong" : {}
                     }
                 }
             }

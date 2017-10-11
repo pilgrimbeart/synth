@@ -3,9 +3,10 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
-        "end_time" : "+PT10M"
+        "end_time" : null
     },
     "events" : [
+        {   "at" : "PT0S", "action": { "client.set_mode" : "interactive" } },
         {
             "at" : "PT0S",
             "action" :
@@ -13,7 +14,7 @@
                 "client.create_filters" : [
                     {
                         "$description" : "Down (test)",
-                        "where" : "$ts < ago(120)", // Timeout at 2 minutes
+                        "where" : "$ts < ago(60)",
                         "monitor" : true,
                         "action" : {
                             "$description": "Notify Synth of timeout (test)",
@@ -32,27 +33,20 @@
         },
         {
             "at" : "PT0S",
-            "repeats" : 500,
-            "interval" : "PT0S",
+            "repeats" : 1,
+            "interval" : "PT1S",
             "comment" : "A device with periodic comms outages",
             "action": {
                 "create_device" : {
                     "functions" : {
-                        "variable" : {
-                            "name" : "count",
-                            "timefunction" : {
-                                "count" : {
-                                    "interval" : "PT10S"
-                                }
-                            }
+                        "heartbeat" : {
+                            "interval" : "PT10S"
                         },
                         "commswave" : {
                             "timefunction" : {
                                 "pulsewave" : {
-                                    "interval" : "PT10M",
-                                    "transition" : "PT2M",
-                                    "invert" : true,
-                                    "comment" : "Send heartbeats for 2 minutes, then timeout"
+                                    "interval" : "PT4M",
+                                    "invert" : true
                                 }
                             }
                         },
@@ -60,12 +54,11 @@
                             "event_name" : "notifyTimeout",
                             "timefunction" : {
                                 "pulsewave" : {
-                                    "interval" : "PT10M",
-                                    "transition" : "PT4M",
-                                    "comment" : "Expect a timeout after 4 minutes"
+                                    "interval" : "PT4M",
+                                    "delay": "PT1M"
                                 }
                             },
-                            "required_score_percent" : 100
+                            "slack_webhook" : "https://hooks.slack.com/services/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"
                         }
                     }
                 }
@@ -73,17 +66,14 @@
         },
         {
             "at" : "PT0S",
-            "comment" : "A device that's always posting, to keep DP now() moving forwards",
+            "repeats" : 1,
+            "interval" : "PT1S",
+            "comment" : "A device that's always posting, to prevent old DP timeout logic bug",
             "action": {
                 "create_device" : {
                     "functions" : {
-                        "variable" : {
-                            "name" : "count",
-                            "timefunction" : {
-                                "count" : {
-                                    "interval" : "PT10S"
-                                }
-                            }
+                        "heartbeat" : {
+                            "interval" : "PT60S"
                         }
                     }
                 }
