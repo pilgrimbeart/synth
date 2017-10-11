@@ -24,13 +24,15 @@ from common import importer
 
 class Basic(Device):
     device_number = 0
+    myRandom = random.Random()  # Use our own private random-number generator, so we will repeatably generate the same device ID's regardless of who else is asking for random numbers
+    myRandom.seed(1234)
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         self.instance_name = instance_name
         self.creation_time = time
         self.engine = engine
         self.update_callback = update_callback
         self.properties = {}
-        self.properties["$id"] = "-".join([format(random.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
+        self.properties["$id"] = "-".join([format(Basic.myRandom.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
         self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
         self.properties["label"] = "Thing "+str(Basic.device_number)
         self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down).
