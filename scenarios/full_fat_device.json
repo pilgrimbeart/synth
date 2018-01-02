@@ -52,7 +52,7 @@
                                     "comment" : "5 min window immediately after timeout"
                                 }
                             },
-                            "required_score_percent" : 100
+                            "required_score_percent" : 0
                         },
                         "firmware" : {
                         },
