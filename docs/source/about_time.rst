@@ -15,6 +15,6 @@ Further examples of ISO8601 durations::
     * "P30D"    # In 30 days.
     * "-PT4H"   # 4 hours previously.
 
-Note that *negative* durations are allowed in some contexts. For example if you set a simulation start time as "P30D" then the simulation will start 30 days before now.
+Note that *negative* durations are allowed in some contexts. For example if you set a simulation start time as "-PT4H" then the simulation will start 4 hours before now.
 
-NOTE: Currently ISO8601 durations greater than Days are not correctly supported due to a bug in the <isodate> module. But it's fine to say e.g. "P360D" for a year.
+NOTE: Currently ISO8601 durations greater than Days are not correctly supported due to limitations of the <isodate> module. But it's fine to say e.g. "P360D" for a year.
