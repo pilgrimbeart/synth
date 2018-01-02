@@ -115,15 +115,15 @@ from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import httplib, urllib
 import isodate
+import traceback
 import boto3 # AWS library for bulk upload
 from clients.client import Client
-from common import ISO8601
-from common import top
-from common import json_writer
+from common import ISO8601, top, json_writer, evt2csv
 
 SAVEDSEARCH_ENDPOINT = "/savedSearches"         # UI calls these "filters"
 INCIDENTCONFIG_ENDPOINT = "/incidentConfigs"    # UI calls these "event configurations"
 NOTIFICATION_ENDPOINT = "/notifications"        # UI calls these "actions"
+DEVICE_ENDPOINT = "/devices"
 
 # Suppress annoying Requests debug
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -134,6 +134,9 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("urllib3.poolmanager").setLevel(logging.WARNING)
 logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
 
+debug_post = False
+debug_queue = False
+
 def set_headers(token):
     headers = {}
     headers["Authorization"] = "Token {0}".format(token)
@@ -141,12 +144,14 @@ def set_headers(token):
     return headers
 
 class Devicepilot(Client):
-    def __init__(self, instance_name, params):
+    def __init__(self, instance_name, context, params):
         """There are two types of queue-throttling:
             1) flush_criterion says "don't post until you have X messages (or X secs have passed)"
             2) throttle_seconds_per_post says "ensure X seconds between any post"
         """
         logging.info("Initialising DevicePilot client")
+        self.instance_name = instance_name
+        self.context = context
         self.params = params
         self.url = params["devicepilot_api"]
         self.key = params["devicepilot_key"]
@@ -181,14 +186,23 @@ class Devicepilot(Client):
         self.top.update(props)
         if self.mode == "interactive":
             self.post_queue.append(props)
-            self.flush_post_queue_if_ready()        
+            self.flush_post_queue_if_ready()
         if (self.mode == "bulk") and (record):
             self.json_stream.write_event(props)
 
     def add_device(self, device_id, time, properties):
-        self._send_update(device_id, time, properties, False)
-
+## NOTE: DevicePilot API doesn't require a separate "create device" call (device is created automatically on first mention)
+##       and sending an update here causes properties to be resent, potentially duplicating state which can invalidate tests
+##        if debug_queue:
+##            logging.info("devicepilot::add_device queueing "+str(properties))
+##            traceback.print_stack()
+##        self._send_update(device_id, time, properties, False)
+        pass
+    
     def update_device(self, device_id, time, properties):
+        if debug_queue:
+            logging.info("devicepilot::update_device queueing "+str(properties))
+            traceback.print_stack()
         self._send_update(device_id, time, properties, True)
 
     def get_device(self, device_id):
@@ -311,6 +325,8 @@ class Devicepilot(Client):
             else:
                 url += '/ingest'
             resp = self.session.post(url, verify=True, headers=set_headers(self.key), data=body)
+            if debug_post:
+                logging.info("devicePilot::post_device posted "+str(body))
         except httplib.HTTPException as err:
             logging.error("ERROR: devicepilot.post_device() couldn't create on server")
             logging.error(str(err))
@@ -426,14 +442,29 @@ class Devicepilot(Client):
         resp = self.session.get(r, headers=set_headers(self.key))
         return json.loads(resp.text)
 
-    def get_device_history(self, device_URN, start, end, fields):
-        req = self.url + device_URN + "/history" + "?" + urllib.urlencode({"start":start,"end":end,"fields":fields}) + "&timezoneOffset=0"+"&random=973"
-        resp = self.session.get(req, headers=set_headers(self.key))    # Beware caching of live data (change 'random' value to avoid)
-        if not resp.ok:
-            logging.error(str(resp.reason))
-            logging.error(str(resp.text))
-        return json.loads(resp.text)
+##    def get_device_history(self, device_URN, start, end, fields):
+##        req = self.url + device_URN + "/history" + "?" + urllib.urlencode({"start":start,"end":end,"fields":fields}) + "&timezoneOffset=0"+"&random=973"
+##        resp = self.session.get(req, headers=set_headers(self.key))    # Beware caching of live data (change 'random' value to avoid)
+##        if not resp.ok:
+##            logging.error(str(resp.reason))
+##            logging.error(str(resp.text))
+##        return json.loads(resp.text)
 
+    def get_device_history(self, device_id, start, end, fields):
+        req = self.url + "/query?last"
+        query = {
+            "op":"history",
+            "start" : start,
+            "end" : end,
+            "select": {
+                "deviceId" : device_id,
+                "fields" : fields
+                }
+            }
+        resp = self.session.post(req, headers=set_headers(self.key), data=json.dumps(query))
+        assert resp.ok, "Problem getting device history "+json.dumps(query)+"\n"+resp.text
+        return json.loads(resp.text)
+        
     def get_all_X(self, endpoint):
         """Return all X (where X is some DevicePilot endpoint such as "/savedSearches")"""
         return json.loads(self.session.get(self.url + endpoint, headers=set_headers(self.key)).text)
@@ -454,6 +485,8 @@ class Devicepilot(Client):
 
         url = self.url + endpoint
         resp = self.session.post(url, verify=True, headers=set_headers(self.key), data=json.dumps(body_set))
+        if debug_post:
+            logging.info("devicePilot::create_or_update_X posted "+str(body_set))
         if not resp.ok:
             logging.error(resp.text)
             resp.raise_for_status()
@@ -574,3 +607,34 @@ class Devicepilot(Client):
         """Delete all devices DevicePilot. We use an uppercase name to make it more obvious in scenario files! """
         self.delete_all_devices()
 
+    def PLUGIN_fetch_history(self, params):
+        # start = time.time() + isodate.parse_duration(params.get("start", "-P7D")).total_seconds()
+        # end = time.time() + isodate.parse_duration(params.get("start", "PT0S")).total_seconds()
+        start = params["start"]
+        end = params["end"]
+        devices = self.get_all_X(DEVICE_ENDPOINT)
+        filename = "../synth_logs/"+self.instance_name+"_history"
+        json_file = open(filename+".json","wt") # Do this to discover problems (e.g. open editor) before our expensive operations
+        csv_file = open(filename+".csv","wt")
+        
+        evts = {}
+        for count, d in enumerate(devices):
+            try:    # Don't let very occasional fetch error kill a long process
+                logging.info("Fetching history for device "+str(d["$id"])+" ("+str(count)+" of "+str(len(devices))+")")
+                fields = [x for x in d.keys() if not x.startswith("$ts/")]
+                history = self.get_device_history(d["$id"], start, end, fields)
+                evt_count = 0
+                for evt in history:
+                    evt["$id"] = d["$id"]
+                    evt["$ts"] = evt["$ts"] / 1000.0    # Convert from ms to s
+                    if len(evt) > 2:    # Suppress empty timestamps 
+                        evt2csv.insert_properties(evts, evt)
+                        evt_count+=1
+                logging.info(str(evt_count)+" events")
+            except:
+                logging.error(traceback.format_exc())
+        logging.info("Writing "+filename+".json")
+        evt2csv.write_as_json(evts, filename+".json")
+        logging.info("Writing "+filename+".csv")
+        csv = evt2csv.convert_to_csv(evts)
+        csv_file.write(csv)

@@ -1,0 +1,83 @@
+// Devices in Germany are happy, devices in UK are not
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P7D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "repeats" : 50,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "heartbeat" : {
+                            "interval" : "PT1H"
+                        },
+                        "comms" : {
+                            "reliability" : 0.95,
+                            "period" : "PT1H"
+                        },
+                        "latlong" : {
+                            "area_centre" : "Gottingen, Germany",
+                            "area_radius" : "Flensburg, Germany"
+                        },
+                        "light" : {
+                        },
+                        "variable" : {
+                            "name" : "country",
+                            "value" : "Germany"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 50,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "comms" : {
+                            "reliability" : 0.80,
+                            "period" : "PT1H"
+                        },
+                        "latlong" : {
+                            "area_centre" : "Manchester, UK",
+                            "area_radius" : "Brighton, UK"
+                        },
+                        "light" : {
+                        },
+                        "variable" : {
+                            "name" : "country",
+                            "value" : "UK"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 100,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "comms" : {
+                            "reliability" : 0.97,
+                            "period" : "PT1H"
+                        },
+                        "latlong" : {
+                            "area_centre" : "Colby, Kansas, USA",
+                            "area_radius" : "Nova Scotia"
+                        },
+                        "light" : {
+                        },
+                        "variable" : {
+                            "name" : "country",
+                            "value" : "USA"
+                        }
+                    }
+                }
+            }
+        }        
+    ]
+}

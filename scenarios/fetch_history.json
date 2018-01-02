@@ -1,0 +1,18 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "when_done"
+    },
+    "events" : [
+        {
+            "action": {
+                "client.fetch_history" : {
+                    "start" : "2017-10-10T00:00:00Z",
+                    "end" : "2017-10-12T00:00:00Z"
+                }
+            }
+        }
+    ]
+}

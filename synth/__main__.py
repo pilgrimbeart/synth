@@ -189,7 +189,7 @@ def main():
     if not "client" in params:
         logging.error("No client defined to receive simulation results")
         return
-    client = importer.get_class('client', params['client']['type'])(params['instance_name'], params['client'])
+    client = importer.get_class('client', params['client']['type'])(params['instance_name'], params, params['client'])
 
     if not "engine" in params:
         logging.error("No simulation engine defined")

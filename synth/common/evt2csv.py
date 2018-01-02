@@ -53,6 +53,15 @@ def insert_properties(the_dict, properties):
 
     the_dict[key] = existingProps
 
+def write_as_json(the_dict, filename):
+    out = []
+    for e in sorted(the_dict.keys()):
+        props = {}
+        for (p,v) in the_dict[e]:
+            props[p] = v
+        out.append(props)
+    open(filename, "wt").write(json.dumps(out, sort_keys=True, indent=4))
+
 def convert_to_csv(the_dict):
     """Convert dict and return a CSV file contents as a string"""
     out_str=""

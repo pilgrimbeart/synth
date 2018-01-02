@@ -57,7 +57,8 @@ from clients.client import Client
 DEFAULT_TYPENAME = "DemoThingType"
 
 class Aws(Client):
-    def __init__(self, instance_name, params):
+    def __init__(self, instance_name, context, params):
+        self.context = context
         self.aws_access_key_id = params.get("aws_access_key_id", None)
         self.aws_secret_access_key = params.get("aws_secret_access_key", None)
         self.aws_region = params.get("aws_region", None)

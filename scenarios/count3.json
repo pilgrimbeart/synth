@@ -1,0 +1,29 @@
+{
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-PT30000S",
+        "end_time" : null,
+        "end_after_events" : 3
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 1,
+            "interval" : "PT1S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : {
+                            "name" : "count",
+                            "timefunction" : {
+                                "count" : {
+                                    "interval" : "PT1S"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
