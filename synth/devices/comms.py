@@ -2,13 +2,14 @@
 comms
 =====
 Simulates unreliable communications between device and service.
-If an RSSI property is available, this is used to further modify the reliability.
+If a property "rssi" exists, this is used to further modify the reliability.
 
 Configurable parameters::
 
     {
-        "reliability" : Either a fraction 0.0..1.0, or a string containing a specification of the trajectory
-        "period" : How often the comms goes up and down - defaults to once a day
+        "reliability" : Either a fraction 0.0..1.0, or a string containing a specification of the trajectory. Defaults to 1.0
+        "period" : Mean period with which device goes up and down (has exponential tail with max 100x). Defaults to once a day
+        "has_buffer" : If this boolean is true then the device buffers data while comms is down (else it throws it away)
     }
 
 Device properties created::
@@ -23,6 +24,7 @@ from device import Device
 import random
 import isodate
 import helpers.timewave
+import logging
 
 GOOD_RSSI = -50.0
 BAD_RSSI = -120.0
@@ -32,12 +34,27 @@ class Comms(Device):
         self.ok_comms = True
         self.comms_reliability = params["comms"].get("reliability", 1.0)
         self.comms_up_down_period = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
+        self.has_buffer = params["comms"].get("has_buffer", False)
+        self.buffer = []
         engine.register_event_in(0, self.tick_comms_up_down, self)
-        super(Comms,self).__init__(instance_name, time, engine, update_callback, context, params)   # Set ourselves up before others do, so comms up/down takes effect even on device "boot"
+        super(Comms,self).__init__(instance_name, time, engine, update_callback, context, params)   # Chain other classes last, so we set ourselves up before others do, so comms up/down takes effect even on device "boot"
 
-    def comms_ok(self):
+    def comms_ok(self): # Overrides base-class's definition
         return super(Comms, self).comms_ok() and self.ok_comms
 
+    def transmit(self, the_id, ts, properties, force_comms):
+        # logging.info("comms.py::transmit")
+        if self.ok_comms or force_comms:
+            super(Comms, self).transmit(the_id, ts, properties, force_comms)
+            # logging.info("(doing comms)")
+        else:
+            if self.has_buffer:
+                # logging.info("(appending)")
+                self.buffer.append( (the_id, ts, properties) )
+            else:
+                # logging.info("(discarding)")
+                pass # Discard data
+                 
     def external_event(self, event_name, arg):
         super(Comms, self).external_event(event_name, arg)
 
@@ -46,9 +63,23 @@ class Comms(Device):
 
     # Private methods
 
+    def change_comms(self, ok):
+        if ok and (self.ok_comms == False): # If restoring comms, transmit everything that buffered whilst comms was offline
+            logging.info("comms.py: comms coming back online for device "+str(self.properties["$id"]))
+            if self.has_buffer:
+                logging.info("comms.py: ... so now transmitting " + str(len(self.buffer)) + " buffered events")
+                for e in self.buffer:
+                    self.transmit(e[0],e[1],e[2], True)
+                self.buffer = []
+
+        if (not ok) and self.ok_comms:
+            logging.info("comms.py: comms going offline for device " + str(self.properties["$id"]))
+
+        self.ok_comms = ok
+
     def tick_comms_up_down(self, _):
         if isinstance(self.comms_reliability, (int,float)):   # Simple probability
-            self.ok_comms = self.comms_reliability > random.random()
+            self.change_comms(self.comms_reliability > random.random())
         else:   # Probability spec, i.e. varies with time
             relTime = self.engine.get_now() - self.creation_time
             prob = timewave.interp(self.comms_reliability, relTime)
@@ -57,7 +88,7 @@ class Comms(Device):
                 radioGoodness = 1.0-(rssi-GOOD_RSSI)/(BAD_RSSI-GOOD_RSSI)   # Map to 0..1
                 radioGoodness = 1.0 - math.pow((1.0-radioGoodness), 4)      # Skew heavily towards "good"
                 prob *= radioGoodness
-            self.ok_comms = prob > random.random()
+            self.change_comms(prob > random.random())
 
         delta_time = random.expovariate(1.0 / self.comms_up_down_period)
         delta_time = min(delta_time, self.comms_up_down_period * 100.0) # Limit long tail

@@ -48,19 +48,24 @@ class Basic(Device):
     def comms_ok(self):
         return True
 
-    # Internal methods
+    def transmit(self, the_id, ts, properties, force_comms):
+        if not self.comms_ok() and not force_comms:
+            return
+
+        if self.update_callback:
+            self.update_callback(the_id, ts, properties)
+        else:
+            logging.warning("No callback installed to update device properties")
     
+    # Internal methods
+
     def do_comms(self, properties, force_comms = False):
         t = self.engine.get_now()
-        if force_comms or self.comms_ok():
-            if self.update_callback:
-                if not "$id" in properties: # Ensure there's an ID
-                    properties["$id"] = self.properties["$id"]
-                if not "$ts" in properties: # Ensure there's a timestamp
-                    properties["$ts"] = t
-                self.update_callback(self.properties["$id"], t, properties)
-            else:
-                logging.warning("No callback installed to update device properties")
+        if not "$id" in properties: # Ensure there's an ID
+            properties["$id"] = self.properties["$id"]
+        if not "$ts" in properties: # Ensure there's a timestamp
+            properties["$ts"] = t
+        self.transmit(self.properties["$id"], t, properties, force_comms)
 
     def get_property(self, prop_name):
         return self.properties[prop_name]

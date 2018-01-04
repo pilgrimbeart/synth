@@ -159,7 +159,8 @@ class Sim(Engine):
                 fn(arg)             # Note that this is likely to itself inject more events, so we must have released lock
                 return
         self.sim_lock.release()           # --->
-        logging.info("Waiting {:.2f}s for real time".format(wait))
+        if wait >= 1.0:
+            logging.info("Waiting {:.2f}s for real time".format(wait))
         time.sleep(min(1.0, wait))
         self.set_now(time.time())    # So that any events injected asynchronously will correctly get stamped with current time
 

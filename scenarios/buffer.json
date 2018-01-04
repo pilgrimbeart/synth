@@ -1,0 +1,50 @@
+{
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "PT4H"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 10,
+            "interval" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "comms" : {
+                            "reliability" : 0.5,
+                            "period" : "PT30M",
+                            "has_buffer" : true
+                        },
+                        "variable" : {
+                            "name" : "count",
+                            "timefunction" : {
+                                "count" : {
+                                    "interval" : "PT1M"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "at" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : {
+                            "name" : "count",
+                            "timefunction" : {
+                                "count" : {
+                                    "interval" : "PT1M"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }        
+    ]
+}
