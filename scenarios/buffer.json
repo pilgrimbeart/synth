@@ -2,12 +2,12 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
-        "end_time" : "PT4H"
+        "end_time" : "PT66M"
     },
     "events" : [
         {
             "at" : "PT0S",
-            "repeats" : 10,
+            "repeats" : 25,
             "interval" : "PT0S",
             "action": {
                 "create_device" : {
@@ -21,7 +21,7 @@
                             "name" : "count",
                             "timefunction" : {
                                 "count" : {
-                                    "interval" : "PT1M"
+                                    "interval" : "PT1S"
                                 }
                             }
                         }
@@ -38,7 +38,7 @@
                             "name" : "count",
                             "timefunction" : {
                                 "count" : {
-                                    "interval" : "PT1M"
+                                    "interval" : "PT1S"
                                 }
                             }
                         }
