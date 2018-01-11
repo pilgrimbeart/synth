@@ -51,7 +51,17 @@ Get Synth to run a query on the historical data it has just generated [TODO: cod
         "expression" : "$ts < ago(30)"
     }
 
-Execute an action on whichever Synth client is in use (e.g. aws, devicepilot, filesystem etc.)::
+Change arbitrary device properties with arbitrary timestamps::
+
+    "change_property" : {
+        "identity_property" : "name_of_property",   # e.g. "$id" - which property is used to identify device
+        "identity_value" : value_of_property,       # e.g. "01-02-03-04-05-06"
+        "property_name" : "name_of_property",
+        "property_value" : value_of_property  [can be string, number or boolean]
+        "$ts" : "time_specification"    # e.g. "-P1D" or "2000-01-01T00:00:00" - optional, if omitted change is stamped with current simulation time
+    }
+    
+Execute an action on whichever Synth client is in use (e.g. aws, devicepilot, filesystem etc. - see docs for each client)::
 
     "client.<action>" {
         <whatever parameters it expects>
@@ -88,6 +98,7 @@ import device_factory
 from common import query
 from common import evt2csv
 from common import ISO8601
+from common import conftime
 
 LOG_DIRECTORY = "../synth_logs/"
 
@@ -113,6 +124,17 @@ class Events():
             events = evt2csv.read_evt_str("".join(self.logtext))
             query.do_query(params, events)
             
+        def change_property_action(params):
+            d = device_factory.get_device_by_property( params["identity_property"],
+                                                       params["identity_value"])
+            assert d != None, "attempt to do change_property on non-existent device with property " + params["identity_property"] + " set to " + params["identity_value"]
+            if "$ts" in params:
+                ts = conftime.richTime(params["$ts"])
+            else:
+                ts = None
+            logging.info("change_property "+str(params))
+            d.set_property(params["property_name"], params["property_value"], timestamp=ts)
+
         def client_action(args):
             (name, params) = args
             if "PLUGIN_"+name in dir(client):
@@ -182,6 +204,10 @@ class Events():
                     engine.register_event_at(at_time,
                                              query_action,
                                              action["query"])
+                elif "change_property" in action:
+                    engine.register_event_at(at_time,
+                                             change_property_action,
+                                             action["change_property"])
                 else:   # Plug-in actions
                     name = action.keys()[0]
                     if not name.startswith("client."):

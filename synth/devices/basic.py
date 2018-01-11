@@ -59,13 +59,14 @@ class Basic(Device):
     
     # Internal methods
 
-    def do_comms(self, properties, force_comms = False):
-        t = self.engine.get_now()
+    def do_comms(self, properties, force_comms = False, timestamp = None):
+        if timestamp == None:
+            timestamp = self.engine.get_now()
         if not "$id" in properties: # Ensure there's an ID
             properties["$id"] = self.properties["$id"]
         if not "$ts" in properties: # Ensure there's a timestamp
-            properties["$ts"] = t
-        self.transmit(self.properties["$id"], t, properties, force_comms)
+            properties["$ts"] = timestamp
+        self.transmit(self.properties["$id"], timestamp, properties, force_comms)
 
     def get_property(self, prop_name):
         return self.properties[prop_name]
@@ -76,7 +77,9 @@ class Basic(Device):
     def property_absent(self, prop_name):
         return not self.property_exists(prop_name)
     
-    def set_property(self, prop_name, value, always_send = True):
+    def set_property(self, prop_name, value,
+                     always_send = True,
+                     timestamp = None):
         """Set device property and transmit an update"""
         if not prop_name in self.properties:
             changed = True
@@ -85,10 +88,13 @@ class Basic(Device):
         else:
             changed = False
 
-        new_props = { prop_name : value, "$id" : self.properties["$id"], "$ts" : self.engine.get_now() }
+        if timestamp == None:
+            timestamp = self.engine.get_now()
+
+        new_props = { prop_name : value, "$id" : self.properties["$id"], "$ts" : timestamp }
         self.properties.update(new_props)
         if changed or always_send:
-            self.do_comms(new_props)
+            self.do_comms(new_props, timestamp = timestamp)
 
     def set_properties(self, new_props):
         new_props.update({ "$id" : self.properties["$id"], "$ts" : self.engine.get_now() })  # Force ID and timestamp to be correct

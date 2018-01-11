@@ -1,0 +1,38 @@
+{
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "PT60S"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : {
+                            "name" : "count",
+                            "timefunction" : {
+                                "count" : {
+                                    "interval" : "PT1S"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "at" : "PT10S",
+            "action": {
+                "change_property" : {
+                    "identity_property" : "label",
+                    "identity_value" : "Thing 0",
+                    "property_name" : "metadata0",
+                    "property_value" : "the_value",
+                    "$ts" : "1970-01-01T00:00:00"
+                }
+            }
+        }        
+    ]
+}
