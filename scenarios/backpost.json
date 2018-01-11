@@ -19,7 +19,7 @@
                             }
                         }
                     },
-                    "delete_at" : "PT10S"
+                    "stop_at" : "PT10S"
                 }
             }
         },

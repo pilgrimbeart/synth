@@ -44,7 +44,7 @@ class Sim(Engine):
         self.caught_up_callback = cb
         self.caught_up = False
         self.event_count_callback = event_count_callback
-        self.events = []     # A sorted list of simulation callbacks: [(epochTime,sortkeycount,function,arg), ...]
+        self.events = []     # A sorted list of simulation callbacks: [(epochTime,sortkeycount,function,arg,device), ...]
         self.sort_key_count = 0
 
 
@@ -149,7 +149,7 @@ class Sim(Engine):
             logging.info("No events pending")
             wait = 1.0
         else:
-            (t,skc,fn,arg) = self.events[0]
+            (t,skc,fn,arg,dev) = self.events[0]
             wait = t - time.time()
             if wait <= 0:
                 self.events.pop(0)
@@ -164,7 +164,7 @@ class Sim(Engine):
         time.sleep(min(1.0, wait))
         self.set_now(time.time())    # So that any events injected asynchronously will correctly get stamped with current time
 
-    def _add_event(self, time, func, arg):
+    def _add_event(self, time, func, arg, dev):
         """If multiple events are inserted at the same time, we guarnatee they'll get executed in order.
         We do this by ensuring that the second item in the tuple is a monotonically rising number"""
         if time == 0:
@@ -173,7 +173,7 @@ class Sim(Engine):
             logging.info("Advisory: Setting event in the past (not illegal, but often a sign of a mistake)")
 
         self.sim_lock.acquire()
-        bisect.insort(self.events, (time, self.sort_key_count, func, arg)) # Efficient since we know the list is kept sorted.
+        bisect.insort(self.events, (time, self.sort_key_count, func, arg, dev)) # Efficient since we know the list is kept sorted.
         self.sort_key_count += 1
         self.sim_lock.release()
 
@@ -187,13 +187,20 @@ class Sim(Engine):
 ##        finally:
 ##            self.sim_Lock.release()   # --->
 
+    def remove_all_events_for_device(self, dev):
+        self.sim_lock.acquire()
+        old_len = len(self.events)
+        self.events = [e for e in self.events if e[4] != dev] # Remove any events with device=dev
+        new_len = len(self.events)
+        self.sim_lock.release()
+        logging.info("Removed all events for device "+str(dev)+ " (" + str(old_len-new_len)+" events removed)")
           
     def register_event_at(self, time, func, arg, device):
-        self._add_event(time, func, arg)
+        self._add_event(time, func, arg, device)
         
     def register_event_in(self, deltaTime, func, arg, device):
         assert deltaTime >= 0
-        self._add_event(self.get_now() + deltaTime, func, arg)
+        self._add_event(self.get_now() + deltaTime, func, arg, device)
 
     def dump_events(self):
         logging.info("EVENT QUEUE:")
