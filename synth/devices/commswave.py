@@ -41,4 +41,4 @@ class Commswave(Device):
 ##    (we don't actually need to tick, as we can instantaneously look up timefunction state whenever we need to)
 ##    def tick_commswave(self, _):
 ##        self.ok_commswave = self.comms_timefunction.state()
-##        self.engine.register_event_at(self.comms_timefunction.next_change(), self.tick_commswave, self)
+##        self.engine.register_event_at(self.comms_timefunction.next_change(), self.tick_commswave, self, self)

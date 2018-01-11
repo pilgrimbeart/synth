@@ -31,12 +31,14 @@ class Engine(object):
         pass
 
     @abstractmethod
-    def register_event_at(self, time, event, arg=None):
-        """Schedule an event (callback) at a given time. <arg> will be passed to callback."""
+    def register_event_at(self, time, event, arg, device):
+        """Schedule an event (callback) at a given time.
+           <arg> is passed to callback (set to None if unused)
+           <device> identifies which device object the event belongs to (set to None if not a device event)"""
         pass
 
     @abstractmethod
-    def register_event_in(self, interval, event):
+    def register_event_in(self, interval, event, arg, device):
         """Schedule an event (callback) after a given interval from current sim time"""
         pass
 

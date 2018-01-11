@@ -188,10 +188,10 @@ class Sim(Engine):
 ##            self.sim_Lock.release()   # --->
 
           
-    def register_event_at(self, time, func, arg=None):
+    def register_event_at(self, time, func, arg, device):
         self._add_event(time, func, arg)
         
-    def register_event_in(self, deltaTime, func, arg=None):
+    def register_event_in(self, deltaTime, func, arg, device):
         assert deltaTime >= 0
         self._add_event(self.get_now() + deltaTime, func, arg)
 

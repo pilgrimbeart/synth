@@ -24,7 +24,7 @@ import random
 class Light(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Light,self).__init__(instance_name, time, engine, update_callback, context, params)
-        engine.register_event_in(0, self.tick_light, self)
+        engine.register_event_in(0, self.tick_light, self, self)
 
     def comms_ok(self):
         return super(Light,self).comms_ok()
@@ -42,4 +42,4 @@ class Light(Device):
         lat = float(self.properties.get("latitude", 0.0))
         light = solar.sun_bright(self.engine.get_now(), lon, lat)
         self.set_property("light", light)
-        self.engine.register_event_in(60*60, self.tick_light, self)
+        self.engine.register_event_in(60*60, self.tick_light, self, self)

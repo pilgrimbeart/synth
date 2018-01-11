@@ -26,6 +26,7 @@ import traceback
 import json
 import pendulum
 from common import importer
+from common import conftime
 from devices.basic import Basic
 
 devices = []
@@ -51,11 +52,19 @@ def create_device(args):
         d = Basic(instance_name, engine.get_now(), engine, update_callback, context, params)
     client.add_device(d.properties["$id"], engine.get_now(), d.properties)
 
+    if "delete_at" in params:
+        at_time = conftime.richTime(params["delete_at"])
+        engine.register_event_at(at_time,delete_device,d,None)
+
     if get_device_by_property("$id", d.properties["$id"]) != None:
         logging.error("FATAL: Attempt to create duplicate device "+str(d.properties["$id"]))
         exit(-1)
     devices.append(d)
 
+def delete_device(d):
+    logging.info("deleting device "+str(d.properties["$id"]))
+    devices.remove(d)
+    
 def num_devices():
     global devices
     n = len(devices)

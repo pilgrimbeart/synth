@@ -57,7 +57,7 @@ class Expect(Device):
         self.expected_ignore_start = isodate.parse_duration(params["expect"].get("ignore_start", "PT0S")).total_seconds()
         self.expected_required_score_percent = params["expect"].get("required_score_percent", None)
         if not Expect.initialised:
-            self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
+            self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self, self)
             Expect.initialised = True
 
         self.seen_event_in_this_window = False
@@ -65,9 +65,9 @@ class Expect(Device):
         t = engine.get_now()
         t_next = self.expected_timefunction.next_change(t)
         if self.expected_timefunction.state(t):
-            self.engine.register_event_at(t_next, self.tick_window_end, self)
+            self.engine.register_event_at(t_next, self.tick_window_end, self, self)
         else:
-            self.engine.register_event_at(t_next, self.tick_window_start, self)
+            self.engine.register_event_at(t_next, self.tick_window_start, self, self)
 
     def comms_ok(self):
         return super(Expect,self).comms_ok()
@@ -108,10 +108,10 @@ class Expect(Device):
     
     def tick_window_start(self,_):
         self.seen_event_in_this_window = False
-        self.engine.register_event_at(self.expected_timefunction.next_change(), self.tick_window_end, self)
+        self.engine.register_event_at(self.expected_timefunction.next_change(), self.tick_window_end, self, self)
 
     def tick_window_end(self,_):
-        self.engine.register_event_at(self.expected_timefunction.next_change(), self.tick_window_start, self)
+        self.engine.register_event_at(self.expected_timefunction.next_change(), self.tick_window_start, self, self)
         if not self.seen_event_in_this_window:
             self.add_event(self.engine.get_now(),MISSING_EVENT)
 
@@ -185,5 +185,5 @@ class Expect(Device):
 
         self.output_plot()
         self.write_stats()
-        self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self)
+        self.engine.register_event_in(REPORT_PERIOD_S, self.tick_send_report, self, self)
         

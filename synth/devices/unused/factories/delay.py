@@ -21,7 +21,7 @@ class Delay(Device):
         delay = get_interval(conf, 'delay', pendulum.interval())
         device_conf = conf['device']
         logger.info("Delaying creation of device {conf} until {delay}.".format(conf=conf, delay=delay))
-        self.engine.register_event_in(self.__build_create(device_conf), delay)
+        self.engine.register_event_in(self.__build_create(device_conf), delay, None, self)
 
     def create(self, conf, time):
         logger.info("@{time}: Delayed creation of new device: {conf}".format(conf=conf, time=time))

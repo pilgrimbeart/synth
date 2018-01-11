@@ -40,7 +40,7 @@ class Variable(Device):
                 tf_name = params["timefunction"].keys()[0]
                 var_value = importer.get_class("timefunction", tf_name)(engine, params["timefunction"][tf_name])
                 self.set_property(var_name, var_value.state())
-                engine.register_event_at(var_value.next_change(), self.tick_variable, (var_name, var_value))
+                engine.register_event_at(var_value.next_change(), self.tick_variable, (var_name, var_value), self)
             else:
                 assert False,"variable " + var_name + " must have either value or timefunction"
             self.variables.append( (var_name, var_value) )
@@ -68,4 +68,4 @@ class Variable(Device):
         (name, function) = args
         new_value = function.state()
         self.set_property(name, new_value, always_send=False)
-        self.engine.register_event_at(function.next_change(), self.tick_variable, args)
+        self.engine.register_event_at(function.next_change(), self.tick_variable, args, self)

@@ -81,7 +81,7 @@ class Enumerated(Device):
         dt = min(dt, period + 2*sigma)
         dt = max(dt, period - 2*sigma)
         dt = max(dt, 1.0)   # Ensure we never create negative durations
-        self.engine.register_event_in(dt, self.change_enumerated_value, index)
+        self.engine.register_event_in(dt, self.change_enumerated_value, index, self)
 
     def change_enumerated_value(self, index):
         self.set_property(self.enumerated_name, self.enumerated_values[index])

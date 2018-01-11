@@ -27,7 +27,7 @@ class Heartbeat(Device):
         """Simple metronomic heartbeat transmission so that server knows we're still here"""
         super(Heartbeat,self).__init__(instance_name, time, engine, update_callback, context, params)
         self.heartbeat_interval = isodate.parse_duration(params["heartbeat"].get("interval", "PT10M")).total_seconds()
-        self.engine.register_event_in(self.heartbeat_interval, self.tick_heartbeat, self)
+        self.engine.register_event_in(self.heartbeat_interval, self.tick_heartbeat, self, self)
 
     def comms_ok(self):
         return super(Heartbeat,self).comms_ok()
@@ -42,5 +42,5 @@ class Heartbeat(Device):
     
     def tick_heartbeat(self,_):
         self.do_comms({})
-        self.engine.register_event_in(self.heartbeat_interval, self.tick_heartbeat, self)
+        self.engine.register_event_in(self.heartbeat_interval, self.tick_heartbeat, self, self)
         

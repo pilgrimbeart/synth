@@ -199,23 +199,27 @@ class Events():
                 elif "create_device" in action:
                     engine.register_event_at(at_time,
                                              device_factory.create_device,
-                                             (instance_name, client, engine, update_callback, context, action["create_device"]))
+                                             (instance_name, client, engine, update_callback, context, action["create_device"]),
+                                             None)
                 elif "query" in action:
                     engine.register_event_at(at_time,
                                              query_action,
-                                             action["query"])
+                                             action["query"],
+                                             None)
                 elif "change_property" in action:
                     engine.register_event_at(at_time,
                                              change_property_action,
-                                             action["change_property"])
+                                             action["change_property"],
+                                             None)
                 else:   # Plug-in actions
                     name = action.keys()[0]
                     if not name.startswith("client."):
                         logging.error("Ignoring unrecognised action "+name)
                     else:
                         engine.register_event_at(at_time,
-                                             client_action,
-                                             (name[7:], action[name]))
+                                                 client_action,
+                                                 (name[7:], action[name]),
+                                                 None)
 ##                    
 ##                elif "delete_demo_devices" in action:
 ##                    if "deleteDemoDevices" in dir(client):

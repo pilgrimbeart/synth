@@ -24,7 +24,7 @@ class Simple(Device):
         ))
 
         self.client.add_device(self.id, engine.get_now(), {'value': self.value})
-        self.engine.register_event_in(self.tick, self.interval)
+        self.engine.register_event_in(self.tick, self.interval, None, self)
 
     def get_state(self):
         return {'id': self.id, 'value': self.value}
@@ -33,4 +33,4 @@ class Simple(Device):
         self.value += self.increment
         logger.info("@{time}: Ticking device {id} to {value}".format(time=time, id=self.id, value=self.value))
         self.client.update_device(self.id, time, {'value': self.value})
-        self.engine.register_event_in(self.tick, self.interval)
+        self.engine.register_event_in(self.tick, self.interval, None, self)

@@ -36,7 +36,7 @@ class Comms(Device):
         self.comms_up_down_period = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
         self.has_buffer = params["comms"].get("has_buffer", False)
         self.buffer = []
-        engine.register_event_in(0, self.tick_comms_up_down, self)
+        engine.register_event_in(0, self.tick_comms_up_down, self, self)
         super(Comms,self).__init__(instance_name, time, engine, update_callback, context, params)   # Chain other classes last, so we set ourselves up before others do, so comms up/down takes effect even on device "boot"
 
     def comms_ok(self): # Overrides base-class's definition
@@ -92,7 +92,7 @@ class Comms(Device):
 
         delta_time = random.expovariate(1.0 / self.comms_up_down_period)
         delta_time = min(delta_time, self.comms_up_down_period * 100.0) # Limit long tail
-        self.engine.register_event_in(delta_time, self.tick_comms_up_down, self)
+        self.engine.register_event_in(delta_time, self.tick_comms_up_down, self, self)
 
 # Model for comms unreliability
 # -----------------------------

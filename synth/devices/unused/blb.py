@@ -42,18 +42,18 @@ class Blb(Device):
             # noinspection PyArgumentList
             self.battery_life = get_interval(conf, 'batteryLife', pendulum.interval(minutes=5))
         self.battery_auto_replace = conf.get('batteryAutoReplace', False)
-        self.engine.register_event_in(self.battery_decay, self.battery_life / 100)
+        self.engine.register_event_in(self.battery_decay, self.battery_life / 100, None, self)
 
         # setup button press counter
         self.button_press_count = 0
-        self.engine.register_event_in(self.press_button, pendulum.interval())
+        self.engine.register_event_in(self.press_button, pendulum.interval(), None, self)
 
         # setup light measurement
         self.longitude = conf.get('longitude', 0)
         self.latitude = conf.get('latitude', 0)
         self.light = 0.0
         # noinspection PyArgumentList
-        self.engine.register_event_in(self.measure_light, pendulum.interval(hours=12))
+        self.engine.register_event_in(self.measure_light, pendulum.interval(hours=12), None, self)
 
         self.client.add_device(self.id, engine.get_now(), {
             'battery': self.battery,
@@ -75,7 +75,7 @@ class Blb(Device):
                 id=self.id,
                 nth=as_ordinal(self.button_press_count),
             ))
-            self.engine.register_event_in(self.press_button, next_press_interval)
+            self.engine.register_event_in(self.press_button, next_press_interval, None, self)
 
     def battery_decay(self, time):
         self.battery -= 1
@@ -88,7 +88,7 @@ class Blb(Device):
         self.client.update_device(self.id, time, {'battery': self.battery})
 
         if self.battery > 0:
-            self.engine.register_event_in(self.battery_decay, self.battery_life / 100)
+            self.engine.register_event_in(self.battery_decay, self.battery_life / 100, None, self)
 
     def measure_light(self, time):
         if self.battery > 0:
@@ -99,4 +99,4 @@ class Blb(Device):
             #  ))
             self.client.update_device(self.id, time, {'light': self.light})
             # noinspection PyArgumentList
-            self.engine.register_event_in(self.measure_light, pendulum.interval(hours=1))
+            self.engine.register_event_in(self.measure_light, pendulum.interval(hours=1), None, self)

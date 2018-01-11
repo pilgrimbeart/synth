@@ -167,7 +167,7 @@ def main():
         if "action" in webParams:
             if webParams["action"] == "event":
                 if webParams["headers"]["Instancename"]==params["instance_name"]:
-                    engine.register_event_in(0, device_factory.external_event, webParams)
+                    engine.register_event_in(0, device_factory.external_event, webParams, None)
             elif webParams["action"] == "announce":
                 logging.log(webParams["severity"], "[broadcast message] "+webParams["message"])
 

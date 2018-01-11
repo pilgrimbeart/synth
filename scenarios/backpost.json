@@ -2,7 +2,7 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
-        "end_time" : "PT60S"
+        "end_time" : "PT21S"
     },
     "events" : [
         {
@@ -18,12 +18,13 @@
                                 }
                             }
                         }
-                    }
+                    },
+                    "delete_at" : "PT10S"
                 }
             }
         },
         {
-            "at" : "PT10S",
+            "at" : "PT20S",
             "action": {
                 "change_property" : {
                     "identity_property" : "label",

@@ -55,4 +55,4 @@ class Mobile(Device, Client):
             random.expovariate(1 / self.mean_up_down_period.total_seconds()),
             self.mean_up_down_period.total_seconds() * 100
         )
-        self.engine.register_event_in(self.set_connected, pendulum.interval(seconds=next))
+        self.engine.register_event_in(self.set_connected, pendulum.interval(seconds=next), None, self)
