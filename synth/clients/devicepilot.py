@@ -19,7 +19,7 @@ The client accepts the following parameters (usually found in the "On*.json" fil
         "devicepilot_api" : "https://api.devicepilot.com",
         "devicepilot_key" : "xxxxxxxxxxxxxxxxxxxx", # Your key from DevicePilot Settings page
         "devicepilot_min_post_period" : "PT10S",    # Optional. Do not post more often than this.
-        "devicepilot_max_items_per_post" : 500,     # Optional. Individual posts cannot be bigger than this (the DP /ingest endpoint has a 1MB payload limit per post)
+        "devicepilot_max_items_per_post" : 500,     # Optional. Individual posts cannot be bigger than this (the DP /device endpoint has a 1MB payload limit per post)
         "devicepilot_mode" : "bulk|interactive",    # In bulk mode, events are written to DevicePilot in bulk. In interactive mode they are written one-by-one (this mode is entered automatically when real-time is reached)
         "aws_access_key_id" : "xxxxxxxxxxxxxxxx",   # Optional (AWS credential only required if you use bulk mode)
         "aws_secret_access_key" : "xxxxxxxxxxxxxxxxxxxxx",  # Ditto
@@ -77,9 +77,9 @@ Query DevicePilot (you'll probably want to do a client.sync first). Parameters a
 The DevicePilot client has two modes of pushing events into DevicePilot:
 
     * `bulk` mode generates JSON files locally, and then does a bulk-upload to DevicePilot (via AWS)
-    * `interactive` mode send events directly into the /ingest DevicePilot API (slower, but will trigger actions and is interactive)
+    * `interactive` mode send events directly into the /devices DevicePilot API (slower, but will trigger actions and is interactive)
 
-The client default to `bulk` mode, and automatically changes to `interactive` mode either at the end of the simulation, or when real-time is reached, whichever comes first.
+The client defaults to `interactive` mode, and automatically changes to `interactive` mode either at the end of the simulation, or when real-time is reached, whichever comes first.
 If you want to change to `interactive` mode within your simulation, you can use the "set_mode" command::
 
     "action" : {
@@ -155,7 +155,7 @@ class Devicepilot(Client):
         self.params = params
         self.url = params["devicepilot_api"]
         self.key = params["devicepilot_key"]
-        self.mode = params.get("devicepilot_mode", "bulk")  # Either "bulk" or "interactive"
+        self.mode = params.get("devicepilot_mode", "interactive")  # Either "bulk" or "interactive"
         self.throttle_seconds_per_post = params.get("devicepilot_throttle_seconds_per_post", None)
         # self.queue_flush_criterion = params.get("queue_criterion","messages") # or "time" or "interactive"
         # self.queue_flush_limit = params.get("queue_limit",500)
@@ -321,9 +321,9 @@ class Devicepilot(Client):
         try:
             url = self.url
             if historical:
-                url += '/ingest'    # Was to "/historical"
+                url += DEVICE_ENDPOINT    # Was to "/historical"
             else:
-                url += '/ingest'
+                url += DEVICE_ENDPOINT
             resp = self.session.post(url, verify=True, headers=set_headers(self.key), data=body)
             if debug_post:
                 logging.info("devicePilot::post_device posted "+str(body))
