@@ -31,7 +31,8 @@ To install Synth type::
 
 then::
 
-    pip install -r requirements.txt
+    sudo -H pip install -r requirements.txt
+
 
 To test that Synth is installed correctly:
 
@@ -57,6 +58,11 @@ This will run for 10 seconds and create output files including::
     ../synth_logs/OnFStest.out  - a copy of the log messages
     ../synth_logs/OnFStest.evt  - a list of generated events
     ../synth_logs/OnFStest.csv  - the output from the 'filesystem' client
+
+To test further functionality, run::
+
+    ./selftest
+
 
 Directory structure
 *******************
