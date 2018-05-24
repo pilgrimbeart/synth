@@ -20,7 +20,7 @@ import random
  
 class Randomwave(Timefunction):
     """Generates random waves of defined period"""
-    def __init__(self, engine, params):
+    def __init__(self, engine, device, params):
         self.engine = engine
         self.period = float(isodate.parse_duration(params["period"]).total_seconds())
         self.initTime = engine.get_now()

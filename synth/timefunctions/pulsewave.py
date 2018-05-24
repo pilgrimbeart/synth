@@ -21,7 +21,7 @@ import isodate
 import math
 
 class Pulsewave(Timefunction):
-    def __init__(self, engine, params):
+    def __init__(self, engine, device, params):
         """<interval> is the length of a full cycle ____----
            <transition> is when the low-to-high transition happens - either a percentage e.g. "75%" or another ISO interval
            <delay> is the absolute amount that the start is delayed

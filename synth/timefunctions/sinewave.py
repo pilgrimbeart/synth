@@ -18,8 +18,9 @@ POINTS_PER_CYCLE = 32
 
 class Sinewave(Timefunction):
     """Generates sinewaves of defined period"""
-    def __init__(self, engine, params):
+    def __init__(self, engine, device, params):
         self.engine = engine
+        self.device = device
         self.period = float(isodate.parse_duration(params["period"]).total_seconds())
         self.initTime = engine.get_now()
 

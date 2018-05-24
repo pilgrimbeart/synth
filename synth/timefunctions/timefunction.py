@@ -5,7 +5,7 @@ class Timefunction(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, engine, params):
+    def __init__(self, engine, device, params):
         pass
 
     @abstractmethod

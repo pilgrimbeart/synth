@@ -7,7 +7,7 @@ Arguments::
 
     {
         "timefunctions" : [] an array of timefunctions
-        "operator" : How to combine the timefunctions ("and" and "mul" currently supported)
+        "operator" : How to combine the timefunctions ("and", "add" and "mul" currently supported)
     }
 """
 
@@ -17,20 +17,23 @@ from common.ordinal import LCMM
 
 class Mix(Timefunction):
     """Combine timefunctions according to a given operator"""
-    def __init__(self, engine, params):
+    def __init__(self, engine, device, params):
         self.engine = engine
+        self.device = device
         self.mix_operator = params["operator"]
         self.mix_timefunctions = []
         for f in params["timefunctions"]:
-            tf = importer.get_class("timefunction", f.keys()[0])(engine, f[f.keys()[0]])
+            tf = importer.get_class("timefunction", f.keys()[0])(engine, device, f[f.keys()[0]])
             self.mix_timefunctions.append(tf)
 
         self.operators = {
+            "add" : self.operator_add,
             "and" : self.operator_and,
             "mul" : self.operator_mul
         }
 
         self.initial_state = {
+            "add" : 0.0,
             "and" : 1.0,
             "mul" : 1.0
         }
@@ -57,6 +60,9 @@ class Mix(Timefunction):
         return LCMM(periods)
 
     # Operators
+
+    def operator_add(self, A, B):
+        return A + B
 
     def operator_and(self, A, B):
         return A and B

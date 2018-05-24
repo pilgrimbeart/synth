@@ -16,7 +16,7 @@ import isodate
 import math
 
 class Count(Timefunction):
-    def __init__(self, engine, params):
+    def __init__(self, engine, device, params):
         """<interval> is the length between counts"""
         self.engine = engine
         self.interval = float(isodate.parse_duration(params["interval"]).total_seconds())
