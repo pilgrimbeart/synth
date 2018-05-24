@@ -24,7 +24,7 @@ class Commswave(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         """Take Comms up and down according to some time function"""
         tf = params["commswave"]["timefunction"]
-        self.comms_timefunction = importer.get_class("timefunction", tf.keys()[0])(engine, tf[tf.keys()[0]])
+        self.comms_timefunction = importer.get_class("timefunction", tf.keys()[0])(engine, self, tf[tf.keys()[0]])
         super(Commswave,self).__init__(instance_name, time, engine, update_callback, context, params)
 
     def comms_ok(self):
