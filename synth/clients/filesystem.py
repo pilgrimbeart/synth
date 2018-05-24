@@ -3,7 +3,7 @@ Filesystem client
 =================
 This client posts event data to the local filesystem, and is useful for offline testing of scenarios.
 In addition to the .evt file that Synth emits, the Filesystem client also emits
-a .csv file.
+one .csv file (columnar for easy analysis in e.g. Excel) and multiple .json files (for easy ingestion into programs or batch upload into e.g. AWS S3).
 
 Filesystem client specification
 -------------------------------
