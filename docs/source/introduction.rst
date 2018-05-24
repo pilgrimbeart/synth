@@ -1,5 +1,5 @@
-Welcome to Synth
-================
+Synth - IoT device simulator
+============================
 
 Connected devices are being deployed in every market sector in increasing numbers. A significant challenge of the Internet of Things is how to test IoT services? Services must typically be brought-up ahead of the widespread availability of the devices they will serve, yet testing a service requires an estate of devices to test it with – a chicken-and-egg problem. And as a proposition grows in the market, operators will wish to continually test services at a scale perhaps an order-of-magnitude greater than the number of devices currently in use, to find bottlenecks and weaknesses in the service.
 
