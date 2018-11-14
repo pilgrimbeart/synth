@@ -149,6 +149,10 @@ def get_params():
         s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
         s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
         params = merge(params, json.loads(s))
+
+    if len(sys.argv) < 2:
+        print "Usage: "+sys.argv[0]+" {filenames}   where filenames are one or more parameter files in scenarios/ or ../synth_accounts/\nSee https://devicepilot-synth.readthedocs.io"
+        sys.exit(1)
         
     params = {}
     load_param_file("default", params, fail_silently=True)

@@ -84,7 +84,10 @@ Arguments are generally taken to be the names of corresponding JSON files in eit
 
 makes Synth run the ``scenarios/full_fat_device.json`` scenario on the account defined in ``../synth_accounts/OnFStest.json``.
 
-Before loading anything, Synth loads the file ``../synth_accounts/default.json`` at startup, if it exists, and this is where you can put universal parameters such as your Google Maps API key.
+Synth loads the file ``../synth_accounts/default.json`` if it exists at startup, so  this is where you can put universal parameters such as your Google Maps API key, to avoid having to put them in individual files. Like this:
+
+    { "google_maps_key" : "YOURKEY" } 
+
 
 Synth merges the JSON files in the order given, so although they'll generally not contain overlapping information, if you *want* to override a parameter then you can do so.
 
