@@ -1,0 +1,111 @@
+{
+	"comment" : "3x dead devices, 3x 50% reliable devices, 3x 100% reliable devices",
+    "restart_log" : true,
+    "engine" :
+    {
+        "type" : "sim",
+        "start_time" : "-PT1000M",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 3,
+            "interval" : "PT0H",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "heartbeat" : {
+                            "interval" : "PT1M"
+                        },
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT100M",
+                                    "transition": "PT0M",
+                                    "invert" : true
+                                }
+                            }
+                        },
+                        "variable" : [
+                            {
+                            	"name" : "cluster",
+                           		"value" : 1
+                           	},
+                           	{
+                           		"name" : "comment",
+                           		"value" : "Cluster 1 : 0% reliable"
+                           	}
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "at" : "PT0S",
+            "repeats" : 3,
+            "interval" : "PT0H",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "heartbeat" : {
+                            "interval" : "PT1M"
+                        },
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT100M",
+                                    "transition": "PT50M",
+                                    "invert" : true
+                                }
+                            }
+                        },
+                        "variable" : [
+                            {
+                            	"name" : "cluster",
+                           		"value" : 2
+                           	},
+                           	{
+                           		"name" : "comment",
+                           		"value" : "Cluster 2 : 50% reliable"
+                           	}
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "at" : "PT0S",
+            "repeats" : 3,
+            "interval" : "PT0H",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "heartbeat" : {
+                            "interval" : "PT1M"
+                        },
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT100M",
+                                    "transition": "PT100M",
+                                    "invert" : true
+                                }
+                            }
+                        },
+                        "variable" : [
+                            {
+                            	"name" : "cluster",
+                           		"value" : 3
+                           	},
+                           	{
+                           		"name" : "comment",
+                           		"value" : "Cluster 3 : 100% reliable"
+                           	}
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
