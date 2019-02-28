@@ -159,7 +159,7 @@ class Devicepilot(Client):
         self.throttle_seconds_per_post = params.get("devicepilot_throttle_seconds_per_post", None)
         # self.queue_flush_criterion = params.get("queue_criterion","messages") # or "time" or "interactive"
         # self.queue_flush_limit = params.get("queue_limit",500)
-        self.min_post_period = isodate.parse_duration(params.get("devicepilot_min_post_period", "PT60S")).total_seconds()
+        self.min_post_period = isodate.parse_duration(params.get("devicepilot_min_post_period", "PT10S")).total_seconds()
         self.max_items_per_post = params.get("devicepilot_max_items_per_post", 500)
         self.last_post_time = time.time() - self.min_post_period    # Allow first post immediately
         self.json_stream = json_writer.Stream(instance_name)
