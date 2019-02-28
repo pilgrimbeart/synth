@@ -11,7 +11,7 @@ Configurable parameters::
         "area_centre" : e.g. "London, UK"       } optional, but both must be specified if either are
         "area_radius" : e.g. "Manchester, UK"   } 
         "map_file" : e.g. "devicepilot_logo" - optional
-        "google_maps_key" : "xyz" } optional. Often defined in ..\synth_accounts\default
+        "google_maps_key" : "xyz" } Google Maps now requires this. Often defined in ../synth_accounts/default.json
     }
 
 Device properties created::
