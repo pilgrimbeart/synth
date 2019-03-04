@@ -85,7 +85,10 @@ def convert_to_csv(the_dict):
             found=False
             for (p,v) in the_dict[k]: # If we have a value, write it
                 if p==propName:
-                    out_str += str(v)+","
+                    try:
+                        out_str += str(v)
+                    except:
+                        logging.info("Ignoring unicode char in convert_to_csv")
                     found=True
                     break
             if not found:
