@@ -1,0 +1,28 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P7D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 10,
+            "interval" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {},
+                        "latlong" : {
+                            "generate_addresses" : true,
+                            "area_centre" : "Stockton, Kansas, USA",
+                            "area_radius" : "Key Largo, USA"
+                        },
+                        "vending_machine" : {}
+                    }
+                }
+            }
+        }
+    ]
+}
