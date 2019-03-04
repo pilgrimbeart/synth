@@ -125,6 +125,7 @@ SAVEDSEARCH_ENDPOINT = "/savedSearches"         # UI calls these "filters"
 INCIDENTCONFIG_ENDPOINT = "/incidentConfigs"    # UI calls these "event configurations"
 NOTIFICATION_ENDPOINT = "/notifications"        # UI calls these "actions"
 DEVICE_ENDPOINT = "/devices"
+MAX_POST_SIZE_BYTES = 500000    # AWS ingestion limit is actually 1MB but even half of that is pretty massive
 
 # Suppress annoying Requests debug
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -317,12 +318,11 @@ class Devicepilot(Client):
 
     # Internal methods
     
-    def post_device(self, device, historical=False):
+    def _post_device(self, device, historical):
         # DevicePilot API accepts either a single JSON object, or an array of such
         # If <historical> is true, DevicePilot doesn't calculate any dependent events (so e.g. won't send alerts)
-
         self.last_post_time = time.time()
-        
+
         body = json.dumps(device)
 
         # logging.info(body)
@@ -358,6 +358,23 @@ class Devicepilot(Client):
                 logging.error("Status code:"+str(resp.status_code))
                 logging.error("Text:"+str(resp.text))
                 logging.error("Body:"+str(body))
+
+        return True
+
+
+    def post_device(self, device, historical=False):
+        if not isinstance(device, list):
+            return self._post_device(device, historical)
+        D = device[:]
+        while len(D) > 0:  # Break into small-enough chunks 
+            L = []
+            while len(D) > 0:
+                if len(str(L)+str(D[0])) > MAX_POST_SIZE_BYTES: # Keep going until we break the size barrier
+                    logging.info("Breaking-up too-large post")
+                    break
+                L.append(D[0])
+                del(D[0])
+            self._post_device(L, historical)
 
         return True
 
