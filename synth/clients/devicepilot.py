@@ -23,7 +23,8 @@ The client accepts the following parameters (usually found in the "On*.json" fil
         "devicepilot_mode" : "bulk|interactive",    # In bulk mode, events are written to DevicePilot in bulk. In interactive mode they are written one-by-one (this mode is entered automatically when real-time is reached)
         "aws_access_key_id" : "xxxxxxxxxxxxxxxx",   # Optional (AWS credential only required if you use bulk mode)
         "aws_secret_access_key" : "xxxxxxxxxxxxxxxxxxxxx",  # Ditto
-        "aws_region" : "eu-west-1"                          # Ditto
+        "aws_region" : "eu-west-1",                          # Ditto
+        "merge_posts" : true    # Spots cases where different device properties are being updated at the same time (and therefore could be merged into a single post)
     }
 
 DevicePilot client event actions
@@ -137,6 +138,8 @@ logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
 debug_post = False
 debug_queue = False
 
+merged_posts = 0
+
 def set_headers(token):
     headers = {}
     headers["Authorization"] = "Token {0}".format(token)
@@ -159,6 +162,7 @@ class Devicepilot(Client):
         self.throttle_seconds_per_post = params.get("devicepilot_throttle_seconds_per_post", None)
         # self.queue_flush_criterion = params.get("queue_criterion","messages") # or "time" or "interactive"
         # self.queue_flush_limit = params.get("queue_limit",500)
+        self.merge_posts = params.get("merge_posts", False)
         self.min_post_period = isodate.parse_duration(params.get("devicepilot_min_post_period", "PT10S")).total_seconds()
         self.max_items_per_post = params.get("devicepilot_max_items_per_post", 500)
         self.last_post_time = time.time() - self.min_post_period    # Allow first post immediately
@@ -181,10 +185,18 @@ class Devicepilot(Client):
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
     def _send_update(self, device_id, time, properties, record):
+        global merged_posts
         props = properties.copy()
         props.update({"$id" : device_id, "$ts" : time})
         self.top.update(props)
         if self.mode == "interactive":
+            if self.merge_posts:
+                if len(self.post_queue)>0:
+                    if self.post_queue[-1]["$ts"] == props["$ts"]:
+                        if self.post_queue[-1]["$id"] == props["$id"]:
+                            merged_posts = merged_posts + 1
+                            props.update(self.post_queue[-1])
+                            del(self.post_queue[-1])
             self.post_queue.append(props)
             self.flush_post_queue_if_ready()
         if (self.mode == "bulk") and (record):
@@ -288,6 +300,8 @@ class Devicepilot(Client):
 
     def close(self):
         logging.info("Closing DevicePilot client")
+        if merged_posts > 0:
+            logging.info("Saved "+str(merged_posts)+" posts by merging")
         self.json_stream.close()
         self.enter_interactive()    # Ensure that bulk uploads are done
         logging.info(str(len(self.post_queue))+" items to flush")
