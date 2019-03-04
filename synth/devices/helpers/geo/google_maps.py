@@ -25,6 +25,8 @@
 import json, httplib, urllib
 import logging
 
+CACHE_FILE = "../synth_logs/geo_cache.txt"
+
 def set_headers():
     """Sets the headers for sending to the DM server.
 
@@ -35,12 +37,25 @@ def set_headers():
 
 
 # ==== Google Maps API ====
-geo_cache = {}
+
+try:
+    f = open(CACHE_FILE)
+    caches = json.loads(f.read())
+    f.close()
+    logging.info("Used existing Google Maps cache "+CACHE_FILE)
+except:
+    logging.info("No existing Google Maps cache")
+    caches = {"geo" : {}, "reverse" : {}}
+
+def add_to_cache(cache, key, contents):
+    caches[cache][key] = contents
+    f = open(CACHE_FILE, "wt")
+    f.write(json.dumps(caches))
+    f.close()
 
 def address_to_lon_lat(address, google_maps_api_key=None):
-    global geo_cache
-    if address in geo_cache:
-        return geo_cache[address]    # Avoid thrashing Google (expensive!)
+    if address in caches["geo"]:
+        return caches["geo"][address]    # Avoid thrashing Google (expensive!)
 
     (lng,lat) = (None, None)
 
@@ -62,11 +77,10 @@ def address_to_lon_lat(address, google_maps_api_key=None):
         logging.error(json.dumps(data))
         raise
     (lng,lat) = (geo["lng"], geo["lat"])
-    geo_cache[address] = (lng,lat)
+    # geo_cache[address] = (lng,lat)
+    add_to_cache("geo", address, (lng,lat))
     return (lng,lat)
 
-
-LL_cache = {}
 
 useful_fields = ["street_number", "route", "locality", "postal_town", "administrative_area_level_2", "administrative_area_level_1", "country", "postal_code"]
 
@@ -78,10 +92,9 @@ def intersect_lists(L1, L2):
     return L[0] # Assumes there is never more than one item in intersection
 
 def lon_lat_to_address(lng, lat, google_maps_api_key=None):
-    global LL_cache
     s = str((lng,lat))
-    if s in LL_cache:
-        return LL_cache[s]    # Avoid thrashing Google (expensive!)
+    if s in caches["reverse"]:
+        return caches["reverse"][s]    # Avoid thrashing Google (expensive!)
 
     logging.info("Looking up "+str((lng,lat))+" in Google Maps")
     conn = httplib.HTTPSConnection("maps.google.com")   # Must now use SSL
@@ -95,17 +108,18 @@ def lon_lat_to_address(lng, lat, google_maps_api_key=None):
     result = resp.read()
     try:
         data = json.loads(result)
-        fields = data["results"][0]["address_components"]
         results = {}
-        for k in fields:
-            L = intersect_lists(useful_fields, k["types"])
-            if L != None:
-                results.update({"address_"+L : k["long_name"]})
+        if data["status"] != "ZERO_RESULTS":
+            fields = data["results"][0]["address_components"]
+            for k in fields:
+                L = intersect_lists(useful_fields, k["types"])
+                if L != None:
+                    results.update({"address_"+L : k["long_name"]})
     except:
         logging.error(URL)
         logging.error(json.dumps(data))
         raise
-    LL_cache[str((lng,lat))] = results
+    add_to_cache("reverse", str((lng,lat)), results)
     return results
 
 def main():
