@@ -30,6 +30,8 @@ max_vending_interval_S = 6 * HOURS
 min_replenish_interval_S = 1 * DAYS
 max_replenish_interval_S = 7 * DAYS
 
+expiry_check_interval = 60*60
+
 product_catalogue = [
         { "name" : "Mars Bar (Mars)",                       "price" : 0.80,   "lifetime" : 1000 * DAYS },
         { "name" : "Crunchie (Cadbury)",                    "price" : 0.60,   "lifetime" : 1000 * DAYS },
@@ -72,6 +74,7 @@ class Vending_machine(Device):
                 
         self.update_available_trays()
         self.set_property("cashbox_cash", cent_rounding(3+self.myRandom.random()*10))
+        self.tick_vending_machine_check_expiry(self)
 
     def comms_ok(self):
         return super(Vending_machine,self).comms_ok()
@@ -114,6 +117,28 @@ class Vending_machine(Device):
         self.replenish()
         self.engine.register_event_in(min_replenish_interval_S + self.myRandom.random()*(max_replenish_interval_S-min_replenish_interval_S), self.tick_vending_machine_replenish, self, self)
 
+    def tick_vending_machine_check_expiry(self, _):
+        self.check_expirys()
+        self.engine.register_event_in(expiry_check_interval, self.tick_vending_machine_check_expiry, self, self)
+
+    def check_expirys(self):
+        has_expired = False
+        will_expire_in_6_hrs = False
+        now = self.engine.get_now()
+        for r in range(machine_rows):
+            for c in range(machine_columns):
+                if self.get_property(tray_name(r,c)+"_stock_level") > 0: 
+                    lifetime = self.get_property(tray_name(r,c)+"_lifetime")
+                    restocked = self.restock_time[tray_name(r,c)]
+                    if restocked + lifetime < now:
+                        has_expired = True
+                    if restocked + lifetime - 6*60*60 < now:
+                        will_expire_in_6_hrs = True
+        if self.get_property_or_None("expired") != has_expired:
+            self.set_property("expired", has_expired)
+        if self.get_property_or_None("expire_in_6_hrs") != will_expire_in_6_hrs:
+            self.set_property("expire_in_6_hrs", will_expire_in_6_hrs)
+
     def update_available_trays(self):
         avail_count = 0
         for r in range(machine_rows):
@@ -139,3 +164,4 @@ class Vending_machine(Device):
         self.set_property("cashbox_cash",0)
         self.set_property("event_replenish", True, always_send=True)
         self.set_property("event_log", "Replenishment complete", always_send=True)
+        self.check_expirys()
