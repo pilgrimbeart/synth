@@ -71,6 +71,11 @@ class Basic(Device):
     def get_property(self, prop_name):
         return self.properties[prop_name]
 
+    def get_property_or_None(self, prop_name):
+        if self.property_absent(prop_name):
+            return None
+        return self.properties[prop_name]
+
     def property_exists(self, prop_name):
         return prop_name in self.properties
 
