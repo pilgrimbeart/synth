@@ -1,0 +1,22 @@
+{
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "action": {
+                "change_property" : {
+                    "identity_property" : "$id",
+                    "identity_value" : "isle-8-space-temp",
+                    "property_name" : "x",
+                    "property_value" : "0",
+                    "$ts" : "PT0S"
+                }
+            }
+        }        
+    ]
+}
+

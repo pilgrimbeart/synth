@@ -2,13 +2,13 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-P7D",
+        "start_time" : "-P14D",
         "end_time" : "now"
     },
     "events" : [
         {
             "at" : "PT0S",
-            "repeats" : 1000,
+            "repeats" : 10,
             "interval" : "PT0S",
             "action": {
                 "create_device" : {
@@ -16,10 +16,11 @@
                         "firmware" : {},
                         "latlong" : {
                             "generate_addresses" : true,
-                            "area_centre" : "Stockton, Kansas, USA",
-                            "area_radius" : "Key Largo, USA"
+                            "area_centre" : "Nijmegen, Holland",
+                            "area_radius" : "Arnhem, Holland"
                         },
-                        "vending_machine" : {}
+                        "weather" : {},
+                        "pump" : {}
                     }
                 }
             }
