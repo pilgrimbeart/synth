@@ -68,7 +68,10 @@ class Basic(Device):
             properties["$ts"] = timestamp
         self.transmit(self.properties["$id"], timestamp, properties, force_comms)
 
-    def get_property(self, prop_name):
+    def get_property(self, prop_name, default_value=None):
+        if default_value is not None:
+            if self.property_absent(prop_name):
+                return default_value
         return self.properties[prop_name]
 
     def get_property_or_None(self, prop_name):

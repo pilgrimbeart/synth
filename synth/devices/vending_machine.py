@@ -93,9 +93,14 @@ class Vending_machine(Device):
     def set_level(self, r,c, level):
         self.set_property(tray_name(r,c)+"_stock_level", level)
 
+    def catalogue_item(self, r,c):
+        return product_catalogue[self.get_property(tray_name(r,c)+"_product_number")]
+
     def past_sellby_date(self, r,c):
-        item = product_catalogue[self.get_property(tray_name(r,c)+"_product_number")]
-        return self.engine.get_now() >= self.restock_time[tray_name(r,c)] + item["lifetime"]
+        return self.engine.get_now() >= self.restock_time[tray_name(r,c)] + self.catalogue_item(r,c)["lifetime"]
+
+    def price(self, r,c):
+        return self.catalogue_item(r,c)["price"]
 
     def tick_vending_machine_vend(self, _):
         r = self.myRandom.randrange(0,machine_rows)
@@ -111,6 +116,7 @@ class Vending_machine(Device):
             if level==1: # Just vended last item
                 self.update_available_trays()
             self.set_property("cashbox_cash", cent_rounding(self.get_property("cashbox_cash")+product_catalogue[self.get_property(tray_name(r,c)+"_product_number")]["price"]))
+            self.set_property("event_vend", self.price(r,c))
         self.engine.register_event_in(self.myRandom.random()*max_vending_interval_S, self.tick_vending_machine_vend, self, self)
 
     def tick_vending_machine_replenish(self, _):

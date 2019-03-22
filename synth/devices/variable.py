@@ -67,5 +67,5 @@ class Variable(Device):
     def tick_variable(self, args):
         (name, function) = args
         new_value = function.state()
-        self.set_property(name, new_value, always_send=False)
+        self.set_property(name, new_value)
         self.engine.register_event_at(function.next_change(), self.tick_variable, args, self)

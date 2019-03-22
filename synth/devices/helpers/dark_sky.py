@@ -29,6 +29,8 @@ CACHE_FILE = "../synth_logs/dark_sky_cache.txt"
 KEY_FILE = "../synth_accounts/default.json"
 API_DOMAIN = "api.darksky.net"
 
+HOUR = 60*60
+
 if __name__ == "__main__":
     CACHE_FILE = "../../../" + CACHE_FILE
     KEY_FILE = "../../../" + KEY_FILE
@@ -50,7 +52,7 @@ try:
     f.close()
     logging.info("Used existing Dark Sky cache "+CACHE_FILE)
 except:
-    logging.info("No existing Dark Sky cache")
+    logging.warning("No existing Dark Sky cache")
     caches = {"weather" : {}}
 
 try:
@@ -68,40 +70,63 @@ def add_to_cache(cache, key, contents):
     f.write(json.dumps(caches))
     f.close()
 
-def get_weather(latitude, longitude, epoch_seconds):
-    if (str((latitude,longitude))) in caches["weather"]:
-        return caches["weather"][str((latitude, longitude))]    # Avoid thrashing Dark Sky
+def round_time(epoch_seconds):
+    # Round time to hourly resolution (so if multiple sim runs are done in quick succession, and with timing relative to real time, we don't do lots of lookups for times just a few minutes apart)
+    return int(epoch_seconds/HOUR) * HOUR
 
-    logging.info("Looking up "+str((latitude, longitude))+" in Dark Sky")
+def extract_and_cache(DS_results, latitude, longitude, epoch_seconds=None):
+# Dark Sky returns a standard set of properties both for its "current" reading, and for hourly readings
+# On any Time Machine request, it returns a days-worth of hourly readings, so by caching these we
+# can reduce DS reads by a factor of 24
+# The co-ordinates supplied as params are what the user requested (i.e. what to cache by), not necessarily the location that DS returns (which we ignore)
+    if epoch_seconds is None:
+        t = round_time(DS_results["time"])
+    else:
+        t = round_time(epoch_seconds)
+
+    cache_key = str((latitude, longitude, t))
+    result = {  # We asked for SI units, so...
+        "temperature" : DS_results["temperature"], # C
+        "wind_speed" : DS_results["windSpeed"], # m/s
+        "precipitation_intensity" : DS_results["precipIntensity"], # mm/hour
+        "precipitation_probability" : DS_results["precipProbability"] # 0..1
+        }
+
+    add_to_cache("weather", cache_key, result)
+    return result
+
+def get_weather(latitude, longitude, epoch_seconds):
+    epoch_seconds = round_time(epoch_seconds)
+    cache_key = str((latitude, longitude, epoch_seconds))
+    if cache_key in caches["weather"]:
+        return caches["weather"][cache_key]
+
+    logging.warning("Looking up " + cache_key + " in Dark Sky")
+
     conn = httplib.HTTPSConnection(API_DOMAIN)
     URL = "/forecast/"+str(account_key)+"/"+str(latitude)+","+str(longitude)+","+str(epoch_seconds)+"?units=si"
-    # URL += '&' + urllib.urlencode({'key':google_maps_api_key})
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
     result = resp.read()
     try:
-        data = json.loads(result)["currently"]
-        result = {  # We asked for SI units, so...
-                "temperature" : data["temperature"], # C
-                "cloud_cover" : data["cloudCover"], # 
-                "humidity" : data["humidity"], # 0..1
-                "wind_gust" : data["windGust"], # m/s
-                "wind_speed" : data["windSpeed"], # m/s
-                "wind_bearing" : data["windBearing"], # degrees
-                "precipitation_intensity" : data["precipIntensity"], # mm/hour
-                "precipitation_probability" : data["precipProbability"] # 0..1
-                }
+        data = json.loads(result)
+        result = extract_and_cache(data["currently"], latitude, longitude, epoch_seconds)   # Requested reading
+        for r in data["hourly"]["data"]:
+            extract_and_cache(r, latitude, longitude)   # Also cache info for other hours that DS has given us
     except:
         logging.error(URL)
         logging.error(json.dumps(data))
         raise
-    add_to_cache("weather", str((latitude, longitude)), result)
     return result
 
 def main():
     t = 1552898857  # 08:47 on 18/03/2019
     (lat, lon) = (52.2053, 0.1218)  # Cambridge UK
-    print "get_weather returned ",get_weather(lat, lon, t)
+    # caches["weather"] = {}  # Stop caching during testing
+    result = get_weather(lat, lon, t)
+    print "get_weather returned ", result
+    result = get_weather(lat, lon, t+HOUR)
+    print "an hour later, get_weather returned ", result
  
 if __name__ == "__main__":
     main()
