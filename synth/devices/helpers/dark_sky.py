@@ -86,10 +86,10 @@ def extract_and_cache(DS_results, latitude, longitude, epoch_seconds=None):
 
     cache_key = str((latitude, longitude, t))
     result = {  # We asked for SI units, so...
-        "temperature" : DS_results["temperature"], # C
-        "wind_speed" : DS_results["windSpeed"], # m/s
-        "precipitation_intensity" : DS_results["precipIntensity"], # mm/hour
-        "precipitation_probability" : DS_results["precipProbability"] # 0..1
+        "temperature" : DS_results.get("temperature", 0.0), # C
+        "wind_speed" : DS_results.get("windSpeed", 0.0), # m/s
+        "precipitation_intensity" : DS_results.get("precipIntensity", 0.0), # mm/hour
+        "precipitation_probability" : DS_results.get("precipProbability", 0.0) # 0..1
         }
 
     add_to_cache("weather", cache_key, result)
@@ -115,6 +115,7 @@ def get_weather(latitude, longitude, epoch_seconds):
             extract_and_cache(r, latitude, longitude)   # Also cache info for other hours that DS has given us
     except:
         logging.error(URL)
+        logging.error(str(result))
         logging.error(json.dumps(data))
         raise
     return result

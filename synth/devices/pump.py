@@ -27,6 +27,7 @@ MIN_SUMP_LIMIT = 5
 MAX_SUMP_LIMIT = 15
 SUMP_DRAIN_RATE_MM_HR = 0.39
 SUMP_ENERGY_CONSUMPTION_KW = 2.7
+RAIN_SCALAR = 1.0
 
 class Pump(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
@@ -51,7 +52,7 @@ class Pump(Device):
         precip = self.get_property("precipitation_intensity", 0)
         level = self.get_property("sump_level_mm")
         limit = self.get_property("sump_limit_mm")
-        level = level + precip
+        level = level + precip * RAIN_SCALAR
         if level > 0:
             self.set_property("sump_pump_energy_consumption_kW", min(1.0, float(level) / SUMP_DRAIN_RATE_MM_HR) * SUMP_ENERGY_CONSUMPTION_KW)    # Run pump for long-enough to drain the sump
             level = max(0.0, level - SUMP_DRAIN_RATE_MM_HR)
