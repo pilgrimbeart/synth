@@ -8,7 +8,7 @@ Configurable parameters::
 
     {
         "name" : the name of the variable
-        "value" : a static number or string
+        "value" : a static number or string - or an array to pick one randomly
         "timefunction" : a timefunction definition
     }
 
@@ -25,6 +25,7 @@ Device properties created::
 """
    
 import logging
+import random
 from device import Device
 from common import importer
 
@@ -35,6 +36,8 @@ class Variable(Device):
             var_name = params["name"]
             if "value" in params:
                 var_value = params["value"]
+                if type(var_value) == list:
+                    var_value = random.choice(var_value)
                 self.set_property(var_name, var_value)
             elif "timefunction" in params:
                 tf_name = params["timefunction"].keys()[0]

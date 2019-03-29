@@ -36,6 +36,9 @@ class Comms(Device):
         self.comms_up_down_period = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
         self.has_buffer = params["comms"].get("has_buffer", False)
         self.buffer = []
+        self.messages_attempted = 0
+        self.messages_sent = 0
+        self.messages_delayed = 0
         engine.register_event_in(0, self.tick_comms_up_down, self, self)
         super(Comms,self).__init__(instance_name, time, engine, update_callback, context, params)   # Chain other classes last, so we set ourselves up before others do, so comms up/down takes effect even on device "boot"
 
@@ -43,13 +46,16 @@ class Comms(Device):
         return super(Comms, self).comms_ok() and self.ok_comms
 
     def transmit(self, the_id, ts, properties, force_comms):
+        self.messages_attempted += 1
         # logging.info("comms.py::transmit")
         if self.ok_comms or force_comms:
             super(Comms, self).transmit(the_id, ts, properties, force_comms)
+            self.messages_sent += 1
             # logging.info("(doing comms)")
         else:
             if self.has_buffer:
                 # logging.info("(appending)")
+                self.messages_delayed += 1
                 self.buffer.append( (the_id, ts, properties) )
             else:
                 # logging.info("(discarding)")
@@ -59,6 +65,10 @@ class Comms(Device):
         super(Comms, self).external_event(event_name, arg)
 
     def close(self):
+        logging.info("Comms report for " + str(self.properties["$id"]) + " " +
+                str(self.messages_sent) + " sent ("+str(100 * self.messages_sent/self.messages_attempted) + "%) and " +
+                str(self.messages_delayed) + " delayed ("+str(100 * self.messages_delayed/self.messages_attempted) + "%) of " +
+                str(self.messages_attempted) + " total")
         super(Comms,self).close()
 
     # Private methods

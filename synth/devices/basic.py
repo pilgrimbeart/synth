@@ -1,11 +1,12 @@
 """
 basic
 =====
-This function is inherited by all devices.
+This function is inherited by all devices automatically. It does not need to be explicitly declared, unless you want to change its behaviour
 
 Configurable parameters::
 
     {
+        "label_root" : (optional) the root name of the label property
     }
 
 Device properties created::
@@ -13,7 +14,7 @@ Device properties created::
     {
         "$id" : a unique random property which looks like a MAC address
         "is_demo_device" : to identify that this is a Synth-created device
-        "label" : A human-readable label "Thing 0", "Thing 1" etc.
+        "label" : A human-readable label "Device 0", "Device 1" etc.
     }
 """
 
@@ -34,7 +35,11 @@ class Basic(Device):
         self.properties = {}
         self.properties["$id"] = "-".join([format(Basic.myRandom.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
         self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
-        self.properties["label"] = "Thing "+str(Basic.device_number)
+        label_root = "Device "
+        if "basic" in params:   # Will only be there if the basic class has been explictly declared (because user wants to override its behaviour)
+            if "label_root" in params["basic"]:
+                label_root = params["basic"]["label_root"]
+        self.properties["label"] = label_root + str(Basic.device_number)
         self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down).
         logging.info("Created device " + str(Basic.device_number+1) + " : " + self.properties["$id"])
         Basic.device_number = Basic.device_number + 1

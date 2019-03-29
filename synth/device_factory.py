@@ -35,7 +35,8 @@ def compose_class(class_names):
     """Create a composite class from a list of class names."""
     classes = []
     for class_name in class_names:
-        classes.append(importer.get_class('device', class_name))
+        if class_name != "basic":   # Normally this is not explicitly specified, so is implicit, but even it is explict we want to ensure that it's the last class added
+            classes.append(importer.get_class('device', class_name))
     classes.append(Basic)   # Class at END of the list is the root of inheritance
     return type("compositeDeviceClass", tuple(classes), {})
 
