@@ -7,18 +7,23 @@
     },
     "events" : [
         {
-            "at" : "PT0S",
             "repeats" : 10,
-            "interval" : "PT0S",
-            "action": {
-                "create_device" : {
+            "action": { "create_device" : {
                     "functions" : {
                         "firmware" : {},
-                        "latlong" : {
-                            "generate_addresses" : true,
-                            "area_centre" : "Nijmegen, Holland",
-                            "area_radius" : "Arnhem, Holland"
-                        },
+                        "latlong" : { "generate_addresses" : true, "area_centre" : "Nijmegen, Holland", "area_radius" : "Arnhem, Holland" },
+                        "weather" : {},
+                        "pump" : {}
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 10,
+            "action": { "create_device" : {
+                    "functions" : {
+                        "firmware" : {},
+                        "latlong" : { "generate_addresses" : true, "area_centre" : "Cardiff, UK", "area_radius" : "Newport, Wales, UK" },
                         "weather" : {},
                         "pump" : {}
                     }
