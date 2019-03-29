@@ -7,6 +7,7 @@ Arguments::
 
     {
         "interval" : the time between counts
+        "modulo" : (optional) the point at which to wrap - if unspecified, never wraps
     }
 """
 
@@ -20,6 +21,8 @@ class Count(Timefunction):
         """<interval> is the length between counts"""
         self.engine = engine
         self.interval = float(isodate.parse_duration(params["interval"]).total_seconds())
+        self.modulo = params.get("modulo", None)
+
         self.init_time = engine.get_now()
 
     def state(self, t=None, t_relative=False):
@@ -27,7 +30,10 @@ class Count(Timefunction):
         if t is None:
             t = self.engine.get_now()
 
-        return int((t-self.init_time) / self.interval)
+        v = int((t-self.init_time) / self.interval)
+        if self.modulo is not None:
+            v = v % self.modulo
+        return v
 
     def next_change(self, t=None):
         """Return a future time when the next event will happen"""
