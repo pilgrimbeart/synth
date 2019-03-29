@@ -1,0 +1,79 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P90D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "comms" : {
+                            "reliability" : 1.0,
+                            "period" : "PT1H"
+                        },
+                        "variable" : [
+                            { "name" : "reliability_percent", "value" : 100 },
+                            {
+                                "name" : "count",
+                                "timefunction" : {
+                                    "count" : {
+                                        "interval" : "PT1H", "modulo" : 16
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "comms" : {
+                            "reliability" : 0.5,
+                            "period" : "PT1H"
+                        },
+                        "variable" : [
+                            { "name" : "reliability_percent", "value" : 50 },
+                            {
+                                "name" : "count",
+                                "timefunction" : {
+                                    "count" : {
+                                        "interval" : "PT1H", "modulo" : 16
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "comms" : {
+                            "reliability" : 0.25,
+                            "period" : "PT1H"
+                        },
+                        "variable" : [
+                            { "name" : "reliability_percent", "value" : 25 },
+                            {
+                                "name" : "count",
+                                "timefunction" : {
+                                    "count" : {
+                                        "interval" : "PT1H", "modulo" : 16
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
