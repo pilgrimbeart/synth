@@ -7,9 +7,9 @@ Arguments::
 
     {
         "period" : the period with which the random value is updated e.g. "PT10M"
-        "lower" : (optional) numbers will be returned within range (lower,upper)
+        "lower" : (optional) numbers will be returned within range (lower,upper) - if not specified then range is (0.0, 1.0]
         "upper" : (optional)
-        "precision" : (optiona) 1 for integer, 10 for 1 decimal point, 100 for 2 decimals etc.
+        "precision" : (optional) 1 for integer, 10 for 1 decimal point, 100 for 2 decimals etc.
     }
 """
 
