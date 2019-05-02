@@ -82,6 +82,15 @@ def get_device_by_property(prop, value):
                 return d
     return None
 
+def get_devices_by_property(prop, value):
+    # Same as above, but return list of all matching devices
+    global devices
+    devs = []
+    for d in devices:
+        if prop in d.properties:
+            if d.properties[prop] == value:
+                devs.append(d)
+    return devs
 
 ##def logString(s, time=None):
 ##    logging.info(s)

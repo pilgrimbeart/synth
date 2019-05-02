@@ -38,7 +38,7 @@ class Commswave(Device):
         if self.comms_tf_threshold is not None:
             tf_ok = self.comms_timefunction.state() >= self.comms_tf_threshold
             if not tf_ok:
-                logging.info("commswave suppressing a communication due to timefunction state")
+                pass # logging.info("commswave suppressing a communication due to timefunction state")
             is_ok = is_ok and tf_ok
         else:
             is_ok = is_ok and self.comms_timefunction.state()

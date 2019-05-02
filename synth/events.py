@@ -59,6 +59,7 @@ Change arbitrary device properties with arbitrary timestamps::
         "property_name" : "name_of_property",
         "property_value" : value_of_property  [can be string, number or boolean]
         "$ts" : "time_specification"    # e.g. "-P1D" or "2000-01-01T00:00:00" - optional, if omitted change is stamped with current simulation time
+        "is_attribute" : False  # If true, then instead of this setting a named property of the device, it sets an attribute of the object managing the device (i.e. a way to change the device behaviour)
     }
     
 Execute an action on whichever Synth client is in use (e.g. aws, devicepilot, filesystem etc. - see docs for each client)::
@@ -125,15 +126,26 @@ class Events():
             query.do_query(params, events)
             
         def change_property_action(params):
-            d = device_factory.get_device_by_property( params["identity_property"],
+            def set_it(d):
+                if params.get("is_attribute", False):
+                    d.__dict__[params["property_name"]] = params["property_value"]
+                    logging.info("Set attribute "+str(params["property_name"])+" on device "+d.get_property("$id")+" to "+str(params["property_value"]))
+                else:
+                    d.set_property(params["property_name"], params["property_value"], timestamp=ts)
+                    logging.info("Set property "+str(params["property_name"])+" on device "+d.get_property("$id")+" to "+str(params["property_value"]))
+
+            d = device_factory.get_devices_by_property( params["identity_property"],
                                                        params["identity_value"])
-            assert d != None, "attempt to do change_property on non-existent device with property " + params["identity_property"] + " set to " + params["identity_value"]
+            logging.info("change property acting on "+str(len(d))+" matching devices")
+
             if "$ts" in params:
                 ts = conftime.richTime(params["$ts"])
             else:
                 ts = None
+
             logging.info("change_property "+str(params))
-            d.set_property(params["property_name"], params["property_value"], timestamp=ts)
+            for the_d in d:
+                set_it(the_d)
 
         def client_action(args):
             (name, params) = args
