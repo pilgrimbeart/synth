@@ -1,0 +1,21 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : "now"
+    },
+    "events" : [
+        { 
+            "repeats" : 400,
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "light" : { "clouds" : true, "generate" : true, "generate_scalar" : 2 },
+                        "latlong" : { "generate_addresses" : true, "area_centre" : "Warsaw, Poland", "area_radius" : "Plonsk, Poland" }  
+                    }
+                }
+            }
+        }
+    ]
+}
