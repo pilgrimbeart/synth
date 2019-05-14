@@ -1,0 +1,32 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "repeats" : 100,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "comms" : {
+                            "reliability" : "rssi",
+                            "period" : "PT1H",
+                            "suppress_messages" : true
+                        },
+                        "variable" : {
+                            "name" : "count",
+                            "timefunction" : {
+                                "count" : {
+                                    "interval" : "PT1H"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
