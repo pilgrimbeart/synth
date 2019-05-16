@@ -1,5 +1,5 @@
 """
-For this module to work, SSL certificate files must be placed in ../synth_accounts/:
+For this module to work, the following SSL certificate files must be placed in ../synth_accounts/:
     ssl.crt 
     ssl.key
 
@@ -47,7 +47,7 @@ resulting in an action specification which looks something like this::
 # Copyright (c) 2017 DevicePilot Ltd.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
-there # of this software and associated documentation files (the "Software"), to deal
+# of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
@@ -197,10 +197,6 @@ def plots(filename):
     if re.search(r'[^A-Za-z0-9.]', filename):
         for c in filename:
             logging.info(str(ord(c)))
-        logging.info("Bad characters")
-        abort(400)
-
-    if ".." in filename:
         logging.info("Illegal .. in pathname")
         abort(400)
 
