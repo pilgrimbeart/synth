@@ -1,8 +1,12 @@
 """
+For this module to work, SSL certificate files must be placed in ../synth_accounts/:
+    ssl.crt 
+    ssl.key
+
 GET /?<magickey>
 ----------------
 Return a basic page listing all running Synth processes and free memory.
-For security this must be accompanied by a magic key matching the contents of the file ../synth_certs/magickey
+For security this must be accompanied by a magic key matching the "web_check_key" property in the file ../synth_accounts/default.json
 
 GET /spawn?devicepilot_key=XXX&devicepilot_api=staging
 ------------------------------------------------------
@@ -43,7 +47,7 @@ resulting in an action specification which looks something like this::
 # Copyright (c) 2017 DevicePilot Ltd.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
+there # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
@@ -65,7 +69,7 @@ resulting in an action specification which looks something like this::
 # where necessary.
 #
 # We also run Flask in its own *Process*.
-# WARNING: it appears that if you binding ZMQ to a socket on multiple processes
+# WARNING: it appears that if you bind ZMQ to a socket on multiple processes
 # then the second one fails *silently*! So don't call socket_send() from the parent
 # process, or Flask's ZMQ sends will all fail silently.
 
