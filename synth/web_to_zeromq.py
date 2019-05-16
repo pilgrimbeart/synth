@@ -3,6 +3,8 @@ For this module to work, the following SSL certificate files must be placed in .
     ssl.crt 
     ssl.key
 
+Flask occasionally just stops responding to web requests (like every day or so) - no idea why. So we rely on an external service (e.g. Pingdom or UptimeRobot) to ping us regularly and then, knowing that that is happening, if we don't recive any messages then we know to restart the server.
+
 GET /?<magickey>
 ----------------
 Return a basic page listing all running Synth processes and free memory.
@@ -79,8 +81,8 @@ import multiprocessing, subprocess, threading
 import json, time, logging, sys, re, datetime
 import zmq # pip install pyzmq-static
 
-WEB_PORT = 443 # HTTPS. If < 1000 then this process must be run with elevated privileges
-PING_TIMEOUT = 60*5 # We expect to get pinged every N seconds
+WEB_PORT = 80 # HTTPS. If < 1000 then this process must be run with elevated privileges
+PING_TIMEOUT = 60*10 # We expect to get pinged every N seconds
 ZEROMQ_PORT = 5556
 ZEROMQ_BUFFER = 100000
 
@@ -220,14 +222,19 @@ def isRunning():
         return '{ "active" : false }'
     return '{ "active" : true }'
 
-@app.route("/")
-def whatIsRunning():
+@app.route("/ping")
+def ping():
     """We expect Pingdom to regularly ping this route to reset the heartbeat."""
     global g_last_ping_time
+    logging.info("Saw request to /ping")
+    g_last_ping_time.value = time.time()
+    socket_send({"action": "ping"})   # Propagate pings into ZeroMQ for liveness logging throughout rest of system
+    return "pong"
 
+@app.route("/")
+def whatIsRunning():
     logging.info("Got web request to /")
 
-    g_last_ping_time.value = time.time()
     try:
         magicKey=json.loads(open(DEFAULTS_FILE,"rt").read())["web_check_key"]
     except:
@@ -238,7 +245,6 @@ def whatIsRunning():
         logging.error("Incorrect or missing magic key in request")
         abort(403)
         
-    socket_send({"action": "ping"})   # Propagate pings into ZeroMQ for liveness logging throughout rest of system
     try:
         x = subprocess.check_output("ps uax | grep 'python' | grep -v grep", shell=True)
         x += "<br>"
@@ -259,8 +265,7 @@ def start_web_server(restart):
     g_lock = threading.Lock()
     args = {    "threaded":True,
                 "host":"0.0.0.0",
-                "port":WEB_PORT,
-                "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')
+                "port":WEB_PORT
             }
     logging.info("Starting Flask server with args : "+json.dumps(args))
     p = multiprocessing.Process(target=app.run, kwargs=args)
