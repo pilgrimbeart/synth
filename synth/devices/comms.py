@@ -7,9 +7,10 @@ If a property "rssi" exists, this is used to further modify the reliability.
 Configurable parameters::
 
     {
-        "reliability" : Either a fraction 0.0..1.0, or a string containing a specification of the trajectory. Defaults to 1.0
-        "period" : Mean period with which device goes up and down (has exponential tail with max 100x). Defaults to once a day
-        "has_buffer" : If this boolean is true then the device buffers data while comms is down (else it throws it away)
+        "reliability" : 1.0     A fraction 0.0..1.0 or the word "rssi" to generate reliability from RSSI
+        "period" :      P1D     Mean period with which device goes up and down [or RSSI varies, if being created] (has exponential tail with max 100x). Defaults to once a day
+        "has_buffer" :  false   If this boolean is true then the device buffers data while comms is down (else it throws it away)
+        "suppress_messages" : false If true then wont emit log messages
     }
 
 Device properties created::
@@ -26,15 +27,24 @@ import isodate
 import helpers.timewave
 import logging
 
-GOOD_RSSI = -50.0
-BAD_RSSI = -120.0
+BEST_RSSI = -50.0
+WORST_RSSI = -120.0
+RSSI_KNEE = -80.0           # Below this, comms gets progressively less reliable
+CHANCE_ABOVE_KNEE = 0.95    # Chance of any comms being OK if above knee
+CHANCE_AT_WORST = 0.00      # Chance of any comms being OK if RSSI is at worst
 
 class Comms(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         self.ok_comms = True
-        self.comms_reliability = params["comms"].get("reliability", 1.0)
+        self.comms_reliability = params["comms"].get("reliability", 1.0)    # 0..1 or the word "rssi"
+        if self.comms_reliability == "rssi":
+            rssi_span = BEST_RSSI-WORST_RSSI
+            self.rssi_mean = WORST_RSSI + rssi_span*0.2 + random.random() * rssi_span*0.8   # Mean value for RSSI of any particular device lies between a fifth and four fifths of the range
+            self.rssi_sigma = rssi_span/12 
+            self.set_rssi()
         self.comms_up_down_period = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
         self.has_buffer = params["comms"].get("has_buffer", False)
+        self.suppress_messages = params["comms"].get("suppress_messages", False)
         self.buffer = []
         self.messages_attempted = 0
         self.messages_sent = 0
@@ -49,6 +59,8 @@ class Comms(Device):
         self.messages_attempted += 1
         # logging.info("comms.py::transmit")
         if self.ok_comms or force_comms:
+            if self.comms_reliability == "rssi":
+                properties["rssi"] = self.rssi  # Add an RSSI property to any outgoing messages
             super(Comms, self).transmit(the_id, ts, properties, force_comms)
             self.messages_sent += 1
             # logging.info("(doing comms)")
@@ -73,35 +85,54 @@ class Comms(Device):
 
     # Private methods
 
+    def set_rssi(self):
+        self.rssi = random.normalvariate(self.rssi_mean, self.rssi_sigma)
+        self.rssi = min(self.rssi, BEST_RSSI)
+        self.rssi = max(self.rssi, WORST_RSSI)
+        self.rssi = int(self.rssi)
+        # print "rssi_mean=",self.rssi_mean,"rssi_sigma=",self.rssi_sigma,"so rssi=",self.rssi
+
+    def is_rssi_good_enough(self):
+        if self.rssi > RSSI_KNEE:
+            result = random.random() < CHANCE_ABOVE_KNEE
+            # print "self.rssi = ",self.rssi,"which is above knee, so result is",result
+            return result
+        else:
+            chance = float(self.rssi - WORST_RSSI)/(RSSI_KNEE-WORST_RSSI)   # normalise our position on line from worst to knee
+            chance = CHANCE_AT_WORST + chance * (CHANCE_ABOVE_KNEE-CHANCE_AT_WORST)
+            result = random.random() < chance
+            # print "self.rssi = ",self.rssi,"which is below knee, so result is",result
+            return result
+
     def change_comms(self, ok):
         if ok and (self.ok_comms == False): # If restoring comms, transmit everything that buffered whilst comms was offline
-            logging.info("comms.py: comms coming back online for device "+str(self.properties["$id"]))
+            if not self.suppress_messages:
+                logging.info("comms.py: comms coming back online for device "+str(self.properties["$id"]))
             if self.has_buffer:
-                logging.info("comms.py: ... so now transmitting " + str(len(self.buffer)) + " buffered events")
+                if not self.suppress_messages:
+                    logging.info("comms.py: ... so now transmitting " + str(len(self.buffer)) + " buffered events")
                 for e in self.buffer:
                     self.transmit(e[0],e[1],e[2], True)
                 self.buffer = []
 
         if (not ok) and self.ok_comms:
-            logging.info("comms.py: comms going offline for device " + str(self.properties["$id"]))
+            if not self.suppress_messages:
+                logging.info("comms.py: comms going offline for device " + str(self.properties["$id"]))
 
         self.ok_comms = ok
 
     def tick_comms_up_down(self, _):
         if isinstance(self.comms_reliability, (int,float)):   # Simple probability
             self.change_comms(self.comms_reliability > random.random())
-        else:   # Probability spec, i.e. varies with time
-            relTime = self.engine.get_now() - self.creation_time
-            prob = timewave.interp(self.comms_reliability, relTime)
-            if self.property_exists("rssi"): # Now affect comms according to RSSI
-                rssi = self.get_property("rssi")
-                radioGoodness = 1.0-(rssi-GOOD_RSSI)/(BAD_RSSI-GOOD_RSSI)   # Map to 0..1
-                radioGoodness = 1.0 - math.pow((1.0-radioGoodness), 4)      # Skew heavily towards "good"
-                prob *= radioGoodness
-            self.change_comms(prob > random.random())
+        elif self.comms_reliability=="rssi":
+            self.set_rssi()
+            self.change_comms(self.is_rssi_good_enough())
+        else:
+            assert False, "comms_reliability spec of "+str(self.comms_reliability)+" not supported"
 
         delta_time = random.expovariate(1.0 / self.comms_up_down_period)
-        delta_time = min(delta_time, self.comms_up_down_period * 100.0) # Limit long tail
+        delta_time = max(delta_time, 60.0) # never more than once a minute
+        delta_time = min(delta_time, self.comms_up_down_period * 10.0) # Limit long tail
         self.engine.register_event_in(delta_time, self.tick_comms_up_down, self, self)
 
 # Model for comms unreliability

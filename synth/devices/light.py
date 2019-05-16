@@ -23,7 +23,7 @@ from device import Device
 from helpers.solar import solar
 import math, random
 
-FULL_POWER = 0.5
+DEFAULT_GEN_SCALAR = -0.5
 
 class Light(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
@@ -31,7 +31,9 @@ class Light(Device):
         self.use_clouds = params["light"].get("clouds", False)
         self.generate = params["light"].get("generate", False)
         if self.generate:
-            self.gen_light_to_power_ratio = max(FULL_POWER * 0.7, min(FULL_POWER * 1.3, random.normalvariate(FULL_POWER, FULL_POWER/10)))
+            scalar = float(params["light"].get("generate_scalar", DEFAULT_GEN_SCALAR))
+            r = random.normalvariate(scalar, scalar/10.0)
+            self.gen_light_to_power_ratio = max(scalar * 0.7, min(scalar * 1.3, r))
             self.set_property("energy", 0.0)
         engine.register_event_in(0, self.tick_light, self, self)
 
@@ -63,7 +65,7 @@ class Light(Device):
 
         self.set_property("light", light, always_send = False)
         if self.generate:
-            p = light * -self.gen_light_to_power_ratio
+            p = light * self.gen_light_to_power_ratio
             self.set_property("power", p, always_send = False)
             self.set_property("energy", self.get_property("energy") + p, always_send = False)
         self.engine.register_event_in(60*60, self.tick_light, self, self)
