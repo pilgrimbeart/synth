@@ -29,5 +29,6 @@ def printIt(params):
 
 if __name__ == "__main__":
     zeromq_rx.init(printIt)
+    print "Watching..."
     while True:
         time.sleep(1)    

@@ -1,8 +1,14 @@
 """
+For this module to work, the following SSL certificate files must be placed in ../synth_accounts/:
+    ssl.crt 
+    ssl.key
+
+Flask occasionally just stops responding to web requests (like every day or so) - no idea why. So we rely on an external service (e.g. Pingdom or UptimeRobot) to ping us regularly and then, knowing that that is happening, if we don't recive any messages then we know to restart the server.
+
 GET /?<magickey>
 ----------------
 Return a basic page listing all running Synth processes and free memory.
-For security this must be accompanied by a magic key matching the contents of the file ../synth_certs/magickey
+For security this must be accompanied by a magic key matching the "web_check_key" property in the file ../synth_accounts/default.json
 
 GET /spawn?devicepilot_key=XXX&devicepilot_api=staging
 ------------------------------------------------------
@@ -65,7 +71,7 @@ resulting in an action specification which looks something like this::
 # where necessary.
 #
 # We also run Flask in its own *Process*.
-# WARNING: it appears that if you binding ZMQ to a socket on multiple processes
+# WARNING: it appears that if you bind ZMQ to a socket on multiple processes
 # then the second one fails *silently*! So don't call socket_send() from the parent
 # process, or Flask's ZMQ sends will all fail silently.
 
@@ -75,8 +81,8 @@ import multiprocessing, subprocess, threading
 import json, time, logging, sys, re, datetime
 import zmq # pip install pyzmq-static
 
-WEB_PORT = 443 # HTTPS. If < 1000 then this process must be run with elevated privileges
-PING_TIMEOUT = 60*5 # We expect to get pinged every N seconds
+WEB_PORT = 80 # HTTPS. If < 1000 then this process must be run with elevated privileges
+PING_TIMEOUT = 60*10 # We expect to get pinged every N seconds
 ZEROMQ_PORT = 5556
 ZEROMQ_BUFFER = 100000
 
@@ -122,11 +128,16 @@ def socket_send(json_msg):
         logging.error("****** SLOW POSTING *******")
         logging.error("Took "+str(elapsed)+"s to post event")
     
+def note_arrival(route):
+    global g_last_ping_time
+    g_last_ping_time.value = time.time()
+    logging.info("Got web request to "+route)
+
 @app.route("/event", methods=['POST','GET'])
 def event():
     """Accept an incoming event and route it to a Synth instance."""
 
-    logging.info("Got web request to /event")
+    note_arrival("/event")
     h = {}
     for (key,value) in request.headers:
         h[key] = value
@@ -172,7 +183,7 @@ def getAndCheckApi(req):
 @app.route("/spawn", methods=['GET'])
 def spawn():
     """Start a new Synth instance."""
-    logging.info("Got web request to /spawn")
+    note_arrival("/spawn")
     dpKey = getAndCheckKey(request)
     if dpKey==None:
         abort(403)
@@ -188,15 +199,12 @@ def spawn():
 @app.route("/plots/<filename>", methods=['GET'])
 def plots(filename):
     """Serve plots from special directory"""
-    logging.info("Got web request to "+str(request.path)+" so filename is "+str(filename))
+    note_arrival(str(request.path))
+    logging.info(" so filename is "+str(filename))
 
     if re.search(r'[^A-Za-z0-9.]', filename):
         for c in filename:
             logging.info(str(ord(c)))
-        logging.info("Bad characters")
-        abort(400)
-
-    if ".." in filename:
         logging.info("Illegal .. in pathname")
         abort(400)
 
@@ -209,7 +217,7 @@ def plots(filename):
 
 @app.route("/is_running")
 def isRunning():
-    logging.info("Got web request to /is_running")
+    note_arrival("/is_running")
     dpKey = getAndCheckKey(request)
     if dpKey==None:
         abort(403)
@@ -220,14 +228,17 @@ def isRunning():
         return '{ "active" : false }'
     return '{ "active" : true }'
 
+@app.route("/ping")
+def ping():
+    """We expect Pingdom to regularly ping this route to reset the heartbeat."""
+    note_arrival("/ping")
+    socket_send({"action": "ping"})   # Propagate pings into ZeroMQ for liveness logging throughout rest of system
+    return "pong"
+
 @app.route("/")
 def whatIsRunning():
-    """We expect Pingdom to regularly ping this route to reset the heartbeat."""
-    global g_last_ping_time
+    note_arrival("/")
 
-    logging.info("Got web request to /")
-
-    g_last_ping_time.value = time.time()
     try:
         magicKey=json.loads(open(DEFAULTS_FILE,"rt").read())["web_check_key"]
     except:
@@ -238,7 +249,6 @@ def whatIsRunning():
         logging.error("Incorrect or missing magic key in request")
         abort(403)
         
-    socket_send({"action": "ping"})   # Propagate pings into ZeroMQ for liveness logging throughout rest of system
     try:
         x = subprocess.check_output("ps uax | grep 'python' | grep -v grep", shell=True)
         x += "<br>"
@@ -259,8 +269,7 @@ def start_web_server(restart):
     g_lock = threading.Lock()
     args = {    "threaded":True,
                 "host":"0.0.0.0",
-                "port":WEB_PORT,
-                "ssl_context":(CERT_DIRECTORY+'ssl.crt', CERT_DIRECTORY+'ssl.key')
+                "port":WEB_PORT
             }
     logging.info("Starting Flask server with args : "+json.dumps(args))
     p = multiprocessing.Process(target=app.run, kwargs=args)
@@ -277,4 +286,5 @@ if __name__ == "__main__":
             server.terminate()
             time.sleep(5)
             server = start_web_server(restart=True)
+            g_last_ping_time.value = time.time() 
             time.sleep(60)
