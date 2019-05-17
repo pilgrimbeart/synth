@@ -113,6 +113,7 @@ def write_page(instance_name, divs):
         f.write('\n</DIV>\n')
     f.write("\n</BODY>\n</HTML>\n")
     f.close()
+    logging.info("Finished writing plot")
     # title='Score ' + '%.3f' % (score*100) + '% at {:%Y-%m-%d %H:%M:%S} GMT'.format(datetime.datetime.now()),
 
 

@@ -128,11 +128,16 @@ def socket_send(json_msg):
         logging.error("****** SLOW POSTING *******")
         logging.error("Took "+str(elapsed)+"s to post event")
     
+def note_arrival(route):
+    global g_last_ping_time
+    g_last_ping_time.value = time.time()
+    logging.info("Got web request to "+route)
+
 @app.route("/event", methods=['POST','GET'])
 def event():
     """Accept an incoming event and route it to a Synth instance."""
 
-    logging.info("Got web request to /event")
+    note_arrival("/event")
     h = {}
     for (key,value) in request.headers:
         h[key] = value
@@ -178,7 +183,7 @@ def getAndCheckApi(req):
 @app.route("/spawn", methods=['GET'])
 def spawn():
     """Start a new Synth instance."""
-    logging.info("Got web request to /spawn")
+    note_arrival("/spawn")
     dpKey = getAndCheckKey(request)
     if dpKey==None:
         abort(403)
@@ -194,7 +199,8 @@ def spawn():
 @app.route("/plots/<filename>", methods=['GET'])
 def plots(filename):
     """Serve plots from special directory"""
-    logging.info("Got web request to "+str(request.path)+" so filename is "+str(filename))
+    note_arrival(str(request.path))
+    logging.info(" so filename is "+str(filename))
 
     if re.search(r'[^A-Za-z0-9.]', filename):
         for c in filename:
@@ -211,7 +217,7 @@ def plots(filename):
 
 @app.route("/is_running")
 def isRunning():
-    logging.info("Got web request to /is_running")
+    note_arrival("/is_running")
     dpKey = getAndCheckKey(request)
     if dpKey==None:
         abort(403)
@@ -225,15 +231,13 @@ def isRunning():
 @app.route("/ping")
 def ping():
     """We expect Pingdom to regularly ping this route to reset the heartbeat."""
-    global g_last_ping_time
-    logging.info("Saw request to /ping")
-    g_last_ping_time.value = time.time()
+    note_arrival("/ping")
     socket_send({"action": "ping"})   # Propagate pings into ZeroMQ for liveness logging throughout rest of system
     return "pong"
 
 @app.route("/")
 def whatIsRunning():
-    logging.info("Got web request to /")
+    note_arrival("/")
 
     try:
         magicKey=json.loads(open(DEFAULTS_FILE,"rt").read())["web_check_key"]
@@ -282,4 +286,5 @@ if __name__ == "__main__":
             server.terminate()
             time.sleep(5)
             server = start_web_server(restart=True)
+            g_last_ping_time.value = time.time() 
             time.sleep(60)

@@ -19,7 +19,7 @@ For convenience:
 
 (*) The `sim` engine guarantees that events which are scheduled for the same time will be executed in the order that they are defined.
 
-Optionally, an event can repeat, so for example the scenario below starts with the creation of 10 devices, one per minute::
+Optionally, an event can repeat, with optionally an interval between each repeat, so for example the scenario below starts with the creation of 10 devices, one per minute::
 
     "events" : [
         {
@@ -45,12 +45,6 @@ Create a device::
         }
     }
 
-Get Synth to run a query on the historical data it has just generated [TODO: code not yet complete!]::
-
-    "query" : {
-        "expression" : "$ts < ago(30)"
-    }
-
 Change arbitrary device properties with arbitrary timestamps::
 
     "change_property" : {
@@ -66,6 +60,12 @@ Execute an action on whichever Synth client is in use (e.g. aws, devicepilot, fi
 
     "client.<action>" {
         <whatever parameters it expects>
+    }
+
+Get Synth to run a query on the historical data it has just generated [TODO: code not yet complete!]::
+
+    "query" : {
+        "expression" : "$ts < ago(30)"
     }
 
 """
