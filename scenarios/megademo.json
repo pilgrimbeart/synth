@@ -1,0 +1,230 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P14D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {	# VENDING MACHINES
+            "repeats" : 20,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {},
+                        "latlong" : {
+                            "generate_addresses" : true,
+                            "area_centre" : "Stockton, Kansas, USA",
+                            "area_radius" : "Key Largo, USA"
+                        },
+                        "vending_machine" : {},
+                        "variable" : {"name" : "device_type", "value" : "vending_machine"}
+                    }
+                }
+            }
+        },
+        {	# SUMP PUMPS
+            "repeats" : 10,
+            "action": {
+            	"create_device" : {
+                    "functions" : {
+                        "firmware" : {},
+                        "latlong" : { "generate_addresses" : true, "area_centre" : "Nijmegen, Holland", "area_radius" : "Arnhem, Holland" },
+                        "weather" : {},
+                        "pump" : {},
+                        "variable" : {"name" : "device_type", "value" : "sump_pump"}
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 10,
+            "action": {
+            	"create_device" : {
+                    "functions" : {
+                        "firmware" : {},
+                        "latlong" : { "generate_addresses" : true, "area_centre" : "Cardiff, UK", "area_radius" : "Newport, Wales, UK" },
+                        "weather" : {},
+                        "pump" : {},
+                        "variable" : {"name" : "device_type", "value" : "sump_pump"}
+                    }
+                }
+            }
+        },
+        {	# MOBILE DEVICES
+            "repeats" : 25,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "mobile" : {
+                            "area_centre" : "Rugby, UK",
+                            "area_radius" : "Boston, UK"
+                        },
+                        "variable" : [
+                            {
+                                "name" : "temperature_C",
+                                "timefunction" : {
+                                    "sinewave" : {
+                                        "period" : ["PT7M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
+                                        "overall_amplitude" : 15.0,
+                                        "overall_offset" : -3.5,
+                                        "sample_period" : "PT3H",
+                                        "randomise_phase_by" : "$id",
+                                        "precision" : 10
+                                    }
+                                }
+                            },
+                            {
+                                "name" : "event",
+                                "timefunction" : {
+                                    "events" : {
+                                        "interval" : "P30D",
+                                        "value" : "1G_shock_detected"
+                                    }
+                                }
+                            },
+                            {	"name" : "device_type", "value" : "pallet"}
+                        ]
+                    }
+                }
+            }
+        },
+        {   # BMS (SMOKE DETECTORS)
+            "repeats" : 50,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "basic" : {
+                            "label_root" : "Smoke Detector "
+                        },
+                        "comms" : {
+                            "reliability" : "rssi",
+                            "period" : "PT1H",
+                            "suppress_messages" : true
+                        },
+                        "enumerated" : {
+                            "name" : "event",
+                            "values" :  ["heartbeat", "alarm", "battery low", "mains loss", "cover removed", "hardware fault", "calibration error", "sensor needs cleaning", "internal fault", "link interference", "over-temperature"],
+                            "periods" : ["PT1H",      "P30D",  "P20D",        "P20D",       "P15D",          "P60D",           "P100D",             "P20D",                  "P50D",           "P23D",              "P50D"],
+                            "sigmas" :  ["PT0S",      "P10D",  "P8D",         "P8D",        "P5D",           "P20D",           "P33D",              "P8D",                   "P18D",           "P8D",               "P18D"]
+                        },
+                        "variable" : [
+                            { "name" : "device_type", "value" : "smoke_alarm" },
+                            { "name" : "hardware_version", "value" : [0.4,0.6,0.9,1.1,1.5] },
+                            { "name" : "x", "value" : [1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500] },
+                            { "name" : "y", "value" : [1000,1250,1500,1750,2000,2250,2500,2750,3000] },
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  #  Mountain View, California 
+                        ]
+                    }
+                }
+            }
+        },
+        {   # BMS (PV ARRAY)
+            "repeats" : 8,
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "light" : { "clouds" : true, "generate" : true },
+                        "variable" : [
+                            { "name" : "device_type", "value" : "pv_array" },
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  #  Mountain View, California 
+                        ]
+                    }
+                }
+            }
+        },
+        {   # BMS (WEATHER SENSOR)
+            "repeats" : 1,
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "weather" : {},
+                        "variable" : [
+                            { "name" : "device_type", "value" : "weather_sensor" },
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  #  Mountain View, California 
+                        ]
+                    }
+                }
+            }
+        },
+        {   # BMS (LIGHT BULBS)
+            "repeats" : 10,
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "bulb" : { "power" : [12,20,36]},
+                        "variable" : [
+                            { "name" : "device_type", "value" : "bulb" },
+                            { "name" : "x", "value" : [100,150,200,250,300,350,400,450,500,550,600,650] },
+                            { "name" : "y", "value" : [100,125,150,175,200,225,250,275,300] },
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  #  Mountain View, California 
+                        ]
+                    }
+                }
+            }
+        },
+        {	# SOLAR PV ARRAY
+            "repeats" : 10,
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "light" : { "clouds" : true, "generate" : true, "generate_scalar" : 2 },
+                        "latlong" : { "generate_addresses" : true, "area_centre" : "Warsaw, Poland", "area_radius" : "Plonsk, Poland" },
+                        "variable" : { "name" : "device_type", "value" : "pv_array"}
+                    }
+                }
+            }
+        },
+        {	# SMART METERS across India,where one vendor has a problem
+            "repeats" : 50,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "basic" : {
+                            "label_root" : "Meter "
+                        },
+                        "commswave" : {
+                            "threshold" : 0.01, # To give 99% uptime
+                            "timefunction" : {
+                                "randomwave" : {
+                                    "period" : "PT1H",
+                                    "precision" : 100
+                               }
+                            }
+                         },
+                        "enumerated" : {
+                            "name" : "fault",
+                            "values" : ["tamper", "mains loss", "cover removed", "hardware fault", "calibration error", "internal fault", "link interference", "over-temperature"],
+                            "periods" : ["P30D",  "P20D",       "P15D",          "P60D",           "P100D",              "P50D",           "P23D",              "P50D"],
+                            "sigmas" : ["P10D",   "P7D",        "P5D",           "P20D",           "P30D",               "P16D",           "P8D",               "P16D"]
+                        },
+                        "firmware" : {},
+                        "latlong" : {
+                            "generate_addresses" : true,
+                            "area_centre" : "Nagpur, India",
+                            "area_radius" : "Jodhpur, India"
+                        },
+                        "variable" : [
+                            {   "name" : "vendor",  "value" : ["Landis & Gyr", "EDMI", "Aclara", "Itron", "Kaifa", "Honeywell", "Flonidan", "GWI"]},
+                            {   "name" : "model",   "value" : ["E470-5394", "ES-10A", "SGM1412", "EM425-I2", "MA120", "AS203P", "BK-G4E", "E470", "G4-MG-SE"]},
+                            {	"name" : "device_type", "value" : "smart_meter"},
+                            {   "name" : "energy", "timefunction" : { "count" : { "interval" : "PT1H" } } }
+                        ]
+                    }
+                }
+            }
+        },
+        {	# INJECT A PROBLEM LATER INTO SMART METER
+            "at" : "P7D",
+             "action": {
+                "change_property" : {
+                    "is_attribute" : true,
+                    "identity_property" : "vendor",
+                    "identity_value" : "Itron",
+                    "property_name" : "comms_tf_threshold",
+                    "property_value" : 0.20 # Change uptime to 80%
+                }
+            }
+        }
+    ]
+}
