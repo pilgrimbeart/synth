@@ -180,9 +180,9 @@ class Devicepilot(Client):
 
         self.session = requests.Session()   # Using a persistent session allows re-use of connection, retries 
         retries = Retry(total=5,
-                backoff_factor=0.1,
+                backoff_factor=1.0, 
                 method_whitelist=['GET', 'POST'],    # By default Requests will not retry a POST (for idempotency reasons)
-                status_forcelist=[ 104, 403 ])   # Connection occasionally gets closed. DevicePilot will throw occasional auth failures.
+                status_forcelist=[ 104, 403, 500, 401 ])   # Connection occasionally gets closed. DevicePilot will throw very occasional auth failures. If the service actually suffers an outage, it throws 401s and 500s
         self.session.mount('http://', HTTPAdapter(max_retries=retries))
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
