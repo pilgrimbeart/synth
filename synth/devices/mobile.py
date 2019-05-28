@@ -9,6 +9,7 @@ Configurable parameters::
         "area_centre" : e.g. "London, UK"       } optional, but both must be specified if either are. Points-to-visit will be within this set.
         "area_radius" : e.g. "Manchester, UK"   } 
         "points_to_visit" : 4   number of points to visit. Optional, but if specified then must be at least 2
+        "generate_fleet_management_metrics" : False      If true then output several properties to do with fleet management (fuel, miles etc.)
         "google_maps_key" : "xyz" } Google Maps now requires this. Often defined in ../synth_accounts/default.json
     }
 
@@ -22,18 +23,21 @@ Device properties created::
 
 from device import Device
 from helpers.geo import google_maps, geo
-import random
+import random, math
+import logging
 
 
 # We gradually move from point to point, and dwell for a while at each point
 UPDATE_PERIOD_S = 60*60 # Once an hour
-DWELL_MIN = 3   # In units of UPDATE_PERIOD_S
-DWELL_MAX = 24 * 14 # Units can dwell for up to a fortnight
-TRAVEL_RATE_MIN = 1.0/12  # What fraction of the distance between two points is travelled in every update period?
-TRAVEL_RATE_MAX = 1.0/3
+UPDATE_PERIOD_H = UPDATE_PERIOD_S/(60*60)
+MPH_MIN = 5
+MPH_MAX = 70
 SEND_AT_LEAST_EVERY = 99999999999   # Even when not moving, send an update at least this often (large number for never)
 
 NUMBER_OF_LOCATIONS = 10
+
+MPG = 8 # USA levels of fuel-efficiency!
+LATLON_TO_MILES = 88    # Very approximate conversion factor from "latlong distance in degrees" to miles!
 
 class Mobile(Device):
     # Class variables
@@ -45,6 +49,10 @@ class Mobile(Device):
         self.area_centre = params["mobile"].get("area_centre", None)
         self.area_radius = params["mobile"].get("area_radius", None)
         self.points_to_visit =params["mobile"].get("points_to_visit", 4)
+        self.fleet_mgmt = params["mobile"].get("generate_fleet_management_metrics", False)
+        self.dwell_h_min = params["mobile"].get("dwell_h_min", 3)
+        self.dwell_h_max = params["mobile"].get("dwell_h_max", 24*14)
+        self.tire_deflation_rate = min(1.0, 1.0 - random.gauss(0.001, 0.0001))
 
         if (Mobile.pp is None):  # Only load map at start, as very expensive operation
             Mobile.pp = geo.point_picker()  # Very expensive, so do only once
@@ -53,10 +61,18 @@ class Mobile(Device):
                 area = [self.area_centre, self.area_radius]
             google_maps_key = context.get("google_maps_key", None)
             Mobile.locations = []   # Array of (lon,lat,address)
-            for L in range(NUMBER_OF_LOCATIONS):
-                (lon,lat) = Mobile.pp.pick_point(area, google_maps_key)
-                address_info = google_maps.lon_lat_to_address(lon, lat, google_maps_key)
-                Mobile.locations.append( (lon,lat, address_info["address_postal_town"]) )
+            for L in range(NUMBER_OF_LOCATIONS):    # Choose locations devices will visit
+                while True:
+                    (lon,lat) = Mobile.pp.pick_point(area, google_maps_key)
+                    address_info = google_maps.lon_lat_to_address(lon, lat, google_maps_key)
+                    if ("address_postal_town" in address_info) or ("address_route" in address_info): # Only use locations which have addresses (e.g. don't accidentally pick the sea!)
+                        break
+                if "address_postal_town" in address_info:
+                    addr = address_info["address_postal_town"]
+                else:
+                    addr = address_info["address_route"]
+                logging.info("Location "+str(L)+" for mobile devices to visit is "+str(addr))
+                Mobile.locations.append( (lon,lat, addr) )
             Mobile.base_location = random.randrange(0, NUMBER_OF_LOCATIONS)
 
         self.points = []    # Array of indices into Mobile.locations[]
@@ -67,13 +83,11 @@ class Mobile(Device):
                 if loc not in self.points:
                     break   # Ensure no repeats (which means we'll hang if we try to choose more points than locations!)
             self.points.append(loc)
+        
+        if self.fleet_mgmt:
+            self.pump_up_tires()
 
-        self.from_point = 0
-        self.to_point = 1
-        self.travel_fraction = 0.0
-        self.travel_rate = TRAVEL_RATE_MIN + random.random() * (TRAVEL_RATE_MAX-TRAVEL_RATE_MIN)
-        self.dwell_count = random.randrange(DWELL_MIN, DWELL_MAX)   # While dwell_count > 0, device stays still
-        self.update_everything()
+        self.prepare_new_journey(0,1)
 
         self.engine.register_event_in(UPDATE_PERIOD_S, self.tick_update_position, self, self)
 
@@ -88,15 +102,25 @@ class Mobile(Device):
 
     # Private methods
 
+    def miles_between(self, lon1,lat1, lon2,lat2):
+        (delta_lon, delta_lat) =  (lon2-lon1, lat2-lat1)
+        return math.sqrt(delta_lon * delta_lon + delta_lat * delta_lat) * LATLON_TO_MILES
+
     def update_lon_lat(self):
-        lon_from = Mobile.locations[self.points[self.from_point]][0]
-        lon_to =   Mobile.locations[self.points[self.to_point]][0]
-        lat_from = Mobile.locations[self.points[self.from_point]][1]
-        lat_to =   Mobile.locations[self.points[self.to_point]][1]
+        (prev_lon, prev_lat) = (self.get_property_or_None("longitude"), self.get_property_or_None("latitude"))
+        (lon_from, lat_from) = Mobile.locations[self.points[self.from_point]][0:2]
+        (lon_to, lat_to) = Mobile.locations[self.points[self.to_point]][0:2]
         lon = lon_from * (1.0 - self.travel_fraction) + lon_to * self.travel_fraction
         lat = lat_from * (1.0 - self.travel_fraction) + lat_to * self.travel_fraction
         self.set_property("longitude", lon)
         self.set_property("latitude", lat)
+        if self.fleet_mgmt:
+            if prev_lon is not None:
+                delta_miles = self.miles_between(prev_lon, prev_lat, lon, lat)
+                self.set_property("miles", int(10*delta_miles)/10.0)
+                self.set_property("av_speed_mph", int(delta_miles/UPDATE_PERIOD_H))
+                self.set_property("fuel_gallons", int(100*(delta_miles/MPG))/100.0)
+
 
     def update_moving_and_location(self):
         self.set_property("moving", self.dwell_count == 0)
@@ -118,13 +142,34 @@ class Mobile(Device):
                 self.update_everything()
         else:                       # Moving
             self.travel_fraction += self.travel_rate
-            if self.travel_fraction > 1.0: # Reached destination
-                self.from_point = (self.from_point + 1) % self.points_to_visit
-                self.to_point = (self.to_point + 1) % self.points_to_visit
-                self.travel_fraction = 0.0
-                self.travel_rate = TRAVEL_RATE_MIN + random.random() * (TRAVEL_RATE_MAX-TRAVEL_RATE_MIN)
-                self.dwell_count = random.randrange(DWELL_MIN, DWELL_MAX)
-                self.update_everything()
-            else:
+            if self.travel_fraction <= 1.0:
                 self.update_lon_lat()
+            else:   # Reached destination
+                self.prepare_new_journey((self.from_point + 1) % self.points_to_visit, (self.to_point + 1) % self.points_to_visit)
+        if self.fleet_mgmt:
+            tp = self.get_property("tire_pressure_psi")
+            if tp < 25:
+                self.pump_up_tires()    # Pump tire up again
+            else:
+                self.set_property("tire_pressure_psi", tp * self.tire_deflation_rate)
         self.engine.register_event_in(UPDATE_PERIOD_S, self.tick_update_position, self, self)
+
+    def prepare_new_journey(self, from_point, to_point):
+        self.from_point = from_point
+        self.to_point = to_point
+        self.travel_fraction = 0.0
+            
+        # How far to travel, and speed?
+        (lon_from, lat_from) = Mobile.locations[self.points[self.from_point]][0:2]
+        (lon_to, lat_to) = Mobile.locations[self.points[self.to_point]][0:2]
+        miles = self.miles_between(lon_from, lat_from, lon_to, lat_to)
+        mph = random.randrange(MPH_MIN, MPH_MAX)
+        ticks_of_travel = (miles/mph) / UPDATE_PERIOD_H
+        # therefore what fraction of entire distance to travel in each tick
+        self.travel_rate = 1.0 / ticks_of_travel
+
+        self.dwell_count = random.randrange(self.dwell_h_min/UPDATE_PERIOD_H, self.dwell_h_max/UPDATE_PERIOD_H)
+        self.update_everything()
+
+    def pump_up_tires(self):
+        self.set_property("tire_pressure_psi", random.gauss(35,5))

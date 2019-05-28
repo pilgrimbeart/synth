@@ -1,0 +1,58 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P14D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 100,
+            "interval" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "mobile" : {
+                            "area_centre" : "Anaheim, Los Angeles, CA, USA",
+                            "area_radius" : "San Diego, CA, USA",
+                            "generate_fleet_management_metrics" : true,
+                            "dwell_h_min" : 1,
+                            "dwell_h_max" : 48
+                        },
+                        "enumerated" : {
+                            "name" : "fault",
+                            "values" : ["engine overheat", "flat battery", "fuel trouble", "flat tire", "no fault"],    # Last entry clears all faults within 24 hours
+                            "periods" : ["P80D",           "P70D",         "P80D",         "P45D",      "P1D"],
+                            "sigmas"  : ["P40D",           "P45D",         "P40D",         "P22D",      "PT0S"]
+                        },
+                        "variable" : [
+                            {
+                                "name" : "temperature_F",
+                                "timefunction" : {
+                                    "sinewave" : {
+                                        "period" : ["PT7M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
+                                        "overall_amplitude" : 25.0,
+                                        "overall_offset" : 66,
+                                        "sample_period" : "PT3H",
+                                        "randomise_phase_by" : "$id",
+                                        "precision" : 10
+                                    }
+                                }
+                            },
+                            {
+                                "name" : "event",
+                                "timefunction" : {
+                                    "events" : {
+                                        "interval" : "P60D",
+                                        "value" : "1G_shock_detected"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
