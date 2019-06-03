@@ -3,4 +3,4 @@
 command="python synth $@"
 echo $command
 pkill -f "$command"
-nohup $command &
+nohup $command >/dev/null 2>&1 &
