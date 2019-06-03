@@ -46,6 +46,7 @@ def set_headers():
 
 # ==== Dark Sky API ====
 
+caches = {"weather" : {}}
 try:
     f = open(CACHE_FILE)
     caches = json.loads(f.read())
@@ -53,8 +54,8 @@ try:
     logging.info("Used existing Dark Sky cache "+CACHE_FILE)
 except:
     logging.warning("No existing Dark Sky cache")
-    caches = {"weather" : {}}
 
+account_key = None
 try:
     f = open(KEY_FILE)
     kf = json.loads(f.read())
@@ -62,7 +63,6 @@ try:
     account_key = kf["dark_sky_key"]
 except:
     logging.error("Can't open Dark Sky key file")
-    account_key = None
 
 def add_to_cache(cache, key, contents):
     caches[cache][key] = contents
