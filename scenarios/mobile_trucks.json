@@ -13,6 +13,10 @@
             "action": {
                 "create_device" : {
                     "functions" : {
+                        "basic" : {
+                            "label_root" : "Vehicle ",
+                            "use_label_as_$id" : true
+                        },
                         "mobile" : {
                             "area_centre" : "Anaheim, Los Angeles, CA, USA",
                             "area_radius" : "San Diego, CA, USA",
