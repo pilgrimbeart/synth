@@ -7,6 +7,7 @@ Configurable parameters::
 
     {
         "label_root" : (optional) the root name of the label property
+        "use_label_as_$id" : (optional) - if true then instead of creating a "label" property, the $id property is given the label name  (i.e. human-named $id)
     }
 
 Device properties created::
@@ -33,13 +34,18 @@ class Basic(Device):
         self.engine = engine
         self.update_callback = update_callback
         self.properties = {}
-        self.properties["$id"] = "-".join([format(Basic.myRandom.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
         self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
         label_root = "Device "
+        use_label_as_id = False
         if "basic" in params:   # Will only be there if the basic class has been explictly declared (because user wants to override its behaviour)
-            if "label_root" in params["basic"]:
-                label_root = params["basic"]["label_root"]
-        self.properties["label"] = label_root + str(Basic.device_number)
+            label_root = params["basic"].get("label_root", "Device ")
+            use_label_as_id = params["basic"].get("use_label_as_$id", False)
+        label = label_root + str(Basic.device_number)
+        if use_label_as_id:
+            self.properties["$id"] = label.replace(" ","_") # Should really replace ALL illegal characters
+        else:
+            self.properties["$id"] = "-".join([format(Basic.myRandom.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
+            self.properties["label"] = label
         self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down).
         logging.info("Created device " + str(Basic.device_number+1) + " : " + self.properties["$id"])
         Basic.device_number = Basic.device_number + 1
