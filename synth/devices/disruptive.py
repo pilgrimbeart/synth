@@ -69,15 +69,17 @@ BATTERY_INTERVAL     = 1 * DAYS
 
 INTERNAL_TEMP_C = -18
 EXTERNAL_TEMP_C = 20
-TEMP_COUPLING = 0.01    # How quickly internal temperature adapts to external temperature (this happens exponentially, i.e. as TEMP_COUPLING fraction of the difference per TEMPERATURE_INTERVAL)
+TEMP_COUPLING = 0.02    # How quickly internal temperature adapts to external temperature (this happens exponentially, i.e. as TEMP_COUPLING fraction of the difference per TEMPERATURE_INTERVAL)
 
 AV_DOOR_OPEN_MIN_TIME_S = 1 * MINS
 AV_DOOR_OPEN_SIGMA_S = 2 * MINS
 AV_DOOR_OPENS_PER_HOUR = 2
 CHANCE_OF_DOOR_LEFT_OPEN = 1000  # 1 in 1000 openings causes door to be left open for a LONG time
 
-AV_TIME_TO_COOLING_FAILURE_PER_DEVICE = 100 * DAYS
-AV_TIME_TO_FIX_COOLING_FAILURE = 3 * DAYS
+
+COOLING_FAILURE_POSSIBLE = False    # e.g. compressor or power failure (unrelated to door events)
+COOLING_FAILURE_MTBF = 100 * DAYS
+COOLING_FAILURE_AV_TIME_TO_FIX = 3 * DAYS
 
 #      0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  <- HOURS OF DAY
 Mon = [0,  0,  0,  0,  0,  0,  0,  0,  1,  9,  7,  7,  5,  7,  6,  5,  6,  7,  1,  0,  0,  0,  0,  0] 
@@ -168,15 +170,16 @@ class Disruptive(Device):
 
     def tick_temperature(self, _):
         # Check for cooling failure
-        if not self.having_cooling_failure:
-            chance_of_cooling_failure = float(TEMPERATURE_INTERVAL) / AV_TIME_TO_COOLING_FAILURE_PER_DEVICE 
-            if random.random() < chance_of_cooling_failure:
-                logging.info("Cooling failure on device "+str(self.get_property("$id")))
-                self.having_cooling_failure = True
-        else:
-            chance_of_failure_ending = TEMPERATURE_INTERVAL / AV_TIME_TO_FIX_COOLING_FAILURE 
-            if random.random() < chance_of_failure_ending:
-                logging.info("Cooling failure fixed on device "+str(self.get_property("$id")))
+        if COOLING_FAILURE_POSSIBLE:
+            if not self.having_cooling_failure:
+                chance_of_cooling_failure = float(TEMPERATURE_INTERVAL) / COOLING_FAILURE_MTBF
+                if random.random() < chance_of_cooling_failure:
+                    logging.info("Cooling failure on device "+str(self.get_property("$id")))
+                    self.having_cooling_failure = True
+            else:
+                chance_of_failure_ending = TEMPERATURE_INTERVAL / COOLING_FAILURE_AV_TIME_TO_FIX
+                if random.random() < chance_of_failure_ending:
+                    logging.info("Cooling failure fixed on device "+str(self.get_property("$id")))
 
         # Check for door open
         peer = self.get_peer()
