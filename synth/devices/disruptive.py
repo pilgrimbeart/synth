@@ -53,6 +53,7 @@ Device properties created::
 import random
 import logging
 import time
+from math import sin, pi
 
 from device import Device
 from helpers.solar import solar
@@ -69,12 +70,12 @@ BATTERY_INTERVAL     = 1 * DAYS
 
 INTERNAL_TEMP_C = -18
 EXTERNAL_TEMP_C = 20
-TEMP_COUPLING = 0.02    # How quickly internal temperature adapts to external temperature (this happens exponentially, i.e. as TEMP_COUPLING fraction of the difference per TEMPERATURE_INTERVAL)
+TEMP_COUPLING = 0.02    # How quickly internal temperature adapts to external temperature (this happens asymptotically, i.e. as TEMP_COUPLING fraction of the difference per TEMPERATURE_INTERVAL)
 
 AV_DOOR_OPEN_MIN_TIME_S = 1 * MINS
 AV_DOOR_OPEN_SIGMA_S = 2 * MINS
-AV_DOOR_OPENS_PER_HOUR = 2
-CHANCE_OF_DOOR_LEFT_OPEN = 1000  # 1 in 1000 openings causes door to be left open for a LONG time
+AV_DOOR_OPENS_PER_HOUR = 4
+CHANCE_OF_DOOR_LEFT_OPEN = 500  # 1 in N openings causes door to be left open for a LONG time
 
 
 COOLING_FAILURE_POSSIBLE = False    # e.g. compressor or power failure (unrelated to door events)
@@ -108,6 +109,10 @@ def half_tail(min, sigma):
         if (r >= min) and (r < min * 10.0): # Select only positive half of gaussian distribution (and remove outliers beyond 10x the mean)
             return r
 
+def cyclic_noise(id,t):    # Provides a somewhat cyclic (not completely stochastic) noise of +/- 0.5
+    t = float(t + hash(id)) * 2 * pi    # a cycle every second, until divided
+    return (sin(t/(MINS*7.5)) + sin(t/(HOURS*3.5)) + sin(t/DAYS) + sin(t/(DAYS*3)) + sin(t/(DAYS*7)) + sin(t/(DAYS*30)) + sin(t/(DAYS*47))) / (7*2) 
+
 class Disruptive(Device):
     site_count = 1
     odd_site = False
@@ -131,7 +136,7 @@ class Disruptive(Device):
         if(self.sensor_type == "ccon"):
             engine.register_event_in(CELLULAR_INTERVAL, self.tick_cellular, self, self)
         if(self.sensor_type == "temperature"):
-            self.set_property("temperature", INTERNAL_TEMP_C)
+            self.set_temperature(INTERNAL_TEMP_C)
             engine.register_event_in(TEMPERATURE_INTERVAL, self.tick_temperature, self, self)
             self.having_cooling_failure = False
         if(self.sensor_type == "proximity"):
@@ -184,15 +189,14 @@ class Disruptive(Device):
         # Check for door open
         peer = self.get_peer()
         door_open = peer.get_property("objectPresent") == "NOT_PRESENT"
-        temp = self.get_property("temperature")
+        temp = self.get_temperature()
 
         if door_open or self.having_cooling_failure:
             temp = temp * (1.0 - TEMP_COUPLING) + (EXTERNAL_TEMP_C * TEMP_COUPLING)
         else:
-            temp = INTERNAL_TEMP_C
+            temp = INTERNAL_TEMP_C + cyclic_noise(self.get_property("$id"), self.engine.get_now()) * 2.0
 
-        self.set_property("eventType", "temperature", always_send=True)
-        self.set_property("temperature", temp, always_send=True)
+        self.set_temperature(temp)
         self.engine.register_event_in(TEMPERATURE_INTERVAL, self.tick_temperature, self, self)
 
     def tick_presence(self, _):
@@ -223,7 +227,7 @@ class Disruptive(Device):
             self.engine.register_event_in(delta_hours*60*60, self.tick_presence, self, self)
         else:   # Door just opened, so consider when it should next close
             if random.random() < 1.0/CHANCE_OF_DOOR_LEFT_OPEN:
-                delay = half_tail(1 * HOURS, 6 * HOURS)
+                delay = half_tail(1 * HOURS, 24 * HOURS)
                 logging.info("Door will be left open for "+str(delay)+"s on "+str(self.get_property("$id")))
             else:
                 delay = half_tail(AV_DOOR_OPEN_MIN_TIME_S, AV_DOOR_OPEN_SIGMA_S)
@@ -240,3 +244,13 @@ class Disruptive(Device):
             if p.get_property("$id") != me:
                 peer = p
         return peer
+
+    def set_temperature(self, temperature):  # Temperature stored internally to higher precision than reported (so we can do e.g. asymptotes) 
+        self.temperature = temperature
+        self.set_property("eventType", "temperature", always_send=True)
+        temp = int(temperature * 10) / 10.0
+        self.set_property("temperature", temp, always_send=True)
+
+    def get_temperature(self):
+        return self.temperature
+
