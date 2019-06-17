@@ -248,22 +248,17 @@ class Vending_machine(Device):
         self.cashbox_update()
 
     def make_change(self, value):
-        logging.info("Trying to make change of "+str(value))
         i = len(self.cashbox)-1
         change = {}
         for i in range(len(self.cashbox)-1, -1, -1):    # Walk down through all denominations in cashbox
             denom = sorted(self.cashbox.keys())[i]
-            logging.info("value="+str(value)+" bag_value(change)="+str(bag_value(change)))
             num = int((value-bag_value(change)) / denom)
-            logging.info("denom="+str(denom)+" num="+str(num))
             num = min(num, self.cashbox[denom])         # Can't give more than we have
             if num > 0:
                 add_to_bag(change, denom, num)
                 remove_from_bag(self.cashbox, denom, num)
 
-        logging.info("Change is "+str(change))
         if bag_value(change) != value:
-            logging.info("Failed to make change")
             self.set_property("event_log", "Failed to make correct change. Change was " + str(value) + " but returned only "+str(bag_value(change)))
         return change
 
@@ -275,7 +270,6 @@ class Vending_machine(Device):
 
     def accept_payment(self, price):
         # Work out what coins were provided to pay for the goods
-        logging.info("cashbox was "+str(self.cashbox))
         if random.random() >= cash_likelihood:  # Smartcard payment
             self.set_property("vend_event_cashless", price, always_send=True)
         else:
@@ -293,7 +287,6 @@ class Vending_machine(Device):
                     add_to_bag(payment, cash_denominations[i], num)
                     if bag_value(payment) >= price:
                         break
-            logging.info("price="+str(price)+" payment="+str(payment))
             self.set_property("vend_coins_accepted_total", bag_value(payment))
             add_bags(self.cashbox, payment)
             if bag_value(payment) != price:
