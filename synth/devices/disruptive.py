@@ -126,7 +126,8 @@ class Disruptive(Device):
             else:
                 self.sensor_type = "proximity"
             # self.sensor_type = weighted_choice([("ccon",5), ("temperature",38), ("proximity",33), ("touch",2)])
-        self.set_property("sensorType", self.sensor_type)
+        self.set_property("sensorType", self.sensor_type)           # DT's official property for sensor type
+        self.set_property("device_type", "DT_"+self.sensor_type)    # In DP demos we tend to use this property
         self.set_property("site", self.site_prefix + str(Disruptive.site_count))
 
         if(self.sensor_type != "ccon"):
