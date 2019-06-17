@@ -8,7 +8,7 @@
     "events" : [
         {
             "at" : "PT0S",
-            "repeats" : 1000,
+            "repeats" : 100,
             "interval" : "PT0S",
             "action": {
                 "create_device" : {
@@ -19,7 +19,23 @@
                             "area_centre" : "Stockton, Kansas, USA",
                             "area_radius" : "Key Largo, USA"
                         },
-                        "vending_machine" : {}
+                        "vending_machine" : {
+                            "product_catalogue" : [
+                                { "name" : "Mars Bar (Mars)",                       "price" : 80,   "lifetime" : "P1000D" },
+                                { "name" : "Crunchie (Cadbury)",                    "price" : 60,   "lifetime" : "P1000D" },
+                                { "name" : "Evian (Danone)",                        "price" : 120,   "lifetime" : "P1000D"},
+                                { "name" : "Double Decker (Cadbury)",               "price" : 56,   "lifetime" : "P1000D" },
+                                { "name" : "Snickers (Mars)",                       "price" : 80,   "lifetime" : "P1000D" },
+                                { "name" : "Kit Kat (Nestle)",                      "price" : 90,   "lifetime" : "P1000D" },
+                                { "name" : "Toblerone (Mondelez)",                  "price" : 130,   "lifetime" : "P1000D" },
+                                { "name" : "Galaxy (Mars)",                         "price" : 140,   "lifetime" : "P1000D" },
+                                { "name" : "Dairy Milk (Cadbury)",                  "price" : 130,   "lifetime" : "P1000D" },
+                                { "name" : "Doritos (Frito Lay)",                   "price" : 130,   "lifetime" : "P1000D" },
+                                { "name" : "Spam Sandwich (Freshserve)",            "price" : 150,   "lifetime" : "P3D" },
+                                { "name" : "Seafood selection (Freshserve)",        "price" : 300,   "lifetime" : "P1D" },
+                                { "name" : "Crispy salad and chips (Freshserve)",   "price" : 230,   "lifetime" : "P1D" }
+                            ]
+                        }
                     }
                 }
             }
