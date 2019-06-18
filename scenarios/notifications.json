@@ -26,10 +26,10 @@
                         "commswave" : {
                             "timefunction" : {
                                 "pulsewave" : {
-                                    "interval" : "PT15M",
-                                    "transition" : "PT2M",
+                                    "interval" : "PT20M",
+                                    "transition" : "PT10M",
                                     "invert" : true,
-                                    "comment" : "Send heartbeats for 2 minutes, then timeout"
+                                    "comment" : "Send heartbeats for a while, then timeout (repeat)"
                                 }
                             }
                         },
@@ -37,12 +37,12 @@
                             "event_name" : "notifyTimeout",
                             "timefunction" : {
                                 "pulsewave" : {
-                                    "interval" : "PT15M",
-                                    "transition" : "PT5M",
-                                    "comment" : "Expect a timeout after 5 minutes (2 minutes of heartbeats, then a timeout set to 3 minutes)"
+                                    "interval" : "PT20M",
+                                    "transition" : "PT10M",
+                                    "comment" : "Expect a timeout"
                                 }
                             },
-                            "ignore_start" : "PT4M",
+                            # "ignore_start" : "PT4M",
                             "required_score_percent" : 100
                         }
                     }
