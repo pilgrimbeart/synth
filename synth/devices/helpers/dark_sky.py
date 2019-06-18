@@ -101,7 +101,7 @@ def get_weather(latitude, longitude, epoch_seconds):
     if cache_key in caches["weather"]:
         return caches["weather"][cache_key]
 
-    logging.warning("Looking up " + cache_key + " in Dark Sky")
+    logging.info("Looking up " + cache_key + " in Dark Sky")
 
     conn = httplib.HTTPSConnection(API_DOMAIN)
     URL = "/forecast/"+str(account_key)+"/"+str(latitude)+","+str(longitude)+","+str(epoch_seconds)+"?units=si"
