@@ -21,11 +21,13 @@ The client accepts the following parameters (usually found in the "On*.json" fil
         "devicepilot_min_post_period" : "PT10S",    # Optional. Do not post more often than this.
         "devicepilot_max_items_per_post" : 500,     # Optional. Individual posts cannot be bigger than this (the DP /device endpoint has a 1MB payload limit per post)
         "devicepilot_mode" : "bulk|interactive",    # In bulk mode, events are written to DevicePilot in bulk. In interactive mode they are written one-by-one (this mode is entered automatically when real-time is reached)
-        "aws_access_key_id" : "xxxxxxxxxxxxxxxx",   # Optional (AWS credential only required if you use bulk mode)
-        "aws_secret_access_key" : "xxxxxxxxxxxxxxxxxxxxx",  # Ditto
-        "aws_region" : "eu-west-1",                          # Ditto
+        "aws_dp_account" :      # For bulk mode, the DevicePilot account code ("acc_*"). If this is specified then this client automatically defaults to "bulk" mode 
+        "aws_dp_bucket" :       # (optional) For bulk mode, an alternative bucket to upload to (defaults to production)
         "merge_posts" : true    # Spots cases where different device properties are being updated at the same time (and therefore could be merged into a single post)
     }
+
+To make AWS bulk uploads work, you must run "aws configure" on your command line.
+To create the credentials go to https://console.aws.amazon.com/iam/home and select Users, then yourself.
 
 DevicePilot client event actions
 --------------------------------
@@ -120,12 +122,15 @@ import traceback
 import boto3 # AWS library for bulk upload
 from clients.client import Client
 from common import ISO8601, top, json_writer, evt2csv
+import gzip
+import shutil
+import os
 
 SAVEDSEARCH_ENDPOINT = "/savedSearches"         # UI calls these "filters"
 INCIDENTCONFIG_ENDPOINT = "/incidentConfigs"    # UI calls these "event configurations"
 NOTIFICATION_ENDPOINT = "/notifications"        # UI calls these "actions"
 DEVICE_ENDPOINT = "/devices"
-MAX_POST_SIZE_BYTES = 500000    # AWS ingestion limit is actually 1MB but even half of that is pretty massive
+MAX_POST_SIZE_BYTES = 500000        # AWS ingestion limit is actually 1MB but even half of that is pretty massive
 
 # Suppress annoying Requests debug
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -140,6 +145,24 @@ debug_post = False
 debug_queue = False
 
 merged_posts = 0
+
+DEFAULT_AWS_BUCKET_NAME = "ingest-production"
+
+def gzip_file(filepath):
+    dest_filepath = filepath + ".gz"
+    with open(filepath, "rb") as f_in, gzip.open(dest_filepath, "wb") as f_out:
+        shutil.copyfileobj(f_in, f_out)
+    return dest_filepath
+
+def upload_to_aws_bucket(bucket_name, account_key, local_filepath):
+    zipped = gzip_file(local_filepath)
+    filename = os.path.split(zipped)[1] # Just the filename
+    s3 = boto3.resource("s3")
+    bucket = s3.Bucket(bucket_name)
+    k = "recordsByAccount/" + account_key + "/" + filename
+    logging.info("bucket.upload_file("+str(local_filepath)+","+str(k)+")")
+    bucket.upload_file(zipped, k)
+    os.remove(zipped)
 
 def set_headers(token):
     headers = {}
@@ -159,7 +182,13 @@ class Devicepilot(Client):
         self.params = params
         self.url = params["devicepilot_api"]
         self.key = params["devicepilot_key"]
-        self.mode = params.get("devicepilot_mode", "interactive")  # Either "bulk" or "interactive"
+        if "aws_dp_account" in params:
+            logging.info("aws_dp_account specified so defaulting to bulk upload mode") 
+            self.mode = "bulk"
+        else:
+            self.mode = "interactive"
+        if "devicepilot_mode" in params:
+            self.mode = params["devicepilot_mode"]  # Either "bulk" or "interactive"
         self.throttle_seconds_per_post = params.get("devicepilot_throttle_seconds_per_post", None)
         # self.queue_flush_criterion = params.get("queue_criterion","messages") # or "time" or "interactive"
         # self.queue_flush_limit = params.get("queue_limit",500)
@@ -247,6 +276,7 @@ class Devicepilot(Client):
         self.mode = mode
         
 
+
     def bulk_upload(self):
         """Upload bulk data"""
         self.json_stream.close()    # Close off current file
@@ -257,39 +287,14 @@ class Devicepilot(Client):
 
         t = time.time()
         
-        if "aws_access_key_id" in self.params:
-##            print self.params.get("aws_access_key_id", None)
-##            print self.params.get("aws_secret_access_key", None)
-##            print self.params.get("aws_region", None)
-            client = boto3.client('lambda',
-                        aws_access_key_id=self.params.get("aws_access_key_id", None),
-                        aws_secret_access_key=self.params.get("aws_secret_access_key", None),
-                        region_name=self.params.get("aws_region", None))
-        else:
-            logging.info("bulk_upload: No AWS credentials supplied so using defaults")
-            client = boto3.client('lambda')
-
-        token = 'Token '+self.key
+        assert "aws_dp_account" in self.params, "Must define aws_dp_account parameter of DevicePilot client in order to use bulk upload feature"
+        account_key = self.params["aws_dp_account"]
+        aws_bucket = self.params.get("aws_dp_bucket", DEFAULT_AWS_BUCKET_NAME)
 
         total_events = 0
-        for count, file_name in enumerate(file_list):
-            logging.info("Bulk uploading "+file_name+" ("+str(count+1)+"/"+str(len(file_list))+")")
-            points = json.load(open(file_name, "rt"))
-            total_events += len(points)
-            payload = json.dumps({ 
-                'apiKey': token,
-                'points': points,
-                'last' : (count==len(file_list)-1)
-            })
-            # print "payload in:",payload
-            response = client.invoke(
-                FunctionName='api-digest-staging-inject',
-                InvocationType='RequestResponse',
-                Payload=payload,
-                )
-            ret = response['Payload'].read()
-            assert ret=="{}", ret
-        logging.info("Bulk upload completed (total of "+str(total_events)+" events at "+str(int(total_events / (time.time()-t)))+" events/s)")
+        for count, file_path in enumerate(file_list):
+            logging.info("Bulk uploading "+file_path+" ("+str(count+1)+"/"+str(len(file_list))+") to bucket "+str(aws_bucket))
+            upload_to_aws_bucket(aws_bucket, account_key, file_path)
 
     def send_top(self):
         """Send top (latest) value of all properties on all devices to the client"""
