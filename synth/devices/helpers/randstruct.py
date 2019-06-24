@@ -24,9 +24,11 @@
 import random, ast
 
 def ev(x):
-    if isinstance(x, str): 
-        return x
     if isinstance(x, list):     # Concatenate lists
+        if len(x)==0:
+            return None
+        if len(x)==1:
+            return x[0]      # Don't force things to be lists
         r = ""
         for e in x:
             r = r + ev(e) 
@@ -34,7 +36,7 @@ def ev(x):
     if isinstance(x, tuple):    # Choose from tuples
         n = random.randrange(0, len(x))
         return ev(x[n])
-    assert False, "Can't evaluate type "+repr(type(x))+" : "+repr(x)
+    return x
 
 def evaluate(s):
     a = ast.literal_eval(s)
@@ -42,5 +44,8 @@ def evaluate(s):
 
 if __name__ == "__main__":
     s = '[("I have","Everyone has"),(" good"," bad")," things to say",("",[" to you",(""," boyo")])]'
-    for i in range(20):
-        print evaluate(s)
+    for i in range(10):
+        print(evaluate(s))
+    s = '(1,2,3,4,5)'
+    for i in range(10):
+        print(evaluate(s))
