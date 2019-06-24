@@ -5,7 +5,7 @@ import logging
 import json
 
 DEFAULT_DIRECTORY = "../synth_logs/"
-DEFAULT_MAX_EVENTS_PER_FILE = 10000
+DEFAULT_MAX_EVENTS_PER_FILE = 100000    # FYI 100,000 messages is max JSON file size that DP can ingest (if that's where you end-up putting these files)
 
 class Stream():
     """Write properties into JSON files, splitting by max size.
@@ -50,7 +50,7 @@ class Stream():
 
     def close(self):
         if self.file is not None:
-            logging.info("Closing JSON file")
+            # logging.info("Closing JSON file")
             self.file.write("\n]\n")
             self.file.close()
             self.file = None
