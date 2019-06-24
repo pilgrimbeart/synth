@@ -106,7 +106,7 @@ class FixedOffset(tzinfo):
         self.__name = name
 
     def utcoffset(self, dt):
-        print "FixedOffset class utcoffset() returning",self.__offset
+        print("FixedOffset class utcoffset() returning",self.__offset)
         return self.__offset
 
     def tzname(self, dt):
@@ -167,7 +167,7 @@ def selfTest():
     # Note that there was no BST until 1972 because of a UK "BST all year" experiment!
     # Try 1972 - Sun 19th March was transition
 
-    print "Testing DST"
+    print("Testing DST")
     tz = make_timezone("Europe/London")  # Should work for any time zone, e.g. "America/New_York"
 
     for day in range(1,31):
@@ -178,15 +178,15 @@ def selfTest():
         tomorrow_secs = to_epoch_seconds(tomorrow_str, tz)
 
         secs = int(tomorrow_secs - today_secs)
-        print "Day "+epoch_seconds_to_ISO8601(today_secs,tz)+" starts at "+str(today_secs)+" and contains "+str(secs)+" seconds"
+        print("Day "+epoch_seconds_to_ISO8601(today_secs,tz)+" starts at "+str(today_secs)+" and contains "+str(secs)+" seconds")
 
         if(day!=19):
             assert secs == 24 * 60 * 60
         else:
-            print "***FOUND DST event***"     # Detect DST start
+            print("***FOUND DST event***")     # Detect DST start
             assert secs == 23 * 60 * 60
 
-    print "Test passed"
+    print("Test passed")
     
 if __name__ == "__main__":
     selfTest()
