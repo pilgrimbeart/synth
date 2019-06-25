@@ -36,10 +36,8 @@ from common import importer
 from events import Events
 import device_factory
 import zeromq_rx
+from directories import *
 
-SCENARIO_DIR = "scenarios/"
-ACCOUNTS_DIR = "../synth_accounts/"
-LOG_DIR = "../synth_logs/"
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 
 g_get_sim_time = None   # TODO: Find a more elegant way for logging to discover simulation time
@@ -70,7 +68,7 @@ def init_logging(params):
         os.mkdir(LOG_DIR)	# Ensure directory exists, first time through
     except:
         pass
-    file_handler = logging.FileHandler(filename=LOG_DIR + params["instance_name"] + ".out", mode="w")
+    file_handler = logging.FileHandler(filename=LOG_DIR + g_instance_name + ".out", mode="w")
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
     h2 = logging.getLogger().addHandler(file_handler)
 
@@ -143,12 +141,18 @@ def get_params():
         return params[s]
 
     def load_param_file(file, params, fail_silently=False):
+        global g_instance_name
+
         logging.info("Loading parameter file "+file)
         s = readParamfile(file, fail_silently)
         s = remove_C_comments(s) # Remove Javascript-style comments
         s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
         s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
-        params = merge(params, json.loads(s))
+        j = json.loads(s)
+        if "client" in j:   # We inherit the instance name from whichever file specifies the client
+            g_instance_name = file
+            logging.info("Naming this instance '" + str(g_instance_name) + "'")
+        params = merge(params, j)
 
     if len(sys.argv) < 2:
         print("Usage: "+sys.argv[0]+" {filenames}   where filenames are one or more parameter files in scenarios/ or ../synth_accounts/\nSee https://devicepilot-synth.readthedocs.io")
@@ -175,7 +179,7 @@ def main():
     def postWebEvent(webParams):    # CAUTION: Called asynchronously from the web server thread
         if "action" in webParams:
             if webParams["action"] == "event":
-                if webParams["headers"]["Instancename"]==params["instance_name"]:
+                if webParams["headers"]["Instancename"] == g_instance_name:
                     engine.register_event_in(0, device_factory.external_event, webParams, None)
             elif webParams["action"] == "announce":
                 logging.log(webParams["severity"], "[broadcast message] "+webParams["message"])
@@ -185,8 +189,7 @@ def main():
 
     logging.getLogger().setLevel(logging.INFO)
     params = get_params()
-    assert "instance_name" in params, "The parameter 'instance_name' has not been defined, but this is required for logfile naming"
-    g_instance_name = params["instance_name"]
+    assert g_instance_name is not None, "Instance name has not been defined, but this is required for logfile naming"
     init_logging(params)
     logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
     logging.info("Parameters:\n"+json.dumps(params, sort_keys=True, indent=4, separators=(',', ': ')))
@@ -198,7 +201,7 @@ def main():
     if not "client" in params:
         logging.error("No client defined to receive simulation results")
         return
-    client = importer.get_class('client', params['client']['type'])(params['instance_name'], params, params['client'])
+    client = importer.get_class('client', params['client']['type'])(g_instance_name, params, params['client'])
 
     if not "engine" in params:
         logging.error("No simulation engine defined")
