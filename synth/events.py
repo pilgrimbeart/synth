@@ -96,6 +96,7 @@ import logging
 import json
 import pendulum, isodate
 import device_factory
+import model
 from common import query
 from common import evt2csv
 from common import ISO8601
@@ -115,7 +116,7 @@ def mkdir_p(path):
 
 
 class Events():
-    def __init__(self, client, engine, context, eventList):
+    def __init__(self, client, engine, instance_name, context, eventList):
         """<params> is a list of events. Note that our .event_count property is read from outside."""
         def update_callback(device_id, time, properties):
             write_event_log(properties)
@@ -173,7 +174,7 @@ class Events():
 
             self.event_count += 1
 
-        instance_name = context["instance_name"]
+
         restart_log = context.get("restart_log",True)
         
         self.client = client
@@ -213,6 +214,10 @@ class Events():
                                              device_factory.create_device,
                                              (instance_name, client, engine, update_callback, context, action["create_device"]),
                                              None)
+                elif "use_model" in action:
+                    engine.register_event_at(at_time,
+                            model.use_model,
+                            (instance_name, client, engine, update_callback, context, action["use_model"]), None)
                 elif "query" in action:
                     engine.register_event_at(at_time,
                                              query_action,
