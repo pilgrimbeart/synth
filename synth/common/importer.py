@@ -5,9 +5,15 @@ from clients.client import Client
 from devices.device import Device
 from engines.engine import Engine
 from timefunctions.timefunction import Timefunction
+from models.model import Model
 
 modules = {}
-families = {'engine': Engine, 'client': Client, 'device': Device, 'timefunction': Timefunction}
+families = {
+        'engine': Engine,
+        'client': Client,
+        'device': Device,
+        'timefunction': Timefunction,
+        'model' : Model}
 root = 'synth'
 
 

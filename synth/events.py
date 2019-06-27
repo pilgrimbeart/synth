@@ -216,7 +216,7 @@ class Events():
                                              None)
                 elif "use_model" in action:
                     engine.register_event_at(at_time,
-                            model.use_model,
+                            model.use_model_file,
                             (instance_name, client, engine, update_callback, context, action["use_model"]), None)
                 elif "query" in action:
                     engine.register_event_at(at_time,

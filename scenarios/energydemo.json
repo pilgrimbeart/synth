@@ -1,0 +1,17 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P14D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "action" : {
+                "use_model" : {
+                    "file" : "energydemo_model.json"
+                }
+            }
+        }
+    ]
+}

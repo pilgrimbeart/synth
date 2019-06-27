@@ -1,0 +1,10 @@
+[
+    { "hierarchy" : "customer/site/floor/zone" },
+    { "model" : { "customer" : "Boots" },                                           "functions" : [ "opening_hours" ] },
+    { "model" : { "customer" : "Boots", "site" : "Cambridge" },                     "properties" : { "latitude" : 52.206839, "longitude" : 0.120750 } },
+    { "model" : { "customer" : "Boots", "site" : "Cambridge"},                      "devices" : [ "weather" ] },
+    { "model" : { "customer" : "Boots", "site" : "Cambridge",                       "zone" : "Admin" }, "devices" : [ "bulb" ] },
+    { "model" : { "customer" : "Boots", "site" : "Cambridge",                       "zone" : "Storage" }, "devices" : [ "bulb" ] },
+    { "model" : { "customer" : "Boots", "site" : "Oxford" },                        "properties" : { "latitude" : 51.752814, "longitude" : -1.257859 } }
+    { "model" : { "customer" : "Boots", "site" : "Oxford"},                         "devices" : [ "weather" ] },
+]
