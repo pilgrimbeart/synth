@@ -4,3 +4,4 @@ command="python synth $@"
 echo $command
 pkill -f "$command"
 nohup $command >/dev/null 2>&1 &
+tail -f ../synth_logs/$1.out
