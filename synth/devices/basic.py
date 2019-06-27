@@ -35,6 +35,7 @@ class Basic(Device):
         self.update_callback = update_callback
         self.properties = {}
         self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
+        self.model = {}
         label_root = "Device "
         use_label_as_id = False
         if "basic" in params:   # Will only be there if the basic class has been explictly declared (because user wants to override its behaviour)
