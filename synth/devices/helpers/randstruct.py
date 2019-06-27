@@ -43,9 +43,9 @@ def evaluate(s):
     return ev(a)
 
 if __name__ == "__main__":
-    s = '[("I have","Everyone has"),(" good"," bad")," things to say",("",[" to you",(""," boyo")])]'
+    s = '[("I have","Everyone has"),(" good"," bad")," things to say",("",[" ", ("to","about"), " you",(""," boyo")])]'
     for i in range(10):
         print(evaluate(s))
-    s = '(1,2,3,4,5)'
+    s = '(None,1,2,3,)'
     for i in range(10):
         print(evaluate(s))
