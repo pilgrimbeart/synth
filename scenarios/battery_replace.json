@@ -2,8 +2,8 @@
     "engine" :
     {
         "type" : "sim",
-        "start_time" : "now",
-        "end_time" : null
+        "start_time" : "-P30D",
+        "end_time" : "now"
     },
     "events" : [
         {
@@ -13,9 +13,10 @@
                 "create_device" : {
                     "functions" : {
                         "battery" : {
-                            "life_mu" : "PT5M",
-                            "life_sigma" : "PT1M",
-                            "autoreplace" : true
+                            "life_mu" : "P7D",
+                            "life_sigma" : "PT0S",
+                            "autoreplace" : true,
+                            "autoreplace_delay" : "P1D"
                         }
                     }
                 }

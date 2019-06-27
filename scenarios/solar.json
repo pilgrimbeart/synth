@@ -2,12 +2,12 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-P30D",
+        "start_time" : "-P14D",
         "end_time" : "now"
     },
     "events" : [
         { 
-            "repeats" : 400,
+            "repeats" : 100,
             "action" : {
                 "create_device" : {
                     "functions" : {

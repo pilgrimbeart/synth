@@ -62,6 +62,8 @@ def create_device(args):
         exit(-1)
     devices.append(d)
 
+    return d
+
 def stop_device(args):
     # We stop a device by removing all its pending events
     (engine,device) = args

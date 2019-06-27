@@ -14,6 +14,9 @@
                 "create_device" : {
                     "functions" : {
                         "disruptive" : {
+                            "nominal_temp" : [-30,-18,5,20],
+                            "nominal_temp_deviation" : [2,2,3,8],
+                            "site_type" : ["ultra-freezer", "freezer", "fridge", "ambient"]
                         },
                         "variable" : [
                             { "name" : "x", "random_lower" : 0, "random_upper" : 848 },

@@ -56,6 +56,12 @@
             "action": {
                 "create_device" : {
                     "functions" : {
+                        "battery" : {
+                            "life_mu" : "P3M",
+                            "life_sigma" : "P1M",
+                            "autoreplace" : true,
+                            "autoreplace_delay" : "P30D"
+                        },
                         "mobile" : {
                             "area_centre" : "Rugby, UK",
                             "area_radius" : "Boston, UK"
@@ -96,6 +102,12 @@
                     "functions" : {
                         "basic" : {
                             "label_root" : "Smoke Detector "
+                        },
+                        "battery" : {
+                            "life_mu" : "P12M",
+                            "life_sigma" : "P6M",
+                            "autoreplace" : true,
+                            "autoreplace_delay" : "P14D"
                         },
                         "comms" : {
                             "reliability" : "rssi",
