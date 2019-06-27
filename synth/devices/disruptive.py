@@ -10,6 +10,9 @@ Configurable parameters::
         "sensor_type" : (optional) one of [ccon, temperature, proximity, touch] - if not set then automatically chooses (temperature, proximity) alternately
         "site_prefix" : (optional)      "Fridge "#
         "send_network_status" : False   Disruptive sensors send a lot of these messages
+        "nominal_temp" : (optional) for temperature sensors, what the nominal temp is supposed to be, e.g. -18 for a freezer. If it's an array, then chosen randomly. Created as a property too, so DP can do filters relative to it
+        "nominal_temp_deviation" : (optional) the normal deviation of the temperature (choice matches above)
+        "site_type" : (optional) a string or list which matches choice above
     }
 
 Device properties created::
@@ -68,9 +71,10 @@ NETWORK_INTERVAL     = 15 * MINS
 TEMPERATURE_INTERVAL = 15 * MINS
 BATTERY_INTERVAL     = 1 * DAYS
 
-INTERNAL_TEMP_C = -18
+DEFAULT_NOMINAL_TEMP_C = -18
 EXTERNAL_TEMP_C = 20
 TEMP_COUPLING = 0.02    # How quickly internal temperature adapts to external temperature (this happens asymptotically, i.e. as TEMP_COUPLING fraction of the difference per TEMPERATURE_INTERVAL)
+DEFAULT_TEMP_DEVIATION = 2
 
 AV_DOOR_OPEN_MIN_TIME_S = 1 * MINS
 AV_DOOR_OPEN_SIGMA_S = 2 * MINS
@@ -137,7 +141,19 @@ class Disruptive(Device):
         if(self.sensor_type == "ccon"):
             engine.register_event_in(CELLULAR_INTERVAL, self.tick_cellular, self, self)
         if(self.sensor_type == "temperature"):
-            self.set_temperature(INTERNAL_TEMP_C)
+            self.nominal_temperature = params["disruptive"].get("nominal_temp", DEFAULT_NOMINAL_TEMP_C)
+            if isinstance(self.nominal_temperature, list):
+                choice = random.randint(0,len(self.nominal_temperature)-1)
+                self.nominal_temperature = self.nominal_temperature[choice]
+            if "nominal_temp" in params["disruptive"]:
+                self.set_property("nominal_temp", self.nominal_temperature)
+            self.set_temperature(self.nominal_temperature)
+            self.temperature_deviation = params["disruptive"].get("nominal_temp_deviation", DEFAULT_TEMP_DEVIATION)
+            if isinstance(self.temperature_deviation, list):
+                self.temperature_deviation = self.temperature_deviation[choice] # Matches temp choice above
+            if "site_type" in params["disruptive"]:
+                site_type = params["disruptive"]["site_type"][choice]
+                self.set_property("site_type", site_type)
             engine.register_event_in(TEMPERATURE_INTERVAL, self.tick_temperature, self, self)
             self.having_cooling_failure = False
         if(self.sensor_type == "proximity"):
@@ -195,7 +211,7 @@ class Disruptive(Device):
         if door_open or self.having_cooling_failure:
             temp = temp * (1.0 - TEMP_COUPLING) + (EXTERNAL_TEMP_C * TEMP_COUPLING)
         else:
-            temp = INTERNAL_TEMP_C + cyclic_noise(self.get_property("$id"), self.engine.get_now()) * 2.0
+            temp = self.nominal_temperature + cyclic_noise(self.get_property("$id"), self.engine.get_now()) * self.temperature_deviation
 
         self.set_temperature(temp)
         self.engine.register_event_in(TEMPERATURE_INTERVAL, self.tick_temperature, self, self)
