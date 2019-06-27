@@ -160,7 +160,7 @@ def upload_to_aws_bucket(bucket_name, account_key, local_filepath):
     s3 = boto3.resource("s3")
     bucket = s3.Bucket(bucket_name)
     k = "recordsByAccount/" + account_key + "/" + filename
-    logging.info("bucket.upload_file("+str(local_filepath)+","+str(k)+")")
+    # logging.info("bucket.upload_file("+str(local_filepath)+","+str(k)+")")
     bucket.upload_file(zipped, k)
     os.remove(zipped)
 
