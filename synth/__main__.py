@@ -132,6 +132,33 @@ def remove_C_comments(string):
             return match.group(1) # captured quoted-string
     return regex.sub(_replacer, string)
 
+def preprocess(s):
+    """deal with #define statements"""
+    logging.info("Preprocessing:" + str(s))
+    output = []
+    macros = {}
+    lines = s.split("\n")
+    defining_macro = False
+    for L in lines:
+        if L.startswith("#define"):
+            defining_macro = True
+            macro_name = L[8:]
+            macros[macro_name] = ""
+        elif L.startswith("#enddef"):
+            assert defining_macro
+            defining_macro = False
+        else:
+            if defining_macro:
+                macros[macro_name] = macros[macro_name] + L + "\n"
+            else:
+                for m in macros:
+                    L = L.replace(m, macros[m])
+                output.append(L)
+
+    result = "\n".join(output)
+    logging.info("Preprocess result:"+str(result))
+    return result
+
 def get_params():
     """Read command-line to ingest parameters and parameter files"""
     def macro(matchobj):
@@ -145,6 +172,7 @@ def get_params():
 
         logging.info("Loading parameter file "+file)
         s = readParamfile(file, fail_silently)
+        s = preprocess(s)
         s = remove_C_comments(s) # Remove Javascript-style comments
         s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
         s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
