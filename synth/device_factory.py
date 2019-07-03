@@ -29,7 +29,7 @@ from common import importer
 from common import conftime
 from devices.basic import Basic
 
-devices = []
+g_devices = []
 
 def compose_class(class_names):
     """Create a composite class from a list of class names."""
@@ -41,16 +41,11 @@ def compose_class(class_names):
     return type("compositeDeviceClass", tuple(classes), {})
 
 def create_device(args):
-    global devices
+    global g_devices
     (instance_name, client, engine, update_callback, context, params) = args
     
-    device_num = num_devices()
-
-    if "functions" in params:
-        C = compose_class(params["functions"].keys())        # Create a composite device class from all the given class names
-        d = C(instance_name, engine.get_now(), engine, update_callback, context, params["functions"])   # Instantiate it
-    else:
-        d = Basic(instance_name, engine.get_now(), engine, update_callback, context, params)
+    C = compose_class(params["functions"].keys())        # Create a composite device class from all the given class names
+    d = C(instance_name, engine.get_now(), engine, update_callback, context, params["functions"])   # Instantiate it
     client.add_device(d.properties["$id"], engine.get_now(), d.properties)
 
     if "stop_at" in params:
@@ -60,7 +55,7 @@ def create_device(args):
     if get_device_by_property("$id", d.properties["$id"]) != None:
         logging.error("FATAL: Attempt to create duplicate device "+str(d.properties["$id"]))
         exit(-1)
-    devices.append(d)
+    g_devices.append(d)
 
     return d
 
@@ -72,13 +67,13 @@ def stop_device(args):
     # devices.remove(d) # we no longer delete it
     
 def num_devices():
-    global devices
-    n = len(devices)
+    global g_devices
+    n = len(g_devices)
     return n
 
 def get_device_by_property(prop, value):
-    global devices
-    for d in devices:
+    global g_devices
+    for d in g_devices:
         if prop in d.properties:
             if d.properties[prop] == value:
                 return d
@@ -86,9 +81,9 @@ def get_device_by_property(prop, value):
 
 def get_devices_by_property(prop, value):
     # Same as above, but return list of all matching devices
-    global devices
+    global g_devices
     devs = []
-    for d in devices:
+    for d in g_devices:
         if prop in d.properties:
             if d.properties[prop] == value:
                 devs.append(d)
@@ -105,11 +100,11 @@ def get_devices_by_property(prop, value):
 def external_event(params):
     """Accept events from outside world.
     (these have already been synchronised via the event queue so we don't need to worry about thread-safety here)"""
-    global devices
+    global g_devices
     body = params["body"]
     try:
         logging.debug("external Event received: "+str(params))
-        for d in devices:
+        for d in g_devices:
             if d.properties["$id"] == body["deviceId"]:
                 arg = body.get("arg", None)
                 d.external_event(body["eventName"], arg)
@@ -121,6 +116,7 @@ def external_event(params):
 
 
 def close():
+    global g_devices
     """Close all devices"""
-    for d in devices:
+    for d in g_devices:
         d.close()
