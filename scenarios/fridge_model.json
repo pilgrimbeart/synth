@@ -1,0 +1,6 @@
+[
+    { "hierarchy" : "hospital/site/fridge" },
+    { "model" : { "hospital" : "Addenbrookes" }, "devices" : [ {"weather":{}} ], "properties" : { "latitude" : 52.1730311, "longitude" : 0.1393937}},
+    { "model" : { "hospital" : "Addenbrookes", "site" : "Radiology" } },
+    { "model" : { "hospital" : "Addenbrookes", "site" : "Radiology", "fridge" : "Fridge #2#"},     "devices" : [ { "disruptive" : { "sensor_type" : "temperature" }}, { "disruptive" : { "sensor_type" : "proximity" } } ] }
+]
