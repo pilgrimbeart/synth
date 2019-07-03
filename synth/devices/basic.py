@@ -35,7 +35,7 @@ class Basic(Device):
         self.update_callback = update_callback
         self.properties = {}
         self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
-        self.model = {}
+        self.model = None   # May get set later if we're in a model
         label_root = "Device "
         use_label_as_id = False
         if "basic" in params:   # Will only be there if the basic class has been explictly declared (because user wants to override its behaviour)
@@ -97,6 +97,9 @@ class Basic(Device):
     def property_absent(self, prop_name):
         return not self.property_exists(prop_name)
     
+    def get_properties(self):
+        return self.properties
+
     def set_property(self, prop_name, value,
                      always_send = True,
                      timestamp = None):
@@ -117,7 +120,8 @@ class Basic(Device):
             self.do_comms(new_props, timestamp = timestamp)
 
     def set_properties(self, new_props):
-        new_props.update({ "$id" : self.properties["$id"], "$ts" : self.engine.get_now() })  # Force ID and timestamp to be correct
-        self.properties.update(new_props)
-        self.do_comms(new_props)    # TODO: Suppress if unchanged
+        np = new_props.copy()
+        np.update({ "$id" : self.properties["$id"], "$ts" : self.engine.get_now() })  # Force ID and timestamp to be correct
+        self.properties.update(np)
+        self.do_comms(np)    # TODO: Suppress if unchanged
 

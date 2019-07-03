@@ -61,6 +61,7 @@ from math import sin, pi
 from device import Device
 from helpers.solar import solar
 import device_factory
+import helpers.opening_times
 
 MINS = 60
 HOURS = MINS * 60
@@ -251,16 +252,22 @@ class Disruptive(Device):
             self.engine.register_event_in(delay, self.tick_presence, self, self)
 
     def get_peer(self):
-        site = self.get_property("site", None)
-        if site is None:
-            return None
-        me = self.get_property("$id")
-        peer = None
-        peers = device_factory.get_devices_by_property("site", site)    # All devices at this site
-        for p in peers:
-            if p.get_property("$id") != me:
-                peer = p
-        return peer
+        if self.model:  # If we're running in a model, then use that to find our peer
+            peers = self.model.get_peers(self)
+            assert len(peers)==1, "So far can only cope with one peer in the model (1 proximity and 1 temperature)"
+            return peers[0]
+        else:   # Otherwise default to our own inbuilt peer-finding mechanism
+            logging.info("USING INBUILT MODEL TO FIND PEER")
+            site = self.get_property("site", None)
+            if site is None:
+                return None
+            me = self.get_property("$id")
+            peer = None
+            peers = device_factory.get_devices_by_property("site", site)    # All devices at this site
+            for p in peers:
+                if p.get_property("$id") != me:
+                    peer = p
+            return peer
 
     def set_temperature(self, temperature):  # Temperature stored internally to higher precision than reported (so we can do e.g. asymptotes) 
         self.temperature = temperature
