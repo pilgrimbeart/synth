@@ -11,7 +11,8 @@ Configurable parameters::
         "value" : a static number or string - or an array to pick one randomly OR
         "timefunction" : a timefunction definition OR
         "random_lower", "random_upper" : a range of values to pick randomly within (with optional "precision" parameter) OR
-        "randstruct" : "["A definition like this where",[" lists "," are "," concatenated"], " and tuples are ("chosen from","selected betwixt"), "randomly]"
+        "randstruct" : "["A definition like this where",[" lists "," are "," concatenated"], " and tuples are ("chosen from","selected betwixt"), "randomly]" OR
+        "series" : a list: first device gets first value, second device second value etc.
     }
 
     -or-
@@ -33,6 +34,7 @@ from common import importer
 from helpers import randstruct
 
 class Variable(Device):
+    device_count = -1
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         """A property whose value is static or driven by some time function."""
         def create_var(params):
@@ -57,11 +59,16 @@ class Variable(Device):
             elif "randstruct" in params:
                 var_value = randstruct.evaluate(params["randstruct"])
                 self.set_property(var_name, var_value)
+            elif "series" in params:
+                series = params["series"]
+                var_value = series[Variable.device_count % len(series)]
+                self.set_property(var_name, var_value)
             else:
-                assert False,"variable " + var_name + " must have either value, timefunction, random_lower/upper or randstruct"
+                assert False,"variable " + var_name + " must have either value, timefunction, random_lower/upper, randstruct or series"
             self.variables.append( (var_name, var_value) )
 
         super(Variable, self).__init__(instance_name, time, engine, update_callback, context, params)
+        Variable.device_count += 1
         self.variables = [] # List of (name, value) and <value> may be a static value or a timefunction 
         if type(params["variable"]) == dict:
             create_var(params["variable"])
