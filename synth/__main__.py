@@ -229,7 +229,7 @@ def main():
         logging.error(err_str)
 
     logging.info("Simulation ends")
-    logging.info("Ending device logging ("+str(len(device_factory.devices))+" devices were emulated)")
+    logging.info("Ending device logging ("+str(len(device_factory.g_devices))+" devices were emulated)")
     events.flush()
     client.close()
 
