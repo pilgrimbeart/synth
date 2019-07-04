@@ -21,7 +21,7 @@ The client accepts the following parameters (usually found in the "On*.json" fil
         "devicepilot_min_post_period" : "PT10S",    # Optional. Do not post more often than this.
         "devicepilot_max_items_per_post" : 500,     # Optional. Individual posts cannot be bigger than this (the DP /device endpoint has a 1MB payload limit per post)
         "devicepilot_mode" : "bulk|interactive",    # In bulk mode, events are written to DevicePilot in bulk. In interactive mode they are written one-by-one (this mode is entered automatically when real-time is reached)
-        "aws_dp_account" :      # For bulk mode, the DevicePilot account code ("acc_*"). If this is specified then this client automatically defaults to "bulk" mode 
+        "aws_dp_account" :      # For bulk uploads, the DevicePilot account code ("acc_*/accountname"). If this is specified then this client automatically defaults to "bulk" mode 
         "aws_dp_bucket" :       # (optional) For bulk mode, an alternative bucket to upload to (defaults to production)
         "merge_posts" : true    # Spots cases where different device properties are being updated at the same time (and therefore could be merged into a single post)
     }
@@ -158,9 +158,22 @@ def upload_to_aws_bucket(bucket_name, account_key, local_filepath):
     zipped = gzip_file(local_filepath)
     filename = os.path.split(zipped)[1] # Just the filename
     s3 = boto3.resource("s3")
+    (key,account_name) = account_key.split("/") # account_name acts as a double-check to make it really difficult to accidentally provide the wrong acc_ code
+    table_name = key[4:]    # without the acc_ underscore
+
+    dynamo = boto3.resource("dynamodb")
+    table = dynamo.Table(name="accounts-production")
+    response = table.get_item(Key = {"id" : table_name})
+    actual_an = response["Item"]["name"]
+    if account_name == actual_an:
+        logging.info("Account name verified as '"+str(account_name)+"'")
+    else:
+        logging.error("Bulk upload account name MISMATCH: supplied='"+str(account_name)+"' actual='"+str(actual_an)+"'")
+        assert False
+
+    k = "recordsByAccount/" + key + "/" + filename
+    # logging.info("Doing bucket.upload_file("+str(local_filepath)+","+str(k)+")")
     bucket = s3.Bucket(bucket_name)
-    k = "recordsByAccount/" + account_key + "/" + filename
-    # logging.info("bucket.upload_file("+str(local_filepath)+","+str(k)+")")
     bucket.upload_file(zipped, k)
     os.remove(zipped)
 
