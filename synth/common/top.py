@@ -1,7 +1,8 @@
 
 class top():
     def __init__(self):
-        self.top_devices = {}
+        self.top_devices = {}   # Tracks all devices and the latest value of all their properties
+        self.top_properties = {}
 
     def update(self, new_properties):
         """ 'top' means the latest-known value of each property, for each device.
@@ -22,11 +23,7 @@ class top():
                 if new_ts >= existing_ts:   # Only update if timestamp is newer
                     existing_props[new_prop] = (new_ts, new_value)
 
-##        print "top.update():"
-##        print "new_properties:"
-##        print json.dumps(new_properties, indent=4, sort_keys=True)
-##        print "so top now:"
-##        print json.dumps(self.top_devices, indent=4, sort_keys=True)        
+        self.top_properties.update(new_properties)
 
     def get(self):
         """Return a list of latest property-values by device""" 
@@ -37,3 +34,9 @@ class top():
                 props[name] = time_and_value[1]
             L.append(props)
         return L
+
+    def get_properties(self):
+        # Just the set of properties, with typical values. $id will be essentially random.
+        # (from this you can deduce the type of each property)
+        return self.top_properties
+

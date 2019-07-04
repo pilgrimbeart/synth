@@ -311,9 +311,12 @@ class Devicepilot(Client):
 
     def send_top(self):
         """Send top (latest) value of all properties on all devices to the client"""
-        logging.info("DevicePilot sending top values")
-        for props in self.top.get():
-            self.update_device(props["$id"], props["$ts"], props)
+        logging.info("DevicePilot sending top values to hidden device, to set property types")
+        props = self.top.get_properties()
+        props["$id"] = "property_device"    # A special device, used just to set the type of each properties
+        props["$hidden"] = True
+        #for props in self.top.get():
+        self.update_device(props["$id"], props["$ts"], props)
 
     def tick(self):
         self.flush_post_queue_if_ready()
