@@ -31,7 +31,7 @@ import logging
 import random
 from device import Device
 from common import importer
-from helpers import randstruct
+from common import randstruct
 
 class Variable(Device):
     device_count = -1
