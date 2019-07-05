@@ -79,13 +79,15 @@ def create_2d_array(rows, columns):
     return [[0 for c in range(columns)] for r in range(rows)]
 
 class Vending_machine(Device):
+    myRandom = random.Random()  # Use our own private random-number generator, so we will repeatably generate the same device ID's regardless of who else is asking for random numbers
+    myRandom.seed(1234)
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         self.current_alert = None
         super(Vending_machine,self).__init__(instance_name, time, engine, update_callback, context, params)
 
         # Define machine
         machine_types = params["vending_machine"].get("machine_types", default_machine_types)
-        t = random.randrange(len(machine_types))
+        t = Vending_machine.myRandom.randrange(len(machine_types))
         self.set_property("manufacturer", machine_types[t]["manufacturer"])
         self.machine_rows = machine_types[t]["rows"]
         self.machine_columns = machine_types[t]["columns"]
@@ -109,9 +111,9 @@ class Vending_machine(Device):
         self.product_number_in_position = create_2d_array(self.machine_rows, self.machine_columns)
         for r in range(self.machine_rows):
             for c in range(self.machine_columns):
-                product_number = self.myRandom.randrange(len(self.product_catalogue))
+                product_number = Vending_machine.myRandom.randrange(len(self.product_catalogue))
                 self.product_number_in_position[r][c] = product_number
-                self.stock_level[r][c] = self.myRandom.randrange(0, max_stock_per_position/2)   # Only ever half-stock to begin with
+                self.stock_level[r][c] = Vending_machine.myRandom.randrange(0, max_stock_per_position/2)   # Only ever half-stock to begin with
                 self.restock_time[r][c] = self.engine.get_now()
         self.update_available_positions()
 
@@ -122,8 +124,8 @@ class Vending_machine(Device):
 
         self.tick_vending_machine_check_expiry(self)
 
-        engine.register_event_in(self.myRandom.random()*max_vending_interval_S, self.tick_vending_machine_vend, self, self)
-        engine.register_event_in(min_replenish_interval_S + self.myRandom.random()*(max_replenish_interval_S-min_replenish_interval_S), self.tick_vending_machine_replenish, self, self)
+        engine.register_event_in(Vending_machine.myRandom.random()*max_vending_interval_S, self.tick_vending_machine_vend, self, self)
+        engine.register_event_in(min_replenish_interval_S + Vending_machine.myRandom.random()*(max_replenish_interval_S-min_replenish_interval_S), self.tick_vending_machine_replenish, self, self)
         engine.register_event_in(alert_check_interval, self.tick_alert_check, self, self)
         engine.register_event_in(HEARTBEAT_INTERVAL, self.tick_heartbeat, self, self)
 
@@ -167,8 +169,8 @@ class Vending_machine(Device):
         return alerts[self.current_alert]["allows_comms"]
 
     def tick_vending_machine_vend(self, _):
-        r = self.myRandom.randrange(0,self.machine_rows)
-        c = self.myRandom.randrange(0,self.machine_columns)
+        r = Vending_machine.myRandom.randrange(0,self.machine_rows)
+        c = Vending_machine.myRandom.randrange(0,self.machine_columns)
         level = self.get_level(r,c)
         if level < 1:
             self.set_property("event_log", "Attempt to vend from empty " + position_name(r,c), always_send=True)
@@ -184,11 +186,11 @@ class Vending_machine(Device):
             self.set_property("vend_event_category", product["category"])
             self.set_property("vend_event_price", self.price(r,c))
             self.accept_payment(self.catalogue_item(r,c)["price"])
-        self.engine.register_event_in(self.myRandom.random()*max_vending_interval_S, self.tick_vending_machine_vend, self, self)
+        self.engine.register_event_in(Vending_machine.myRandom.random()*max_vending_interval_S, self.tick_vending_machine_vend, self, self)
 
     def tick_vending_machine_replenish(self, _):
         self.replenish()
-        self.engine.register_event_in(min_replenish_interval_S + self.myRandom.random()*(max_replenish_interval_S-min_replenish_interval_S), self.tick_vending_machine_replenish, self, self)
+        self.engine.register_event_in(min_replenish_interval_S + Vending_machine.myRandom.random()*(max_replenish_interval_S-min_replenish_interval_S), self.tick_vending_machine_replenish, self, self)
 
     def tick_vending_machine_check_expiry(self, _):
         self.check_expirys()
@@ -200,11 +202,11 @@ class Vending_machine(Device):
 
         for a in range(len(alerts)):
             chance = float(alert_check_interval) / alerts[a]["mtbf"]
-            if random.random() < chance:
+            if Vending_machine.myRandom.random() < chance:
                 self.current_alert = a
                 self.set_property("alert", alerts[self.current_alert]["alert"])
                 L = float(alerts[a]["average_length"])
-                length = random.gauss(L, L/2)
+                length = Vending_machine.myRandom.gauss(L, L/2)
                 length = max(L/3, min(L*5, length))
                 self.engine.register_event_in(length, self.tick_alert_cancel, self, self)
                 break
@@ -251,7 +253,7 @@ class Vending_machine(Device):
                 if self.past_sellby_date(r,c):
                     self.set_property("event_log", "Disposed of expired food in "+position_name(r,c), always_send=True)
                     self.set_level(r,c, 0)
-                if self.myRandom.random() > 0.5:    # 50% chance of restocking any individual position 
+                if Vending_machine.myRandom.random() > 0.5:    # 50% chance of restocking any individual position 
                     if self.get_level(r,c) < max_stock_per_position:
                         self.set_property("event_log", "Restocking "+position_name(r,c), always_send=True)
                         self.set_level(r,c, max_stock_per_position)
@@ -295,19 +297,19 @@ class Vending_machine(Device):
 
     def accept_payment(self, price):
         # Work out what coins were provided to pay for the goods
-        if random.random() >= cash_likelihood:  # Smartcard payment
+        if Vending_machine.myRandom.random() >= cash_likelihood:  # Smartcard payment
             self.set_property("vend_event_cashless", price, always_send=True)
         else:
             for biggest in range(len(cash_denominations)):   # Find index of denomination that's big-enough to pay outright
                 if cash_denominations[biggest] >= price:
                     break
-            if random.random() > 0.5:       # they just pay with a single unit of currency
+            if Vending_machine.myRandom.random() > 0.5:       # they just pay with a single unit of currency
                 payment = { cash_denominations[biggest] : 1 }
             else:                           # they make up the payment with coins
                 payment = {}
                 for i in range(biggest-1, -1, -1):
                     num = int((price-bag_value(payment)) / cash_denominations[i])
-                    if random.random() > 0.25:  # A chance that we don't have any smaller change, so we overpay with this denom
+                    if Vending_machine.myRandom.random() > 0.25:  # A chance that we don't have any smaller change, so we overpay with this denom
                         num += 1    # 
                     add_to_bag(payment, cash_denominations[i], num)
                     if bag_value(payment) >= price:

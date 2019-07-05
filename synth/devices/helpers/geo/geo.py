@@ -34,7 +34,7 @@ import logging
 from PIL import Image # To get this on Linux, suggest using "sudo apt-get install python-imaging"
 Image.MAX_IMAGE_PIXELS = 1000000000 # We're dealing with large images, so prevent DecompressionBomb errors
 import numpy
-from random import randint, random
+import random
 import math
 from google_maps import address_to_lon_lat
 
@@ -49,6 +49,9 @@ MINY = 100000
 MAXY = -100000
 
 class point_picker():
+    myRandom = random.Random()  # Use our own private random-number generator, so we will repeatably generate the samepoints regardless of who else is asking for random numbers (useful to keep point data stable, because of caching weather or maps results)
+    myRandom.seed(1234)
+
     """This uses a huge amount of memory. So strongly recommend deleting after use.""" 
     def __init__(self, population_map=None):
         if population_map is None:
@@ -121,21 +124,21 @@ class point_picker():
         
         while True:
             if self.area:
-                radius = randint(0,int(self.area_radius_pixels+0.5))
-                angle = random() * 2 * math.pi
+                radius = point_picker.myRandom.randint(0,int(self.area_radius_pixels+0.5))
+                angle = point_picker.myRandom.random() * 2 * math.pi
                 ox = math.sin(angle) * radius
                 oy = math.cos(angle) * radius
                 x = int(self.area_centre_xy[0] + ox)
                 y = int(self.area_centre_xy[1] + oy)
             else:
-                x,y = randint(0,self.xlimit-1), randint(0,self.ylimit-1)    # Note: INTEGER pick, i.e nearest pixel.
+                x,y = point_picker.myRandom.randint(0,self.xlimit-1), point_picker.myRandom.randint(0,self.ylimit-1)    # Note: INTEGER pick, i.e nearest pixel.
             v = (self.arr[y][x] / 255.0)
-            if v > random():
+            if v > point_picker.myRandom.random():
                 break
 
         # Dither our pixels, otherwise all points will be on pixel grid
-        x += random()
-        y += random()
+        x += point_picker.myRandom.random()
+        y += point_picker.myRandom.random()
 
         longitude,latitude = self.xy_to_lon_lat((x,y))
 
