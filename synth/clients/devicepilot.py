@@ -148,6 +148,8 @@ merged_posts = 0
 
 DEFAULT_AWS_BUCKET_NAME = "ingest-production"
 
+DO_NOT_MERGE_PROPERTIES = { "latitude" : None, "longitude" : None }   # The trouble with merging these is that if the number of merged items gets too long, they could be split between messages, and NO-ONE expects lat & lon to be updated in different messages!
+
 def gzip_file(filepath):
     dest_filepath = filepath + ".gz"
     with open(filepath, "rb") as f_in, gzip.open(dest_filepath, "wb") as f_out:
@@ -238,9 +240,10 @@ class Devicepilot(Client):
                 if len(self.post_queue)>0:
                     if self.post_queue[-1]["$ts"] == props["$ts"]:
                         if self.post_queue[-1]["$id"] == props["$id"]:
-                            merged_posts = merged_posts + 1
-                            props.update(self.post_queue[-1])
-                            del(self.post_queue[-1])
+                            if set(DO_NOT_MERGE_PROPERTIES.keys()) & set(props.keys()) == set([]):  # No non-mergable properties
+                                merged_posts = merged_posts + 1
+                                props.update(self.post_queue[-1])
+                                del(self.post_queue[-1])
             self.post_queue.append(props)
             self.flush_post_queue_if_ready()
         if (self.mode == "bulk") and (record):
