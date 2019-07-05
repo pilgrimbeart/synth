@@ -1,0 +1,18 @@
+[
+    { "hierarchy" : "hospital/building/fridge" },
+    { "model" : { "hospital" : "Addenbrookes" }, "devices" : [ {"weather":{}} ], "properties" : { "latitude" : 52.1730311, "longitude" : 0.1393937}},
+    { "model" : { "hospital" : "Addenbrookes", "building" : "[('Harper','Florence','Whittaker','MRC','NIHR','Crick','Lavellier')]", "fridge" : "Fridge #25#"},
+        "devices" : [
+            {
+                "disruptive" : { "sensor_type" : "temperature", "nominal_temp" : [-30,-18,5,20], "nominal_temp_deviation" : [2,2,3,8], "site_type" : ["ultra-freezer", "freezer", "fridge", "ambient"] }
+            },
+            {
+                "disruptive" : { "sensor_type" : "proximity" }
+            }
+        ],
+        "properties" : {
+                "x" : "0..848",
+                "y" : "0..651"
+        }
+    }
+]

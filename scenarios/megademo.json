@@ -6,6 +6,13 @@
         "end_time" : null
     },
     "events" : [
+        {   # DRUG FRIDGES
+            "action" : {
+                "use_model" : {
+                    "file" : "megademo_fridge_model.json"
+                }
+            }
+        },
         {	# VENDING MACHINES
             "repeats" : 20,
             "action": {
@@ -183,26 +190,6 @@
                         "light" : { "clouds" : true, "generate" : true, "generate_scalar" : 2 },
                         "latlong" : { "generate_addresses" : true, "area_centre" : "Warsaw, Poland", "area_radius" : "Plonsk, Poland" },
                         "variable" : { "name" : "device_type", "value" : "pv_array"}
-                    }
-                }
-            }
-        },
-        {       # DRUG FRIDGES using DISRUPTIVE TECHNOLOGIES sensors
-            "at" : "PT0S",
-            "interval" : "PT0S",
-            "repeats" : 50,  # Generally an even number, as Disruptive sensors often instantiated in (temperature, presence) pairs per site
-            "action": {
-                "create_device" : {
-                    "functions" : {
-                        "disruptive" : {
-                        },
-                        "variable" : [
-                            { "name" : "x", "random_lower" : 0, "random_upper" : 848 },
-                            { "name" : "y", "random_lower" : 0, "random_upper" : 651 },
-                            { "name" : "latitude" , "value" : 52.1750311}, { "name" : "longitude", "value" : 0.1393937},  # Addenbrookes Hospital, Cambridge, UK
-                            { "name" : "drugs_value", "random_lower" : 2000, "random_upper" : 7000, "precision" : 100 },
-                            { "name" : "room", "randstruct" : "[('Harper','Florence','Whittaker','MRC','NIHR','Crick','Lavellier'),' building, floor ',('1','2','3','4','5','6'),', ', ('Radiology','Pathology', 'Storage', [('Acute','Pediatric','Geriatric'),' ward'])]" }
-                        ]
                     }
                 }
             }
