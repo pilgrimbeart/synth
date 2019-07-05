@@ -134,7 +134,6 @@ def remove_C_comments(string):
 
 def preprocess(s):
     """deal with #define statements"""
-    logging.info("Preprocessing:" + str(s))
     output = []
     macros = {}
     lines = s.split("\n")
@@ -156,7 +155,6 @@ def preprocess(s):
                 output.append(L)
 
     result = "\n".join(output)
-    logging.info("Preprocess result:"+str(result))
     return result
 
 def get_params():
