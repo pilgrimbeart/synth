@@ -10,6 +10,7 @@ Configurable parameters::
         "reliability" : 1.0     A fraction 0.0..1.0 or the word "rssi" to generate reliability from RSSI
         "period" :      P1D     Mean period with which device goes up and down [or RSSI varies, if being created] (has exponential tail with max 100x). Defaults to once a day
         "has_buffer" :  false   If this boolean is true then the device buffers data while comms is down (else it throws it away)
+        "unbuffered_properties" : ["propname",...] (optional) these properties will be lost (not buffered) when comms goes offline - means that e.g. heartbeat messages don't get magically restored after an outage
         "suppress_messages" : false If true then wont emit log messages
     }
 
@@ -45,6 +46,7 @@ class Comms(Device):
         self.comms_up_down_period = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
         self.has_buffer = params["comms"].get("has_buffer", False)
         self.suppress_messages = params["comms"].get("suppress_messages", False)
+        self.unbuffered_properties = params["comms"].get("unbuffered_properties", [])
         self.buffer = []
         self.messages_attempted = 0
         self.messages_sent = 0
@@ -66,11 +68,13 @@ class Comms(Device):
             # logging.info("(doing comms)")
         else:
             if self.has_buffer:
-                # logging.info("(appending)")
                 self.messages_delayed += 1
+                for p in self.unbuffered_properties:
+                    if p in properties:
+                        logging.info("Throwing-away unbuffered property "+str(p))
+                        del properties[p]
                 self.buffer.append( (the_id, ts, properties) )
             else:
-                # logging.info("(discarding)")
                 pass # Discard data
                  
     def external_event(self, event_name, arg):
