@@ -28,6 +28,8 @@ import logging
 HOURS = 60*60
 DAYS = HOURS*24
 
+HEARTBEAT_INTERVAL = 1 * DAYS
+
 max_stock_per_position = 10
 
 max_vending_interval_S = 6 * HOURS
@@ -95,6 +97,7 @@ class Vending_machine(Device):
                 e = {}
                 e["name"] = p["name"]
                 e["price"] = p["price"]
+                e["category"] = p["category"]
                 e["lifetime"] = isodate.parse_duration(p["lifetime"]).total_seconds()
                 self.product_catalogue.append(e)
         else:
@@ -112,6 +115,8 @@ class Vending_machine(Device):
                 self.restock_time[r][c] = self.engine.get_now()
         self.update_available_positions()
 
+        self.set_property("heartbeat", True)    # Send a heartbeat immediately on boot
+
         # Put some cash in cashbox
         self.cashbox_initialise()
 
@@ -120,6 +125,7 @@ class Vending_machine(Device):
         engine.register_event_in(self.myRandom.random()*max_vending_interval_S, self.tick_vending_machine_vend, self, self)
         engine.register_event_in(min_replenish_interval_S + self.myRandom.random()*(max_replenish_interval_S-min_replenish_interval_S), self.tick_vending_machine_replenish, self, self)
         engine.register_event_in(alert_check_interval, self.tick_alert_check, self, self)
+        engine.register_event_in(HEARTBEAT_INTERVAL, self.tick_heartbeat, self, self)
 
     def comms_ok(self):
         return super(Vending_machine,self).comms_ok() and self.allowed_to_communicate()
@@ -173,7 +179,9 @@ class Vending_machine(Device):
         else:
             self.set_level(r,c,level-1)
             self.set_property("vend_event_position", position_name(r,c))
-            self.set_property("vend_event_product", self.product_catalogue[self.product_number_in_position[r][c]]["name"])
+            product = self.product_catalogue[self.product_number_in_position[r][c]]
+            self.set_property("vend_event_product", product["name"])
+            self.set_property("vend_event_category", product["category"])
             self.set_property("vend_event_price", self.price(r,c))
             self.accept_payment(self.catalogue_item(r,c)["price"])
         self.engine.register_event_in(self.myRandom.random()*max_vending_interval_S, self.tick_vending_machine_vend, self, self)
@@ -206,6 +214,10 @@ class Vending_machine(Device):
     def tick_alert_cancel(self, _):
         self.current_alert = None
         self.set_property("alert", None)
+
+    def tick_heartbeat(self, _):
+        self.set_property("heartbeat", True, always_send=True)
+        self.engine.register_event_in(HEARTBEAT_INTERVAL, self.tick_heartbeat, self, self)
 
     def check_expirys(self):
         has_expired = False
