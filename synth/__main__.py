@@ -28,7 +28,7 @@ Generate and exercise synthetic devices for testing and demoing IoT services.
 import logging
 import os
 import time, sys, json, re, traceback
-import requests, http.client
+import requests, httplib
 import random   # Might want to replace this with something we control
 from datetime import datetime
 from common import ISO8601
@@ -84,7 +84,7 @@ def post_to_slack(text):
                    }
         try:
             response = requests.post(g_slack_webhook, data=json.dumps(payload), headers={'Content-Type': 'application/json'})
-        except http.client.HTTPException as err:
+        except httplib.HTTPException as err:
             logging.error("post_to_slack() failed: "+str(err))
 
 def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/dictionaries-of-dictionaries-merge/7205107#7205107
