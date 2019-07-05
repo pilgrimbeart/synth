@@ -1,5 +1,43 @@
 """MODEL
-   Reasons on a model of the world."""
+=====
+   Build a model of the world, top-down
+   
+  A model file is a JSON list of declarations. There are two types of declaration:
+
+      "hierarchy" : "company/town/floor/zone" 
+      "model" : { "company" : "Harrods", "town" : "London", "floor" : 0, "zone" : "Admin" }
+   
+    Each model declaration matches one or more of the levels of the hierarchy (and any levels that it doesn't
+    declare are considered to be wildcards.
+
+    Each model may define:
+        "devices" - the same as the "functions" element in a "create_device" action of a normal scenario file
+        "properties" - a set of property (name : value) pairs
+
+    The properties get attached to that level of the model, and inherited by all devices
+    at that level of the model and below. For example in the above model, you could declare a latitude
+    and a longitude property, and those properties would get inherited by any device also at that level
+    (in this declaration or any other).
+    For example a weather station attached to the Harrods store in London would inherit the lat,lon, and so
+    would any devices in that store, e.g. a fridge in the Admin zone of the ground floor of Harrods in London.
+
+    The above helps create a "top down" declarative structure to your Synth simulations.
+
+    Devices can also find out what model hierarchy they exist within. For example the Disruptive Technology
+    device behaviour can use the model to discover if it is in the same part of a model as other devices.
+    Thus proximity sensors attached to fridge doors can make the fridge get warm if they are left open.
+
+
+    Helpful shortcuts for rapid modelling:
+
+    . If you name a model element  "fridge" : "Fridge #2#"  then this is equivalent to two model
+      declarations for "Fridge 1" and "Fridge 2".
+
+    . If you name a model element  "building" : "['Building ', ('Lavel','Maurice')]" then, in conjuction with the
+      numbering scheme above, each fridge will be in either the "Building Lavel" or "Building Maurice" building
+      within the model, randomly.
+
+   """
 #
 # Copyright (c) 2019 DevicePilot Ltd.
 #
@@ -27,16 +65,22 @@ import copy
 import device_factory
 from os import path
 from common import importer
+from common import randstruct
 from directories import *
 
 MODEL_FIELDS_BECOME_PROPERTIES = True
+
+def randomise(s):
+# If string s contains a "randomise me" list of choices, then turn it into one of its choices
+    if s.startswith("[") and s.endswith("]"):
+        s = randstruct.evaluate(s)
 
 def enumerate_model_counter(struc):
     # Given a dict this checks whether any of its values is a special counting value, and if so 'enumerates' it, generating a dict for all values in the specified range
 
     # Is there a counting value?
     the_key = None
-    for k in struc["model"].keys():
+    for k in struc["model"]:
         if struc["model"][k].find("#") != -1:
             the_key = k
             break
@@ -51,7 +95,10 @@ def enumerate_model_counter(struc):
     L = []
     for i in range(N):
         s = copy.deepcopy(struc)
-        s["model"][the_key] = parts[0] + str(i) + parts[2]
+        s["model"][the_key] = parts[0] + str(i+1) + parts[2]    # Start counting at 1
+        for k in s["model"]:
+            randomise(s["model"][k])
+
         L.append(s)
     return L
 
