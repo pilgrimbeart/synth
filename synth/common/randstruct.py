@@ -22,13 +22,14 @@
 # SOFTWARE.
 
 import random, ast
+import logging
 
 def ev(x):
     if isinstance(x, list):     # Concatenate lists
         if len(x)==0:
             return None
         if len(x)==1:
-            return x[0]      # Don't force things to be lists
+            return ev(x[0])      # Don't force things to be lists
         r = ""
         for e in x:
             r = r + ev(e) 
@@ -43,9 +44,22 @@ def evaluate(s):
     return ev(a)
 
 if __name__ == "__main__":
+    s = '"hello"'
+    print(evaluate(s))
+
+    s = '["hello"]'
+    print(evaluate(s))
+
+    s = '[(1,2,3)]'
+    for i in range(10):
+        print(evaluate(s))
+
     s = '[("I have","Everyone has"),(" good"," bad")," things to say",("",[" ", ("to","about"), " you",(""," boyo")])]'
     for i in range(10):
         print(evaluate(s))
+
     s = '(None,1,2,3,)'
     for i in range(10):
         print(evaluate(s))
+
+
