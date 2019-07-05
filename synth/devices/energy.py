@@ -39,7 +39,8 @@ class Energy(Device):
         self.max_power_kW = params["energy"].get("max_power", DEFAULT_MAX_POWER_KW)
         self.baseload_power_kW = params["energy"].get("baseload_power", DEFAULT_BASELOAD_POWER_KW)
         self.power_variation_kW = params["energy"].get("power_variation", DEFAULT_POWER_VARIATION_KW)
-        self.set_property("device_type", "energy")
+        if not self.property_exists("device_type"):
+            self.set_property("device_type", "energy")
         self.set_property("kWh", int(random.random() * 100000))
         self.set_property("occupied", False)    # !!!!!!!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
         self.engine.register_event_in(ENERGY_READING_INTERVAL, self.tick_reading, self, self)

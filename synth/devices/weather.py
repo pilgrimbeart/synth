@@ -25,7 +25,8 @@ MEASUREMENT_INTERVAL_S = 60*60
 class Weather(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Weather,self).__init__(instance_name, time, engine, update_callback, context, params)
-        self.set_property("device_type", "weather")
+        if not self.property_exists("device_type"):
+            self.set_property("device_type", "weather")
         self.set_property("occupied", False)    # !!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
         engine.register_event_in(0, self.tick_weather, self, self)
 
