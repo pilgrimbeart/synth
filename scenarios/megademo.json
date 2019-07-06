@@ -2,7 +2,7 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-P14D",
+        "start_time" : "-P30D",
         "end_time" : null
     },
     "events" : [
@@ -64,10 +64,10 @@
                 "create_device" : {
                     "functions" : {
                         "battery" : {
-                            "life_mu" : "P3M",
-                            "life_sigma" : "P1M",
+                            "life_mu" : "P90D",
+                            "life_sigma" : "P30D",
                             "autoreplace" : true,
-                            "autoreplace_delay" : "P30D"
+                            "autoreplace_delay" : "P7D"
                         },
                         "mobile" : {
                             "area_centre" : "Rugby, UK",
@@ -75,7 +75,7 @@
                         },
                         "variable" : [
                             {
-                                "name" : "temperature_C",
+                                "name" : "temperature",
                                 "timefunction" : {
                                     "sinewave" : {
                                         "period" : ["PT7M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
@@ -111,8 +111,8 @@
                             "label_root" : "Smoke Detector "
                         },
                         "battery" : {
-                            "life_mu" : "P12M",
-                            "life_sigma" : "P6M",
+                            "life_mu" : "P360D",
+                            "life_sigma" : "P120D",
                             "autoreplace" : true,
                             "autoreplace_delay" : "P14D"
                         },
