@@ -246,7 +246,7 @@ class Disruptive(Device):
         else:   # Door just opened, so consider when it should next close
             if random.random() < 1.0/CHANCE_OF_DOOR_LEFT_OPEN:
                 delay = half_tail(1 * HOURS, 24 * HOURS)
-                logging.info("Door will be left open for "+str(delay)+"s on "+str(self.get_property("$id")))
+                logging.info("Door will be left open for "+str(int(delay/60))+"m on "+str(self.get_property("$id")))
             else:
                 delay = half_tail(AV_DOOR_OPEN_MIN_TIME_S, AV_DOOR_OPEN_SIGMA_S)
             self.engine.register_event_in(delay, self.tick_presence, self, self)

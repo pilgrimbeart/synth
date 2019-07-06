@@ -38,7 +38,9 @@ class Battery(Device):
         life = random.normalvariate(mu, sigma)
         life = min(life, mu+2*sigma)
         life = max(life, mu-2*sigma)
-        life = max(life, 60) # Sensible minimum. A battery life of 0 causes auto-replace to blow up.
+        if life < 24*60*60:
+            logging.warning("Battery life of "+str(self.get_property("$id"))+" is insanely short : "+str(life)+"s")
+        life = max(life, 60) # A battery life of 0 causes auto-replace to blow up.
         self.battery_life = life
         self.battery_autoreplace = params["battery"].get("autoreplace", False)
         self.battery_autoreplace_delay = isodate.parse_duration(params["battery"].get("autoreplace_delay", "P7D")).total_seconds()
@@ -47,7 +49,8 @@ class Battery(Device):
         self.engine.register_event_in(REPORT_PERIOD, self.tick_battery_decay, self, self)
 
     def comms_ok(self):
-        return super(Battery,self).comms_ok() and (self.properties.get("battery",100) > 0)
+        ok = super(Battery,self).comms_ok() and (self.properties.get("battery",100) > 0)
+        return ok
 
     def external_event(self, event_name, arg):
         super(Battery,self).external_event(event_name, arg)

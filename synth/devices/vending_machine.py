@@ -33,8 +33,8 @@ HEARTBEAT_INTERVAL = 1 * DAYS
 max_stock_per_position = 10
 
 max_vending_interval_S = 6 * HOURS
-min_replenish_interval_S = 1 * DAYS
-max_replenish_interval_S = 7 * DAYS
+min_replenish_interval_S = 7 * DAYS
+max_replenish_interval_S = 30 * DAYS
 
 expiry_check_interval = 1 * HOURS
 
@@ -104,6 +104,8 @@ class Vending_machine(Device):
                 self.product_catalogue.append(e)
         else:
             self.product_catalogue = default_product_catalogue
+
+        self.set_property("positions_total", self.machine_rows * self.machine_columns)
 
         # Put some stock in machine
         self.restock_time = create_2d_array(self.machine_rows, self.machine_columns)  # the time when each position was last restocked (to detect past-sellby date items). We don't send a literal restock_time property, we just "bonk" the *_event_restock and then we can look at use $ts/*_event_restock in DevicePilot

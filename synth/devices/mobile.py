@@ -112,8 +112,7 @@ class Mobile(Device):
         (lon_to, lat_to) = Mobile.locations[self.points[self.to_point]][0:2]
         lon = lon_from * (1.0 - self.travel_fraction) + lon_to * self.travel_fraction
         lat = lat_from * (1.0 - self.travel_fraction) + lat_to * self.travel_fraction
-        self.set_property("longitude", lon)
-        self.set_property("latitude", lat)
+        self.set_properties({ "longitude" : lon, "latitude" : lat })    # Important to update these together (some client apps don't cope well with lat/lon being split between messages, even if contemporaneous)
         if self.fleet_mgmt:
             if prev_lon is not None:
                 delta_miles = self.miles_between(prev_lon, prev_lat, lon, lat)
