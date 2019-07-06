@@ -63,6 +63,7 @@ import logging
 import json
 import copy
 import device_factory
+import random
 from os import path
 from common import importer
 from common import randstruct
@@ -72,8 +73,17 @@ MODEL_FIELDS_BECOME_PROPERTIES = True
 
 def randomise(s):
 # If string s contains a "randomise me" list of choices, then turn it into one of its choices
+    if not isinstance(s, basestring):
+        return s
     if s.startswith("[") and s.endswith("]"):
-        s = randstruct.evaluate(s)
+        return randstruct.evaluate(s)
+    if s.find("..") != -1:
+        p = s.split("..")
+        n1 = int(p[0])
+        n2 = int(p[1])
+        s = random.randint(n1,n2)
+        return s
+    return s
 
 def enumerate_model_counter(struc):
     # Given a dict this checks whether any of its values is a special counting value, and if so 'enumerates' it, generating a dict for all values in the specified range
@@ -97,8 +107,10 @@ def enumerate_model_counter(struc):
         s = copy.deepcopy(struc)
         s["model"][the_key] = parts[0] + str(i+1) + parts[2]    # Start counting at 1
         for k in s["model"]:
-            randomise(s["model"][k])
-
+            s["model"][k] = randomise(s["model"][k]) 
+        if "properties" in s:
+            for p in s["properties"]:
+                s["properties"][p] = randomise(s["properties"][p])
         L.append(s)
     return L
 
