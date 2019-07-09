@@ -6,7 +6,8 @@
         "end_time" : "now"
     },
     "events" : [
-        {   # Lots of empty, static devices to fill up the map
+        {
+            "comment" : "Lots of empty, static devices to fill up the map",
             "repeats" : 100, 
             "action" : {
                 "create_device" : {
@@ -20,7 +21,8 @@
                 }
             }
         },
-        {   # Some smoke detectors
+        {   
+            "comment" : "Some smoke detectors",
             "repeats" : 20,
             "action": {
                 "create_device" : {
@@ -38,13 +40,14 @@
                             { "name" : "hardware_version", "value" : [0.4,0.6,0.9,1.1,1.5] },
                             { "name" : "x", "value" : [1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500] },
                             { "name" : "y", "value" : [1000,1250,1500,1750,2000,2250,2500,2750,3000] },
-                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  #  Mountain View, California 
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855, "comment" : "Mountain View, California" }
                         ]
                     }
                 }
             }
         },
-        {   # A light sensor
+        {
+            "comment" : "light sensor",
             "repeats" : 16,
             "action" : {
                 "create_device" : {
@@ -52,13 +55,14 @@
                         "light" : { "clouds" : true, "generate" : true },
                         "variable" : [
                             { "name" : "device_type", "value" : "pv_array" },
-                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  #  Mountain View, California 
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  
                         ]
                     }
                 }
             }
         },
-        {   # A weather sensor
+        {   
+            "comment" : "A weather sensor",
             "repeats" : 1,
             "action" : {
                 "create_device" : {
@@ -66,13 +70,14 @@
                         "weather" : {},
                         "variable" : [
                             { "name" : "device_type", "value" : "weather_sensor" },
-                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  #  Mountain View, California 
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}   
                         ]
                     }
                 }
             }
         },
-        {   # Some light switches
+        { 
+            "comment" : "Some light switches",
             "repeats" : 50,
             "action" : {
                 "create_device" : {
@@ -82,7 +87,7 @@
                             { "name" : "device_type", "value" : "bulb" },
                             { "name" : "x", "value" : [100,150,200,250,300,350,400,450,500,550,600,650] },
                             { "name" : "y", "value" : [100,125,150,175,200,225,250,275,300] },
-                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  #  Mountain View, California 
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855} 
                         ]
                     }
                 }

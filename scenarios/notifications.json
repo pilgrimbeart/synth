@@ -1,4 +1,4 @@
-# Test DP's old and new notification mechanisms
+// Test DP's old and new notification mechanisms
 { 
     "restart_log" : true,
     "engine" : {
@@ -42,7 +42,7 @@
                                     "comment" : "Expect a timeout"
                                 }
                             },
-                            # "ignore_start" : "PT4M",
+                            // "ignore_start" : "PT4M",
                             "required_score_percent" : 100
                         }
                     }

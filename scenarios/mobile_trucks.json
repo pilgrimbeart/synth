@@ -26,7 +26,7 @@
                         },
                         "enumerated" : {
                             "name" : "fault",
-                            "values" : ["engine overheat", "flat battery", "fuel trouble", "flat tire", "no fault"],    # Last entry clears all faults within 24 hours
+                            "values" : ["engine overheat", "flat battery", "fuel trouble", "flat tire", "no fault"],    // Last entry clears all faults within 24 hours
                             "periods" : ["P80D",           "P70D",         "P80D",         "P45D",      "P1D"],
                             "sigmas"  : ["P40D",           "P45D",         "P40D",         "P22D",      "PT0S"]
                         },

@@ -6,7 +6,7 @@
         "end_time" : "now"
     },
     "events" : [
-        {    # A device which presses buttons periodically
+        {    // A device which presses buttons periodically
             "at" : "PT0S",
             "repeats" : 1,
             "interval" : "PT1S",

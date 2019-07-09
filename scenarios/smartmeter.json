@@ -17,7 +17,7 @@
                             "label_root" : "Meter "
                         },
                         "commswave" : {
-                            "threshold" : 0.01, # To give 99% uptime
+                            "threshold" : 0.01, // To give 99% uptime
                             "timefunction" : {
                                 "randomwave" : {
                                     "period" : "PT1H",
@@ -56,7 +56,7 @@
                     "identity_property" : "vendor",
                     "identity_value" : "Itron",
                     "property_name" : "comms_tf_threshold",
-                    "property_value" : 0.20 # Change uptime to 80%
+                    "property_value" : 0.20 // Change uptime to 80%
                 }
              }
          }

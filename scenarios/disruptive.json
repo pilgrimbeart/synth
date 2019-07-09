@@ -9,7 +9,7 @@
         {
             "at" : "PT0S",
             "interval" : "PT0S",
-            "repeats" : 50,  # Generally an even number, as Disruptive sensors often instantiated in (temperature, presence) pairs per site
+            "repeats" : 50,  // Generally an even number, as Disruptive sensors often instantiated in (temperature, presence) pairs per site
             "action": {
                 "create_device" : {
                     "functions" : {

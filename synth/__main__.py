@@ -172,7 +172,7 @@ def get_params():
         s = readParamfile(file, fail_silently)
         s = preprocess(s)
         s = remove_C_comments(s) # Remove Javascript-style comments
-        s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
+        # We no-longer support Python-style comments, because interferes with auto-numbering in models s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
         s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
         j = json.loads(s)
         if "client" in j:   # We inherit the instance name from whichever file specifies the client

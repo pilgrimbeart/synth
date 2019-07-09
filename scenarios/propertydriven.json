@@ -7,7 +7,7 @@
     },
     "events" : [
         {
-            "at" : "PT0S",	# Each device emits a value with a statically-random offset mixed with a random wave
+            "at" : "PT0S",	// Each device emits a value with a statically-random offset mixed with a random wave
             "repeats" : 10,
             "interval" : "PT0S",
             "action": {
