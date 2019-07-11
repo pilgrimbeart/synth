@@ -22,7 +22,7 @@ Device properties created::
 """
 
 from device import Device
-from helpers.geo import google_maps, geo
+from common.geo import google_maps, geo
 import random, math
 import logging
 
