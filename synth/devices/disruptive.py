@@ -12,6 +12,8 @@ Configurable parameters::
         "send_network_status" : False   Disruptive sensors send a lot of these messages
         "nominal_temp" : (optional) for temperature sensors, what the nominal temp is supposed to be, e.g. -18 for a freezer. If it's an array, then chosen randomly. Created as a property too, so DP can do filters relative to it
         "nominal_temp_deviation" : (optional) the normal deviation of the temperature (choice matches above)
+        "cooling_MTBF" : (optional) mean time between failure of cooling, for temperature devices, specified as ISO8601 period (e.g. "P100D" means that on average every fridge will fail every 100 days)
+        "cooling_TTF" : (optional) mean time to fix a cooling failure
         "site_type" : (optional) a string or list which matches choice above
     }
 
@@ -27,7 +29,7 @@ Device properties created::
         "eventType" :                1         2           2        2     1="cellularStatus" every 5m  2="networkStatus" every 15m
         "connection" :               y                                    CELLULAR | OFFLINE
 
-        "site"  # A site is something like a room, or a fridge, around which multiple devices can exist, whose behaviour is correlated
+        "site"  # A site is something like a room, or a fridge, around which multiple devices can exist, whose behaviour is correlated (this only gets created if this device is not part of a model)
     }
 
 
@@ -56,6 +58,7 @@ Device properties created::
 import random
 import logging
 import time
+import isodate
 from math import sin, pi
 
 from device import Device
@@ -81,11 +84,6 @@ AV_DOOR_OPEN_MIN_TIME_S = 1 * MINS
 AV_DOOR_OPEN_SIGMA_S = 2 * MINS
 AV_DOOR_OPENS_PER_HOUR = 4
 CHANCE_OF_DOOR_LEFT_OPEN = 500  # 1 in N openings causes door to be left open for a LONG time
-
-
-COOLING_FAILURE_POSSIBLE = False    # e.g. compressor or power failure (unrelated to door events)
-COOLING_FAILURE_MTBF = 100 * DAYS
-COOLING_FAILURE_AV_TIME_TO_FIX = 3 * DAYS
 
 #      0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  <- HOURS OF DAY
 Mon = [0,  0,  0,  0,  0,  0,  0,  0,  1,  9,  7,  7,  5,  7,  6,  5,  6,  7,  1,  0,  0,  0,  0,  0] 
@@ -125,6 +123,8 @@ class Disruptive(Device):
         super(Disruptive,self).__init__(instance_name, time, engine, update_callback, context, params)
         self.sensor_type = params["disruptive"].get("sensor_type", None)
         self.site_prefix = params["disruptive"].get("site_prefix", "Fridge ")
+        if params["disruptive"].get("site_prefix", None) is not None:
+            self.set_property("site", self.site_prefix + str(Disruptive.site_count))    # This mechanism is superceded now by Models and should be removed
         if self.sensor_type is None:
             if not Disruptive.odd_site: # Alternate type
                 self.sensor_type = "temperature"
@@ -133,7 +133,6 @@ class Disruptive(Device):
             # self.sensor_type = weighted_choice([("ccon",5), ("temperature",38), ("proximity",33), ("touch",2)])
         self.set_property("sensorType", self.sensor_type)           # DT's official property for sensor type
         self.set_property("device_type", "DT_"+self.sensor_type)    # In DP demos we tend to use this property
-        self.set_property("site", self.site_prefix + str(Disruptive.site_count))
 
         if(self.sensor_type != "ccon"):
             engine.register_event_in(BATTERY_INTERVAL, self.tick_battery, self, self)
@@ -160,6 +159,11 @@ class Disruptive(Device):
         if(self.sensor_type == "proximity"):
             self.set_property("objectPresent", "PRESENT")   # Door starts closed
             self.schedule_next_presence_event()
+
+        self.cooling_mtbf = params["disruptive"].get("cooling_mtbf", None)
+        if self.cooling_mtbf:
+            self.cooling_mtbf = isodate.parse_duration(self.cooling_mtbf).total_seconds()
+        self.cooling_ttf = isodate.parse_duration(params["disruptive"].get("cooling_TTF", "P3D")).total_seconds()
 
         Disruptive.odd_site = not Disruptive.odd_site
         if not Disruptive.odd_site:
@@ -193,20 +197,26 @@ class Disruptive(Device):
 
     def tick_temperature(self, _):
         # Check for cooling failure
-        if COOLING_FAILURE_POSSIBLE:
+        if self.cooling_mtbf is not None:
             if not self.having_cooling_failure:
-                chance_of_cooling_failure = float(TEMPERATURE_INTERVAL) / COOLING_FAILURE_MTBF
+                chance_of_cooling_failure = float(TEMPERATURE_INTERVAL) / self.cooling_mtbf
                 if random.random() < chance_of_cooling_failure:
                     logging.info("Cooling failure on device "+str(self.get_property("$id")))
                     self.having_cooling_failure = True
             else:
-                chance_of_failure_ending = TEMPERATURE_INTERVAL / COOLING_FAILURE_AV_TIME_TO_FIX
+                chance_of_failure_ending = TEMPERATURE_INTERVAL / self.cooling_ttf
                 if random.random() < chance_of_failure_ending:
                     logging.info("Cooling failure fixed on device "+str(self.get_property("$id")))
+                    self.having_cooling_failure = False
 
         # Check for door open
-        peer = self.get_peer()
-        door_open = peer.get_property("objectPresent") == "NOT_PRESENT"
+        door_open = False
+        peers = self.get_peers()
+        if len(peers)==1:   # Currently we can only cope with one peer in the model (1 proximity and 1 temperature)"
+            peer = peers[0]
+            if peer.property_exists("objectPresent"):
+                door_open = peer.get_property("objectPresent") == "NOT_PRESENT"
+
         temp = self.get_temperature()
 
         if door_open or self.having_cooling_failure:
@@ -251,11 +261,9 @@ class Disruptive(Device):
                 delay = half_tail(AV_DOOR_OPEN_MIN_TIME_S, AV_DOOR_OPEN_SIGMA_S)
             self.engine.register_event_in(delay, self.tick_presence, self, self)
 
-    def get_peer(self):
-        if self.model:  # If we're running in a model, then use that to find our peer
-            peers = self.model.get_peers(self)
-            assert len(peers)==1, "So far can only cope with one peer in the model (1 proximity and 1 temperature)"
-            return peers[0]
+    def get_peers(self):
+        if self.model:  # If we're running in a model, then use that to find our peers
+            return self.model.get_peers(self)
         else:   # Otherwise default to our own inbuilt peer-finding mechanism
             logging.info("USING INBUILT MODEL TO FIND PEER")
             site = self.get_property("site", None)
@@ -267,7 +275,7 @@ class Disruptive(Device):
             for p in peers:
                 if p.get_property("$id") != me:
                     peer = p
-            return peer
+            return [peer]
 
     def set_temperature(self, temperature):  # Temperature stored internally to higher precision than reported (so we can do e.g. asymptotes) 
         self.temperature = temperature
