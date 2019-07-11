@@ -6,6 +6,6 @@ class Model(object):
 
     # noinspection PyUnusedLocal
     @abstractmethod
-    def __init__(self):
+    def __init__(self, context,params,properties):
         pass
 

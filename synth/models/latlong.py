@@ -1,7 +1,7 @@
-"""OPENING_HOURS
-   Define opening-hours"""
+"""LATLONG
+   Define latitude and longitude properties, and optionally addresses too"""
 #
-# Copyright (c) 2018 DevicePilot Ltd.
+# Copyright (c) 2019 DevicePilot Ltd.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,16 @@
 # SOFTWARE.
 
 import logging
+from common.geo import geo, google_maps
 from model import Model
 
-class Opening_hours(Model):
+class Latlong(Model):
     def __init__(self, context, params, properties):
-        pass
+
+        picker = geo.geo_pick(context, params)
+        (lon, lat) = picker.pick()
+        properties.update( { 'latitude' : lat, 'longitude' : lon } )
+
+        for name, value in picker.addresses(): 
+            properties.update( { name : value } )
+
