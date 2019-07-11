@@ -1,0 +1,21 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P14D",
+        "end_time" : null
+    },
+    "events" : [
+        { 
+            "comment" : "Commercial refrigerators in Germany",
+            "action" : {
+                "use_model" : [
+                    { "hierarchy" : "site/fridge" },
+                    { "model" : { "site" : "Site #10#" } , "properties" : { "latlong" : { "area_centre" :  "Eisenach, Germany", "area_radius" : "Aachen, Germany", "generate_addresses" : true  } } },
+                    { "model" : { "site" : "Site #10#" } , "properties" : { "store_manager_email" : "[('Lucas','Max','Oskar','Moritz','Anton','Mia','Emma','Sofia','Johanna','Klara'),'.',('Müller','Schmidt','Schneider','Fischer','Weber'),'@bechstraubel.de']" } },
+                    { "model" : { "site" : "Site #10#", "fridge" : "Fridge #4#" } , "devices" : [ { "disruptive" : { "sensor_type" : "temperature", "nominal_temp" : [-18,5], "nominal_temp_deviation" : [2,3], "site_type" : ["freezer", "fridge"], "cooling_mtbf" : "P100D", "cooling_ttf" : "P3D" }} ] }
+                ]
+            }
+        }
+    ]
+}
