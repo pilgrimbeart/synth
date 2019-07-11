@@ -24,34 +24,18 @@ Device properties created::
 """
 
 from device import Device
-from helpers.geo import geo
-from helpers.geo import google_maps
+from common.geo import geo, google_maps
 
 class Latlong(Device):
-    # Class variables
-    map_file = None
-    pp = None
-    
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Latlong,self).__init__(instance_name, time, engine, update_callback, context, params)
-        self.generate_addresses = params["latlong"].get("generate_addresses", False)
-        self.area_centre = params["latlong"].get("area_centre", None)
-        self.area_radius = params["latlong"].get("area_radius", None)
-        self.map_file = params["latlong"].get("map_file", None)
-        if (Latlong.pp is None) or (Latlong.map_file != self.map_file):  # Only load map at start, or if changed, as very expensive operation
-            Latlong.pp = geo.point_picker(self.map_file)  # Very expensive, so do only once
-            Latlong.map_file = self.map_file
 
-        area = None
-        if self.area_centre != None:
-            area = [self.area_centre, self.area_radius]
-        google_maps_key = context.get("google_maps_key", None)
-        (lon,lat) = Latlong.pp.pick_point(area, google_maps_key)
+        picker = geo.geo_pick(context, params["latlong"])
+        (lon, lat) = picker.pick()
         self.set_properties( { 'latitude' : lat, 'longitude' : lon } )
-        if self.generate_addresses:
-            for name, value in google_maps.lon_lat_to_address(lon, lat, google_maps_key).items():
-                self.set_property(name, value)
 
+        for name, value in picker.addresses():
+            self.set_property(name, value)
 
     def comms_ok(self):
         return super(Latlong,self).comms_ok()
