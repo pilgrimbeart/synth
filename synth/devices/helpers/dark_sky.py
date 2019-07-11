@@ -48,6 +48,7 @@ def set_headers():
 
 caches = {"weather" : {}}
 try:
+    logging.info("Powered by Dark Sky (tm)")    # Requirement of service to display this
     f = open(CACHE_FILE)
     caches = json.loads(f.read())
     f.close()
