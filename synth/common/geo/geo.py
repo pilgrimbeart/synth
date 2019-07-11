@@ -36,7 +36,7 @@ Image.MAX_IMAGE_PIXELS = 1000000000 # We're dealing with large images, so preven
 import numpy
 import random
 import math
-from google_maps import address_to_lon_lat
+from google_maps import address_to_lon_lat, lon_lat_to_address
 
 
 MINLON = 100000
@@ -167,6 +167,35 @@ def main():
     print "LAT:",MINLAT, MAXLAT,"DIFF",MAXLAT-MINLAT
     print "X:",MINX, MAXX,"DIFF",MAXX-MINX
     print "Y:",MINY, MAXY,"DIFF",MAXY-MINY
- 
+
+class geo_pick():
+# Slightly easier parameter-picking
+    # Class variables
+    map_file = None
+    pp = None
+
+    def __init__(self, context, params):
+        self.generate_addresses = params.get("generate_addresses", False)
+        self.area_centre = params.get("area_centre", None)
+        self.area_radius = params.get("area_radius", None)
+        self.map_file = params.get("map_file", None)
+        if (geo_pick.pp is None) or (geo_pick.map_file != self.map_file):  # Only load map at start, or if changed, as very expensive operation
+            geo_pick.pp = point_picker(self.map_file)  # Very expensive, so do only once
+            geo_pick.map_file = self.map_file
+
+        self.area = None
+        if self.area_centre != None:
+            self.area = [self.area_centre, self.area_radius]
+        self.google_maps_key = context.get("google_maps_key", None)
+
+    def pick(self):
+        (self.lon,self.lat) = geo_pick.pp.pick_point(self.area, self.google_maps_key)
+        return (self.lon,self.lat)
+
+    def addresses(self):
+        if not self.generate_addresses:
+            return []
+        return lon_lat_to_address(self.lon, self.lat, self.google_maps_key).items()
+
 if __name__ == "__main__":
     main()
