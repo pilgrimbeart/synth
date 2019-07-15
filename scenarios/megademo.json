@@ -6,14 +6,31 @@
         "end_time" : null
     },
     "events" : [
-        {   // DRUG FRIDGES
+        {
+            "comment" : "drug fridges",
             "action" : {
-                "use_model" : {
-                    "file" : "megademo_fridge_model.json"
-                }
+                "use_model" : [
+                    { "hierarchy" : "hospital/building/fridge" },
+                    { "model" : { "hospital" : "Addenbrookes" }, "devices" : [ {"weather":{}} ], "properties" : { "latitude" : 52.1730311, "longitude" : 0.1393937}},
+                    { "model" : { "hospital" : "Addenbrookes", "building" : "[('Harper','Florence','Whittaker','MRC','NIHR','Crick','Lavellier')]", "fridge" : "Fridge #25#"},
+                        "devices" : [
+                            {
+                                "disruptive" : { "sensor_type" : "temperature", "nominal_temp" : [-30,-18,5,20], "nominal_temp_deviation" : [2,2,3,8], "site_type" : ["ultra-freezer", "freezer", "fridge", "ambient"] }
+                            },
+                            {
+                                "disruptive" : { "sensor_type" : "proximity" }
+                            }
+                        ],
+                        "properties" : {
+                                "x" : "0..848",
+                                "y" : "0..651"
+                        }
+                    }
+                ]
             }
         },
-        {	// VENDING MACHINES
+        {
+            "comment" : "vending machines",
             "repeats" : 20,
             "action": {
                 "create_device" : {
@@ -30,7 +47,8 @@
                 }
             }
         },
-        {	// SUMP PUMPS
+        {
+            "comment" : "sump pumps in Holland",
             "repeats" : 10,
             "action": {
             	"create_device" : {
@@ -45,6 +63,7 @@
             }
         },
         {
+            "comment" : "sump pumps in Cardiff",
             "repeats" : 10,
             "action": {
             	"create_device" : {
@@ -58,7 +77,8 @@
                 }
             }
         },
-        {	// MOBILE DEVICES
+        {
+            "comment" : "mobile pallets in the UK",
             "repeats" : 25,
             "action": {
                 "create_device" : {
@@ -102,7 +122,8 @@
                 }
             }
         },
-        {   // BMS (SMOKE DETECTORS)
+        {
+            "comment" : "BMS - smoke detectors",
             "repeats" : 50,
             "action": {
                 "create_device" : {
@@ -138,7 +159,8 @@
                 }
             }
         },
-        {   // BMS (PV ARRAY)
+        { 
+           "comment" : "BMS - PV array",
             "repeats" : 8,
             "action" : {
                 "create_device" : {
@@ -152,7 +174,8 @@
                 }
             }
         },
-        {   // BMS (WEATHER SENSOR)
+        { 
+            "comment" : "BMS - weather sensor",
             "repeats" : 1,
             "action" : {
                 "create_device" : {
@@ -166,7 +189,8 @@
                 }
             }
         },
-        {   // BMS (LIGHT BULBS)
+        {
+            "comment" : "BMS - light bulbs",
             "repeats" : 10,
             "action" : {
                 "create_device" : {
@@ -182,7 +206,8 @@
                 }
             }
         },
-        {	// SOLAR PV ARRAY
+        {
+            "comment" : "Solar PV array in Poland",
             "repeats" : 10,
             "action" : {
                 "create_device" : {
@@ -194,7 +219,8 @@
                 }
             }
         },
-        {	// SMART METERS across India,where one vendor has a problem
+        {
+            "comment" : "SMART METERS across India,where one vendor has a problem",
             "repeats" : 50,
             "action": {
                 "create_device" : {
@@ -233,7 +259,8 @@
                 }
             }
         },
-        {	// INJECT A PROBLEM LATER INTO SMART METER
+        {
+            "comment" : "Inject a problem later into one brand of meters",
             "at" : "P7D",
              "action": {
                 "change_property" : {
@@ -243,6 +270,70 @@
                     "property_name" : "comms_tf_threshold",
                     "property_value" : 0.20 // Change uptime to 80%
                 }
+            }
+        },
+        {
+            "comment" : "Mobie trucks in LA",
+            "at" : "PT0S",
+            "repeats" : 50,
+            "interval" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "basic" : {
+                            "label_root" : "Vehicle ",
+                            "use_label_as_$id" : true
+                        },
+                        "mobile" : {
+                            "area_centre" : "Anaheim, Los Angeles, CA, USA",
+                            "area_radius" : "San Diego, CA, USA",
+                            "generate_fleet_management_metrics" : true,
+                            "dwell_h_min" : 1,
+                            "dwell_h_max" : 48
+                        },
+                        "enumerated" : {
+                            "name" : "fault",
+                            "values" : ["engine overheat", "flat battery", "fuel trouble", "flat tire", "no fault"],    // Last entry clears all faults within 24 hours
+                            "periods" : ["P80D",           "P70D",         "P80D",         "P45D",      "P1D"],
+                            "sigmas"  : ["P40D",           "P45D",         "P40D",         "P22D",      "PT0S"]
+                        },
+                        "variable" : [
+                            {
+                                "name" : "temperature_F",
+                                "timefunction" : {
+                                    "sinewave" : {
+                                        "period" : ["PT7M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
+                                        "overall_amplitude" : 25.0,
+                                        "overall_offset" : 66,
+                                        "sample_period" : "PT3H",
+                                        "randomise_phase_by" : "$id",
+                                        "precision" : 10
+                                    }
+                                }
+                            },
+                            {
+                                "name" : "event",
+                                "timefunction" : {
+                                    "events" : {
+                                        "interval" : "P60D",
+                                        "value" : "1G_shock_detected"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        { 
+            "comment" : "Commercial refrigerators in Germany with HACCP monitoring",
+            "action" : {
+                "use_model" : [
+                    { "hierarchy" : "site/fridge" },
+                    { "model" : { "site" : "Site #10#" } , "properties" : { "latlong" : { "area_centre" :  "Eisenach, Germany", "area_radius" : "Aachen, Germany", "generate_addresses" : true  } } },
+                    { "model" : { "site" : "Site #10#" } , "properties" : { "store_manager_email" : "[('Lucas','Max','Oskar','Moritz','Anton','Mia','Emma','Sofia','Johanna','Klara'),'.',('Müller','Schmidt','Schneider','Fischer','Weber'),'@bechstraubel.de']" } },
+                    { "model" : { "site" : "Site #10#", "fridge" : "Fridge #4#" } , "devices" : [ { "disruptive" : { "sensor_type" : "temperature", "nominal_temp" : [-18,5], "nominal_temp_deviation" : [2,3], "site_type" : ["freezer", "fridge"], "cooling_mtbf" : "P100D", "cooling_ttf" : "P3D" }} ] }
+                ]
             }
         }
     ]
