@@ -27,6 +27,11 @@ import random, math
 import logging
 
 
+# Because we need to cache the geo point-picker, we have two levels of hierarchy:
+# 1) Mobile behaviour may be instantiated by entirely different, unconnected groups of devices - for example mobile pallets in England and mobile trucks in LA.
+#    So we call each of these a "loc_group" and cache the (expensive) point picker and location lookups per loc_group.
+# 2) All devices in that loc_group then share that defined set of locations to visit, though they each set their own unique itinerary between locations (points[])
+
 # We gradually move from point to point, and dwell for a while at each point
 UPDATE_PERIOD_S = 60*60 # Once an hour
 UPDATE_PERIOD_H = UPDATE_PERIOD_S/(60*60)
@@ -39,44 +44,51 @@ NUMBER_OF_LOCATIONS = 10
 MPG = 8 # USA levels of fuel-efficiency!
 LATLON_TO_MILES = 88    # Very approximate conversion factor from "latlong distance in degrees" to miles!
 
+class Location_group():
+    def __init__(self, context, area_centre, area_radius):
+        self.pp = geo.point_picker()  # Very expensive, so do only once
+        area = None
+        if area_centre != None:
+            area = [area_centre, area_radius]
+        google_maps_key = context.get("google_maps_key", None)
+        self.locations = []   # Array of (lon,lat,address)
+        for L in range(NUMBER_OF_LOCATIONS):    # Choose locations devices will visit
+            while True:
+                (lon,lat) = self.pp.pick_point(area, google_maps_key)
+                address_info = google_maps.lon_lat_to_address(lon, lat, google_maps_key)
+                if ("address_postal_town" in address_info) or ("address_route" in address_info): # Only use locations which have addresses (e.g. don't accidentally pick the sea!)
+                    break
+            if "address_postal_town" in address_info:
+                addr = address_info["address_postal_town"]
+            else:
+                addr = address_info["address_route"]
+            logging.info("Location "+str(L)+" for mobile devices to visit is "+repr(addr))
+            self.locations.append( (lon,lat, addr) )
+        self.base_location = random.randrange(0, NUMBER_OF_LOCATIONS)
+    
 class Mobile(Device):
     # Class variables
-    pp = None
+    loc_groups = {}
     
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Mobile,self).__init__(instance_name, time, engine, update_callback, context, params)
         self.generate_addresses = params["mobile"].get("generate_addresses", False)
         self.area_centre = params["mobile"].get("area_centre", None)
         self.area_radius = params["mobile"].get("area_radius", None)
-        self.points_to_visit =params["mobile"].get("points_to_visit", 4)
+        self.points_to_visit = params["mobile"].get("points_to_visit", 4)
         self.fleet_mgmt = params["mobile"].get("generate_fleet_management_metrics", False)
         self.dwell_h_min = params["mobile"].get("dwell_h_min", 3)
         self.dwell_h_max = params["mobile"].get("dwell_h_max", 24*14)
         self.tire_deflation_rate = min(1.0, 1.0 - random.gauss(0.001, 0.0001))
 
-        if (Mobile.pp is None):  # Only load map at start, as very expensive operation
-            Mobile.pp = geo.point_picker()  # Very expensive, so do only once
-            area = None
-            if self.area_centre != None:
-                area = [self.area_centre, self.area_radius]
-            google_maps_key = context.get("google_maps_key", None)
-            Mobile.locations = []   # Array of (lon,lat,address)
-            for L in range(NUMBER_OF_LOCATIONS):    # Choose locations devices will visit
-                while True:
-                    (lon,lat) = Mobile.pp.pick_point(area, google_maps_key)
-                    address_info = google_maps.lon_lat_to_address(lon, lat, google_maps_key)
-                    if ("address_postal_town" in address_info) or ("address_route" in address_info): # Only use locations which have addresses (e.g. don't accidentally pick the sea!)
-                        break
-                if "address_postal_town" in address_info:
-                    addr = address_info["address_postal_town"]
-                else:
-                    addr = address_info["address_route"]
-                logging.info("Location "+str(L)+" for mobile devices to visit is "+str(addr))
-                Mobile.locations.append( (lon,lat, addr) )
-            Mobile.base_location = random.randrange(0, NUMBER_OF_LOCATIONS)
+        the_key = str(self.area_centre) + "." + str(self.area_radius)  # Needs to be unique-enough between location groups 
+        if the_key not in Mobile.loc_groups:
+            Mobile.loc_groups[the_key] = Location_group(context, self.area_centre, self.area_radius)   # Creates a new group
+        self.loc_group = Mobile.loc_groups[the_key]
 
-        self.points = []    # Array of indices into Mobile.locations[]
-        self.points.append(Mobile.base_location)   # All pallets start at the base location
+        # Choose which points this device will move between
+        self.points = []    # Array of indices into self.loc_group.locations[]
+        self.points.append(self.loc_group.base_location)   # All pallets start at the base location
         for P in range(self.points_to_visit-1):
             while True:
                 loc = random.randrange(0, NUMBER_OF_LOCATIONS)
@@ -108,8 +120,8 @@ class Mobile(Device):
 
     def update_lon_lat(self):
         (prev_lon, prev_lat) = (self.get_property_or_None("longitude"), self.get_property_or_None("latitude"))
-        (lon_from, lat_from) = Mobile.locations[self.points[self.from_point]][0:2]
-        (lon_to, lat_to) = Mobile.locations[self.points[self.to_point]][0:2]
+        (lon_from, lat_from) = self.loc_group.locations[self.points[self.from_point]][0:2]
+        (lon_to, lat_to) = self.loc_group.locations[self.points[self.to_point]][0:2]
         lon = lon_from * (1.0 - self.travel_fraction) + lon_to * self.travel_fraction
         lat = lat_from * (1.0 - self.travel_fraction) + lat_to * self.travel_fraction
         self.set_properties({ "longitude" : lon, "latitude" : lat })    # Important to update these together (some client apps don't cope well with lat/lon being split between messages, even if contemporaneous)
@@ -126,7 +138,7 @@ class Mobile(Device):
         if self.dwell_count == 0:
             self.set_property("location", None)
         else:
-            self.set_property("location", Mobile.locations[self.points[self.from_point]][2])
+            self.set_property("location", self.loc_group.locations[self.points[self.from_point]][2])
 
     def update_everything(self):
         self.update_lon_lat()
@@ -159,8 +171,8 @@ class Mobile(Device):
         self.travel_fraction = 0.0
             
         # How far to travel, and speed?
-        (lon_from, lat_from) = Mobile.locations[self.points[self.from_point]][0:2]
-        (lon_to, lat_to) = Mobile.locations[self.points[self.to_point]][0:2]
+        (lon_from, lat_from) = self.loc_group.locations[self.points[self.from_point]][0:2]
+        (lon_to, lat_to) = self.loc_group.locations[self.points[self.to_point]][0:2]
         miles = self.miles_between(lon_from, lat_from, lon_to, lat_to)
         mph = random.randrange(MPH_MIN, MPH_MAX)
         ticks_of_travel = (miles/mph) / UPDATE_PERIOD_H
