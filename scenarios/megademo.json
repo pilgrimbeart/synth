@@ -22,8 +22,8 @@
                             }
                         ],
                         "properties" : {
-                                "x" : "0..848",
-                                "y" : "0..651"
+                                "$x" : "0..848",
+                                "$y" : "0..651"
                         }
                     }
                 ]
@@ -151,8 +151,8 @@
                         "variable" : [
                             { "name" : "device_type", "value" : "smoke_alarm" },
                             { "name" : "hardware_version", "value" : [0.4,0.6,0.9,1.1,1.5] },
-                            { "name" : "x", "value" : [1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500] },
-                            { "name" : "y", "value" : [1000,1250,1500,1750,2000,2250,2500,2750,3000] },
+                            { "name" : "$x", "value" : [1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500] },
+                            { "name" : "$y", "value" : [1000,1250,1500,1750,2000,2250,2500,2750,3000] },
                             { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  //  Mountain View, California 
                         ]
                     }
@@ -198,8 +198,8 @@
                         "bulb" : { "power" : [12,20,36]},
                         "variable" : [
                             { "name" : "device_type", "value" : "bulb" },
-                            { "name" : "x", "value" : [100,150,200,250,300,350,400,450,500,550,600,650] },
-                            { "name" : "y", "value" : [100,125,150,175,200,225,250,275,300] },
+                            { "name" : "$x", "value" : [100,150,200,250,300,350,400,450,500,550,600,650] },
+                            { "name" : "$y", "value" : [100,125,150,175,200,225,250,275,300] },
                             { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  //  Mountain View, California 
                         ]
                     }
@@ -256,19 +256,6 @@
                             {   "name" : "energy", "timefunction" : { "count" : { "interval" : "PT1H" } } }
                         ]
                     }
-                }
-            }
-        },
-        {
-            "comment" : "Inject a problem later into one brand of meters",
-            "at" : "P7D",
-             "action": {
-                "change_property" : {
-                    "is_attribute" : true,
-                    "identity_property" : "vendor",
-                    "identity_value" : "Itron",
-                    "property_name" : "comms_tf_threshold",
-                    "property_value" : 0.20 // Change uptime to 80%
                 }
             }
         },
@@ -330,10 +317,23 @@
             "action" : {
                 "use_model" : [
                     { "hierarchy" : "site/fridge" },
-                    { "model" : { "site" : "Site #10#" } , "properties" : { "latlong" : { "area_centre" :  "Eisenach, Germany", "area_radius" : "Aachen, Germany", "generate_addresses" : true  } } },
+                    { "model" : { "site" : "Site #10#" } , "properties" : { "haccp" : true, "latlong" : { "area_centre" :  "Eisenach, Germany", "area_radius" : "Aachen, Germany", "generate_addresses" : true  } } },
                     { "model" : { "site" : "Site #10#" } , "properties" : { "store_manager_email" : "[('Lucas','Max','Oskar','Moritz','Anton','Mia','Emma','Sofia','Johanna','Klara'),'.',('Müller','Schmidt','Schneider','Fischer','Weber'),'@bechstraubel.de']" } },
                     { "model" : { "site" : "Site #10#", "fridge" : "Fridge #4#" } , "devices" : [ { "disruptive" : { "sensor_type" : "temperature", "nominal_temp" : [-18,5], "nominal_temp_deviation" : [2,3], "site_type" : ["freezer", "fridge"], "cooling_mtbf" : "P100D", "cooling_ttf" : "P3D" }} ] }
                 ]
+            }
+        },
+        {
+            "comment" : "Inject a problem later into one brand of meters",
+            "at" : "P7D",
+             "action": {
+                "change_property" : {
+                    "is_attribute" : true,
+                    "identity_property" : "vendor",
+                    "identity_value" : "Itron",
+                    "property_name" : "comms_tf_threshold",
+                    "property_value" : 0.20 // Change uptime to 80%
+                }
             }
         }
     ]
