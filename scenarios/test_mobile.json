@@ -1,0 +1,12 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P360D",
+        "end_time" : "now"
+    },
+    "events" : [
+        { "repeats" : 2, "action": { "create_device" : { "functions" : { "mobile" : { "area_centre" : "Rugby, UK", "area_radius" : "Boston, UK" } } } } },
+        { "repeats" : 2, "action": { "create_device" : { "functions" : { "mobile" : { "area_centre" : "Elverum, Norway", "area_radius" : "Stockholm, Sweden" } } } } }
+    ]
+}
