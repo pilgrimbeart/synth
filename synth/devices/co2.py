@@ -13,6 +13,10 @@ Device properties created::
     {
         "co2_ppm"
     }
+
+
+    Good summary of limits for CO2 here: https://www.engineeringtoolbox.com/co2-comfort-level-d_1024.html
+
 """
 import random
 import logging
@@ -23,18 +27,17 @@ from device import Device
 CO2_POLL_INTERVAL_S = 60 * 15
 
 MIN_CO2_LEVEL_PPM = 400     # Should be based on year!
-INTOLERABLE_CO2_LEVEL_PPM = 1000
-CO2_RISE_PER_HOUR = 400
+MAX_CO2_LEVEL_PPM = 5000
 
-CO2_CHANGE_PER_INTERVAL = CO2_RISE_PER_HOUR * (CO2_POLL_INTERVAL_S / (60.0*60))
+COUPLING = 0.1  # The bigger this is, the quicker CO2 rises and falls
 
 def sensor_noise(n):
-    return int(n - 10 + random.random() * 20)
+    noise_level = MIN_CO2_LEVEL_PPM / 10.0
+    return int(n - noise_level/2 + random.random() * noise_level)
 
 class Co2(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Co2,self).__init__(instance_name, time, engine, update_callback, context, params)
-        self.set_property("device_type", "co2")
         self.co2_ppm = sensor_noise(MIN_CO2_LEVEL_PPM)
         self.engine.register_event_in(CO2_POLL_INTERVAL_S, self.tick_co2, self, self)
 
@@ -66,11 +69,8 @@ class Co2(Device):
         occupancy_fraction = self.measure_occupancy()
         # logging.info("occupancy_fraction for device "+str(self.get_property("$id"))+" is "+str(occupancy_fraction))
 
-        if occupancy_fraction == 0.0:
-            self.co2_ppm -= CO2_CHANGE_PER_INTERVAL
-        else:
-            self.co2_ppm += occupancy_fraction * CO2_CHANGE_PER_INTERVAL
-        self.co2_ppm = max(self.co2_ppm, MIN_CO2_LEVEL_PPM)
+        target = MIN_CO2_LEVEL_PPM + (MAX_CO2_LEVEL_PPM - MIN_CO2_LEVEL_PPM) * occupancy_fraction
+        self.co2_ppm = (self.co2_ppm * (1-COUPLING)) + (target * COUPLING)
         self.set_property("co2_ppm", sensor_noise(self.co2_ppm))
         self.engine.register_event_in(CO2_POLL_INTERVAL_S, self.tick_co2, self, self)
 
