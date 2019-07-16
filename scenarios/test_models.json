@@ -1,0 +1,23 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P1D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "action" : {
+                "use_model" : [
+                    { "hierarchy" : "a/b/c" },
+                    { "model" : { } , "properties" : { "all levels" : true } },
+                    { "model" : { "a" : "a1" }, "properties" : { "is_a" : true, "is_1" : true}},
+                    { "model" : { "a" : "a2" }, "properties" : { "is_a" : true, "is_2" : true}},
+                    { "model" : { "a" : "a1" }, "devices" : [ { "variable" : { "name" : "place_in_hierarchy", "value" : "a1"} } ] },
+                    { "model" : { "a" : "a1", "b" : "b1" }, "devices" : [ { "variable" : { "name" : "place_in_hierarchy", "value" : "a1/b1"} } ] },
+                    { "model" : { "a" : "a1", "b" : "b1", "c" : "c1" }, "devices" : [ { "variable" : { "name" : "place_in_hierarchy", "value" : "a1/b1/c1"} } ] }
+                ]
+            }
+        }
+    ]
+}
