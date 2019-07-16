@@ -7,10 +7,11 @@
       "hierarchy" : "company/town/floor/zone" 
       "model" : { "company" : "Harrods", "town" : "London", "floor" : 0, "zone" : "Admin" }
    
-    Each model element matches one or more of the levels of the hierarchy (and any levels that it doesn't
-    declare are considered to be wildcards.
+    Each model element matches zero or more of the levels of the hierarchy
+        . any levels that it doesn't declare are considered to match 
+        . if you declare an empty model:   "model" : {}   then this will apply to everything in the model
 
-    Each model element may define:
+    Each model element will also define at least one of:
         "devices" - devices to be instantiated at this level of the model (i.e. the same as the "functions" element in a "create_device" action of a normal scenario file)
         "properties" - a set of property (name : value) pairs, or name : {parameter} pairs (the latter runs functions in model/ to perform 'smart' property creation)
 
@@ -165,7 +166,7 @@ class Model():
                     self.render_smart_properties(e)
                     self.models.append(e)
             else:
-                assert "Element of model file "+filepath+" contains neither hierarchy or model: "+str(elem)
+                assert "Element of model file contains neither hierarchy or model: "+repr(elem)
 
     def enact_models(self, models):
         for m in models:
