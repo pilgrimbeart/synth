@@ -131,6 +131,7 @@ INCIDENTCONFIG_ENDPOINT = "/incidentConfigs"    # UI calls these "event configur
 NOTIFICATION_ENDPOINT = "/notifications"        # UI calls these "actions"
 DEVICE_ENDPOINT = "/devices"
 MAX_POST_SIZE_BYTES = 500000        # AWS ingestion limit is actually 1MB but even half of that is pretty massive
+BULK_UPLOAD_DELAY_S = 10 
 
 # Suppress annoying Requests debug
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -178,6 +179,8 @@ def upload_to_aws_bucket(bucket_name, account_key, local_filepath):
     bucket = s3.Bucket(bucket_name)
     bucket.upload_file(zipped, k)
     os.remove(zipped)
+
+    time.sleep(BULK_UPLOAD_DELAY_S) # Give time for DP lambdas to pick-up point file so don't force lambda to merge insane numbers of point files
 
 def set_headers(token):
     headers = {}
