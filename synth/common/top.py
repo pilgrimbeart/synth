@@ -1,3 +1,6 @@
+# "TOP" means the last-known value of each property of each device.
+# One use for this is so that we can set the type of each property explicitly after bulk-uploading to DevicePilot
+# NOTE: Any property can occasionally have a value of None (null), from which the type can't be inferred. So we need to explicitly exclude any Nones from our "top"
 
 class top():
     def __init__(self):
@@ -23,7 +26,9 @@ class top():
                 if new_ts >= existing_ts:   # Only update if timestamp is newer
                     existing_props[new_prop] = (new_ts, new_value)
 
-        self.top_properties.update(new_properties)
+        for (k,v) in new_properties.iteritems():    # Update top, except for null values (see NOTE above)
+            if v != None:
+                self.top_properties[k] = v
 
     def get(self):
         """Return a list of latest property-values by device""" 
