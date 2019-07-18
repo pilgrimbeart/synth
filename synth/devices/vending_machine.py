@@ -6,7 +6,7 @@ Simulates a vending machine.
 Configurable parameters::
 
     {
-        "product_catalogue" : (optional) [ "name" : "Mars Bar", "price" : 0.80, "lifetime" : "P1000D", ... ]
+            "product_catalogue" : (optional) [ "name" : "Mars Bar", "price" : 0.80, "category" : "snack", "lifetime" : "P1000D", ... ]
     }
 
 Device properties created::
@@ -18,7 +18,7 @@ Device properties created::
 """
 
 # NOTE: Here we represent cash in CENTS (or whatever, not dollars) to avoid the many perils of floating-point
-# Machines have "positions" which start at "10" top right. A "tray" in vending-machine parlance is a whole row of positions (but we don't use that concept here)
+# Machines have "positions" (a "tray" in vending-machine parlance is a whole row of positions but we don't use that concept here)
 
 from device import Device
 import random
@@ -33,8 +33,8 @@ HEARTBEAT_INTERVAL = 1 * DAYS
 max_stock_per_position = 10
 
 max_vending_interval_S = 6 * HOURS
-min_replenish_interval_S = 7 * DAYS
-max_replenish_interval_S = 30 * DAYS
+min_replenish_interval_S = 1 * DAYS
+max_replenish_interval_S = 14 * DAYS
 
 expiry_check_interval = 1 * HOURS
 
@@ -71,9 +71,6 @@ default_product_catalogue = [
     { "name" : "Crispy salad sandwich (Freshserve)",    "price" : 230,  "category" : "sandwich", "lifetime" : 1 * DAYS }
     ]
 
-
-def position_name(r,c):
-    return "position_"+chr(ord("1")+r)+chr(ord("0")+c)
 
 def create_2d_array(rows, columns):
     return [[0 for c in range(columns)] for r in range(rows)]
@@ -142,6 +139,10 @@ class Vending_machine(Device):
         super(Vending_machine,self).close()
 
     # Private methods
+    def position_name(self, r,c): # Allows us to use different naming conventions for the positions
+        #   return "position_" + chr(ord("1")+r) + chr(ord("0")+c)   Top left is "10"
+        return "position_" + str(1 + r * self.machine_columns + c)
+
     def get_level(self, r,c):
         return self.stock_level[r][c]
 
@@ -175,14 +176,14 @@ class Vending_machine(Device):
         c = Vending_machine.myRandom.randrange(0,self.machine_columns)
         level = self.get_level(r,c)
         if level < 1:
-            self.set_property("event_log", "Attempt to vend from empty " + position_name(r,c), always_send=True)
+            self.set_property("event_log", "Attempt to vend from empty " + self.position_name(r,c), always_send=True)
         elif self.past_sellby_date(r,c):
-            self.set_property("event_log", "Attempt to vend with goods past sell-by date from " + position_name(r,c), always_send=True)
+            self.set_property("event_log", "Attempt to vend with goods past sell-by date from " + self.position_name(r,c), always_send=True)
         elif not self.allowed_to_vend():
             self.set_property("event_log", "Attempt to vend whilst in " + alerts[self.current_alert]["alert"] + " condition")
         else:
             self.set_level(r,c,level-1)
-            self.set_property("vend_event_position", position_name(r,c))
+            self.set_property("vend_event_position", self.position_name(r,c))
             product = self.product_catalogue[self.product_number_in_position[r][c]]
             self.set_property("vend_event_product", product["name"])
             self.set_property("vend_event_category", product["category"])
@@ -253,13 +254,13 @@ class Vending_machine(Device):
         for r in range(self.machine_rows):
             for c in range(self.machine_columns):
                 if self.past_sellby_date(r,c):
-                    self.set_property("event_log", "Disposed of expired food in "+position_name(r,c), always_send=True)
+                    self.set_property("event_log", "Disposed of expired food in "+self.position_name(r,c), always_send=True)
                     self.set_level(r,c, 0)
-                if Vending_machine.myRandom.random() > 0.5:    # 50% chance of restocking any individual position 
+                if Vending_machine.myRandom.random() > 0.8:    # Chance of restocking any individual position 
                     if self.get_level(r,c) < max_stock_per_position:
-                        self.set_property("event_log", "Restocking "+position_name(r,c), always_send=True)
+                        self.set_property("event_log", "Restocking "+self.position_name(r,c), always_send=True)
                         self.set_level(r,c, max_stock_per_position)
-                        # self.set_property(position_name(r,c)+"_event_restock", True, always_send=True)
+                        # self.set_property(self.position_name(r,c)+"_event_restock", True, always_send=True)
                         self.restock_time[r][c] = self.engine.get_now()
         self.update_available_positions()
         self.set_property("event_log", "Emptying/restocking cashbox", always_send=True)
