@@ -256,7 +256,7 @@ class Vending_machine(Device):
                 if self.past_sellby_date(r,c):
                     self.set_property("event_log", "Disposed of expired food in "+self.position_name(r,c), always_send=True)
                     self.set_level(r,c, 0)
-                if Vending_machine.myRandom.random() > 0.8:    # Chance of restocking any individual position 
+                if Vending_machine.myRandom.random() < 0.9:    # Chance of restocking any individual position 
                     if self.get_level(r,c) < max_stock_per_position:
                         self.set_property("event_log", "Restocking "+self.position_name(r,c), always_send=True)
                         self.set_level(r,c, max_stock_per_position)
