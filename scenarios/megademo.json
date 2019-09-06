@@ -7,6 +7,19 @@
     },
     "events" : [
         {
+            "comment" : "notification testing",
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : [
+                            { "name" : "sinewave", "timefunction" : { "sinewave" : { "period" : "PT15M" } } },
+                            { "name" : "device_type", "value" : "test" }
+                        ]
+                    }
+                }
+            }
+        },
+        {
             "comment" : "drug fridges",
             "action" : {
                 "use_model" : [
