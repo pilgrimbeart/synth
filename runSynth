@@ -5,6 +5,6 @@ echo $command
 pkill -f "$command"
 nohup $command >/dev/null 2>&1 &
 echo "tail -f " ../synth_logs/$1.out
-echo "(You can press ^C safely any time to stop monitoring)"
-sleep 1
-tail -f ../synth_logs/$1.out
+echo "(^C to stop monitoring - process will continue)"
+sleep 3
+tail -c+0 -f ../synth_logs/$1.out
