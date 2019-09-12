@@ -147,6 +147,7 @@ debug_queue = False
 
 merged_posts = 0
 
+DEFAULT_DYNAMO_TABLE = "accounts-production"
 DEFAULT_AWS_BUCKET_NAME = "ingest-production"
 
 DO_NOT_MERGE_PROPERTIES = { "latitude" : None, "longitude" : None }   # The trouble with merging these is that if the number of merged items gets too long, they could be split between messages, and NO-ONE expects lat & lon to be updated in different messages!
@@ -157,17 +158,27 @@ def gzip_file(filepath):
         shutil.copyfileobj(f_in, f_out)
     return dest_filepath
 
-def upload_to_aws_bucket(bucket_name, account_key, local_filepath):
+def upload_to_aws_bucket(dynamo_table, bucket_name, account_key, local_filepath):
+    logging.info("upload_to_aws_bucket(" + dynamo_table + "," + bucket_name + "," + account_key + "," + local_filepath + ")")
     zipped = gzip_file(local_filepath)
     filename = os.path.split(zipped)[1] # Just the filename
     s3 = boto3.resource("s3")
     (key,account_name) = account_key.split("/") # account_name acts as a double-check to make it really difficult to accidentally provide the wrong acc_ code
     table_name = key[4:]    # without the acc_ underscore
+    logging.info("table_name = "+table_name)
 
     dynamo = boto3.resource("dynamodb")
-    table = dynamo.Table(name="accounts-production")
+    table = dynamo.Table(dynamo_table)
     response = table.get_item(Key = {"id" : table_name})
-    actual_an = response["Item"]["name"]
+    if "Item" not in response:
+        logging.error(account_key + " not found in the table " + dynamo_table)
+        logging.error(str(response))
+        assert False
+    try:
+        actual_an = response["Item"]["name"]
+    except:
+        logging.error(str(response))
+        raise
     if account_name == actual_an:
         logging.info("Account name verified as '"+str(account_name)+"'")
     else:
@@ -308,12 +319,13 @@ class Devicepilot(Client):
         
         assert "aws_dp_account" in self.params, "Must define aws_dp_account parameter of DevicePilot client in order to use bulk upload feature"
         account_key = self.params["aws_dp_account"]
+        dynamo_table = self.params.get("aws_dynamo_table", DEFAULT_DYNAMO_TABLE)
         aws_bucket = self.params.get("aws_dp_bucket", DEFAULT_AWS_BUCKET_NAME)
 
         total_events = 0
         for count, file_path in enumerate(file_list):
             logging.info("Bulk uploading "+file_path+" ("+str(count+1)+"/"+str(len(file_list))+") to bucket "+str(aws_bucket))
-            upload_to_aws_bucket(aws_bucket, account_key, file_path)
+            upload_to_aws_bucket(dynamo_table, aws_bucket, account_key, file_path)
 
     def send_top(self):
         """Send top (latest) value of all properties on all devices to the client"""
