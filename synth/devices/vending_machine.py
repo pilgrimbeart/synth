@@ -182,6 +182,7 @@ class Vending_machine(Device):
         elif not self.allowed_to_vend():
             self.set_property("event_log", "Attempt to vend whilst in " + alerts[self.current_alert]["alert"] + " condition")
         else:
+            self.start_property_group() # -->
             self.set_level(r,c,level-1)
             self.set_property("vend_event_position", self.position_name(r,c))
             product = self.product_catalogue[self.product_number_in_position[r][c]]
@@ -189,6 +190,7 @@ class Vending_machine(Device):
             self.set_property("vend_event_category", product["category"])
             self.set_property("vend_event_price", self.price(r,c))
             self.accept_payment(self.catalogue_item(r,c)["price"])
+            self.end_property_group()   # <--
         self.engine.register_event_in(Vending_machine.myRandom.random()*max_vending_interval_S, self.tick_vending_machine_vend, self, self)
 
     def tick_vending_machine_replenish(self, _):

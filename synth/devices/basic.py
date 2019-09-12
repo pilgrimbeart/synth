@@ -50,6 +50,7 @@ class Basic(Device):
         self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down).
         logging.info("Created device " + str(Basic.device_number+1) + " : " + self.properties["$id"])
         Basic.device_number = Basic.device_number + 1
+        self.in_property_group = False
         
     def external_event(self, event_name, arg):
         logging.info("Received external event "+event_name+" for device "+str(self.properties["$id"]))
@@ -117,7 +118,10 @@ class Basic(Device):
         new_props = { prop_name : value, "$id" : self.properties["$id"], "$ts" : timestamp }
         self.properties.update(new_props)
         if changed or always_send:
-            self.do_comms(new_props, timestamp = timestamp)
+            if self.in_property_group:
+                self.property_group.update(new_props)
+            else:
+                self.do_comms(new_props, timestamp = timestamp)
 
     def set_properties(self, new_props):
         np = new_props.copy()
@@ -125,3 +129,15 @@ class Basic(Device):
         self.properties.update(np)
         self.do_comms(np)    # TODO: Suppress if unchanged
 
+    def start_property_group(self):
+        """Mark the beginning of a group of set_property() updates, which we want to group as a single message"""
+        assert self.in_property_group == False
+        self.in_property_group = True
+        self.property_group = {}
+
+    def end_property_group(self):
+        assert self.in_property_group == True
+        self.do_comms(self.property_group)
+
+        self.in_property_group = False
+        self.property_group = {}
