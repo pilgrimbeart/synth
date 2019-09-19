@@ -1,0 +1,35 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "comment" : "weather station in north Sweden",
+            "action": {
+            	"create_device" : {
+                    "functions" : {
+                        "latlong" : { "generate_addresses" : true, "area_centre" : "Glimavagen 3-1, 122 40 Enskede, Sweden", "area_radius" : "Olympiaplan, Lingvagen, Enskede, Sweden" },
+                        "weather" : {},
+                        "variable" : {"name" : "device_type", "value" : "weather"}
+                    }
+                }
+            }
+        },
+        {
+            "comment" : "weather station in Malmo, southern Sweden",
+            "action": {
+            	"create_device" : {
+                    "functions" : {
+                        "latlong" : { "generate_addresses" : true, "area_centre" : "Ribersborg, Malmo, Sweden", "area_radius" : "Fridhem, Malmo, Sweden" },
+                        "weather" : {},
+                        "variable" : {"name" : "device_type", "value" : "weather"}
+                    }
+                }
+            }
+        }
+    ]
+}
+

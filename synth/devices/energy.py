@@ -65,8 +65,11 @@ class Energy(Device):
 
         kW = int(100 * kW) / 100.0   # Round
         kWh = int(100 * kWh) / 100.0
+
+        self.start_property_group() # -->
         self.set_property("kW", kW)
         self.set_property("kWh", kWh)
         self.set_property("occupied", not self.get_property("occupied"))    # !!!!!!!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
+        self.end_property_group() # <--
         self.engine.register_event_in(ENERGY_READING_INTERVAL_S, self.tick_reading, self, self)
 
