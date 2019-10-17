@@ -1,0 +1,26 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "repeats" : 100,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "cluster" : {},
+                        "latlong" : {
+                            "generate_addresses" : true,
+                            "area_centre" : "Southbank Centre, London, UK",
+                            "area_radius" : "Queen Elizabeth Olympic Park, London, UK"
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
+
