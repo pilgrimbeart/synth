@@ -10,13 +10,16 @@ import time
 t86 =          [0,  0,  0,  0,  0,  0,  0,  1,  9,  9,  7,  7,  5,  7,  6,  5,  6,  7,  8,  1,  0,  0,  0,  0] 
 t95 =          [0,  0,  0,  0,  0,  0,  0,  0,  1,  9,  7,  7,  5,  7,  6,  5,  6,  7,  1,  0,  0,  0,  0,  0] 
 clo =          [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
+rushhour =     [1,  0,  0,  0,  0,  0,  2,  4,  9,  6,  4,  2,  2,  3,  2,  2,  4,  6,  9,  8,  6,  5,  4,  2]
+daytime =      [0,  0,  0,  0,  0,  0,  0,  2,  3,  4,  5,  5,  5,  5,  5,  4,  5,  6,  5,  4,  3,  2,  1,  1]
 
 #               Mon,Tue,Wed,Thu,Fri,Sat,Sun]
 patterns = {
         "nine_to_five" :    [t95,t95,t95,t95,t95,clo,clo],
         "eight_to_six" :    [t86,t86,t86,t86,t86,clo,clo],
         "six_day" :         [t95,t95,t95,t95,t95,t95,clo],
-        "seven_day":        [t95,t95,t95,t95,t95,t95,t95]
+        "seven_day":        [t95,t95,t95,t95,t95,t95,t95],
+        "rushhour":         [rushhour, rushhour, rushhour, rushhour, rushhour, daytime, daytime]
 }
 
 def chance_of_occupied(epoch, pattern_name = "nine_to_five"):
