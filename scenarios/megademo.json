@@ -93,7 +93,7 @@
         },
         {
             "comment" : "mobile pallets in the UK",
-            "repeats" : 25,
+            "repeats" : 100,
             "action": {
                 "create_device" : {
                     "functions" : {
