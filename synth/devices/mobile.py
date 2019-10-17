@@ -1,7 +1,7 @@
 """
 mobile
 =======
-Devices which move in a predictable way
+Devices which (are supposed to) move in a predictable way
 
 Configurable parameters::
 
@@ -26,6 +26,10 @@ from common.geo import google_maps, geo
 import random, math
 import logging
 
+MINUTES = 60
+HOURS = MINUTES * 60
+DAYS = HOURS * 24
+WEEKS = DAYS * 7
 
 # Because we need to cache the geo point-picker, we have two levels of hierarchy:
 # 1) Mobile behaviour may be instantiated by entirely different, unconnected groups of devices - for example mobile pallets in England and mobile trucks in LA.
@@ -33,13 +37,19 @@ import logging
 # 2) All devices in that loc_group then share that defined set of locations to visit, though they each set their own unique itinerary between locations (points[])
 
 # We gradually move from point to point, and dwell for a while at each point
-UPDATE_PERIOD_S = 60*60 # Once an hour
-UPDATE_PERIOD_H = UPDATE_PERIOD_S/(60*60)
+UPDATE_PERIOD_S = 1 * HOURS # Once an hour
+UPDATE_PERIOD_H = UPDATE_PERIOD_S/HOURS
 MPH_MIN = 5
 MPH_MAX = 70
 SEND_AT_LEAST_EVERY = 99999999999   # Even when not moving, send an update at least this often (large number for never)
 
 NUMBER_OF_LOCATIONS = 10
+
+DEFAULT_POINTS_TO_VISIT = 4
+DEFAULT_MIN_DWELL_H = 3
+DEFAULT_MAX_DWELL_H = 24*14
+DEFAULT_STUCK_IN_TRANSIT_MTBF = 1 * WEEKS   # amount of travel time, not elapsed time
+DEFAULT_STUCK_IN_TRANSIT_RECOVERY_DURATION = 1 * WEEKS
 
 MPG = 8 # USA levels of fuel-efficiency!
 LATLON_TO_MILES = 88    # Very approximate conversion factor from "latlong distance in degrees" to miles!
@@ -52,7 +62,7 @@ class Location_group():
             area = [area_centre, area_radius]
         google_maps_key = context.get("google_maps_key", None)
         self.locations = []   # Array of (lon,lat,address)
-        for L in range(NUMBER_OF_LOCATIONS):    # Choose locations devices will visit
+        for L in range(NUMBER_OF_LOCATIONS):    # Choose the locations that any devices in this loc group can visit
             while True:
                 (lon,lat) = self.pp.pick_point(area, google_maps_key)
                 address_info = google_maps.lon_lat_to_address(lon, lat, google_maps_key)
@@ -75,10 +85,13 @@ class Mobile(Device):
         self.generate_addresses = params["mobile"].get("generate_addresses", False)
         self.area_centre = params["mobile"].get("area_centre", None)
         self.area_radius = params["mobile"].get("area_radius", None)
-        self.points_to_visit = params["mobile"].get("points_to_visit", 4)
+        self.points_to_visit = params["mobile"].get("points_to_visit", DEFAULT_POINTS_TO_VISIT)
         self.fleet_mgmt = params["mobile"].get("generate_fleet_management_metrics", False)
-        self.dwell_h_min = params["mobile"].get("dwell_h_min", 3)
-        self.dwell_h_max = params["mobile"].get("dwell_h_max", 24*14)
+        self.dwell_h_min = params["mobile"].get("dwell_h_min", DEFAULT_MIN_DWELL_H) # "dwell" is how long an asset dwells at each target location
+        self.dwell_h_max = params["mobile"].get("dwell_h_max", DEFAULT_MAX_DWELL_H)
+        self.stuck_in_transit_mtbf = params["mobile"].get("stuck_in_transit_mtbf", DEFAULT_STUCK_IN_TRANSIT_MTBF)
+        self.stuck_in_transit_recovery_duration = params["mobile"].get("stuck_in_transit_recovery_duration", DEFAULT_STUCK_IN_TRANSIT_RECOVERY_DURATION)
+        self.stuck_in_transit = False
         self.tire_deflation_rate = min(1.0, 1.0 - random.gauss(0.001, 0.0001))
 
         the_key = str(self.area_centre) + "." + str(self.area_radius)  # Needs to be unique-enough between location groups 
@@ -145,18 +158,31 @@ class Mobile(Device):
         self.update_moving_and_location()
 
     def tick_update_position(self, _):
-        if self.dwell_count > 0:    # Stationary
+        if self.dwell_count > 0:    # Stationary at an official Location 
             if (self.dwell_count % SEND_AT_LEAST_EVERY)==0:
                 self.update_lon_lat()
             self.dwell_count -= 1
             if self.dwell_count == 0:   # About to move
                 self.update_everything()
-        else:                       # Moving
-            self.travel_fraction += self.travel_rate
-            if self.travel_fraction <= 1.0:
-                self.update_lon_lat()
-            else:   # Reached destination
-                self.prepare_new_journey((self.from_point + 1) % self.points_to_visit, (self.to_point + 1) % self.points_to_visit)
+        else:                       # In transit (should be moving)
+            if not self.stuck_in_transit:
+                if self.stuck_in_transit_mtbf is not None:
+                    if random.random() < float(UPDATE_PERIOD_S) / self.stuck_in_transit_mtbf:
+                        logging.info(self.get_property("$id")+" is now stuck in transit")
+                        self.stuck_in_transit = True
+            else:   # IS stuck in transit
+                if random.random() < float(UPDATE_PERIOD_S) / self.stuck_in_transit_recovery_duration:
+                    logging.info(self.get_property("$id")+" is now unstuck and resuming transit")
+                    self.stuck_in_transit = False
+
+
+            if not self.stuck_in_transit:
+                self.travel_fraction += self.travel_rate
+                if self.travel_fraction <= 1.0:
+                    self.update_lon_lat()
+                else:   # Reached destination
+                    self.prepare_new_journey((self.from_point + 1) % self.points_to_visit, (self.to_point + 1) % self.points_to_visit)
+
         if self.fleet_mgmt:
             tp = self.get_property("tire_pressure_psi")
             if tp < 25:
