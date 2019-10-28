@@ -29,7 +29,8 @@ CACHE_FILE = "../synth_logs/dark_sky_cache.txt"
 KEY_FILE = "../synth_accounts/default.json"
 API_DOMAIN = "api.darksky.net"
 
-HOUR = 60*60
+HOUR = 60 * 60
+DAY = HOUR * 24
 
 if __name__ == "__main__":
     CACHE_FILE = "../../../" + CACHE_FILE
@@ -75,6 +76,9 @@ def round_time(epoch_seconds):
     # Round time to hourly resolution (so if multiple sim runs are done in quick succession, and with timing relative to real time, we don't do lots of lookups for times just a few minutes apart)
     return int(epoch_seconds/HOUR) * HOUR
 
+def round_angle(angle):
+    return int(angle * 1000) / 1000.0   # 3 decimal places is plenty for weather (about 100m)
+
 def extract_and_cache(DS_results, latitude, longitude, epoch_seconds=None):
 # Dark Sky returns a standard set of properties both for its "current" reading, and for hourly readings
 # On any Time Machine request, it returns a days-worth of hourly readings, so by caching these we
@@ -87,10 +91,11 @@ def extract_and_cache(DS_results, latitude, longitude, epoch_seconds=None):
 
     cache_key = str((latitude, longitude, t))
     result = {  # We asked for SI units, so...
-        "temperature" : DS_results.get("temperature", 0.0), # C
+        "external_temperature" : DS_results.get("temperature", 0.0), # C
         "wind_speed" : DS_results.get("windSpeed", 0.0), # m/s
         "precipitation_intensity" : DS_results.get("precipIntensity", 0.0), # mm/hour
-        "precipitation_probability" : DS_results.get("precipProbability", 0.0) # 0..1
+        "precipitation_probability" : DS_results.get("precipProbability", 0.0), # 0..1
+        "cloud_cover" : DS_results.get("cloudCover", 0.5)   # 0..1
         }
 
     add_to_cache("weather", cache_key, result)
@@ -98,6 +103,8 @@ def extract_and_cache(DS_results, latitude, longitude, epoch_seconds=None):
 
 def get_weather(latitude, longitude, epoch_seconds):
     epoch_seconds = round_time(epoch_seconds)
+    latitude = round_angle(latitude)
+    longitude = round_angle(longitude)
     cache_key = str((latitude, longitude, epoch_seconds))
     if cache_key in caches["weather"]:
         return caches["weather"][cache_key]
@@ -105,7 +112,7 @@ def get_weather(latitude, longitude, epoch_seconds):
     logging.info("Looking up " + cache_key + " in Dark Sky")
 
     conn = httplib.HTTPSConnection(API_DOMAIN)
-    URL = "/forecast/"+str(account_key)+"/"+str(latitude)+","+str(longitude)+","+str(epoch_seconds)+"?units=si"
+    URL = "/forecast/"+str(account_key)+"/"+str(latitude)+","+str(longitude)+","+str(epoch_seconds)+"?units=si&exclude=minutely,daily,flags"    # Using exclude apparently makes it a bit faster?
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
     result = resp.read()
@@ -124,11 +131,10 @@ def get_weather(latitude, longitude, epoch_seconds):
 def main():
     t = 1552898857  # 08:47 on 18/03/2019
     (lat, lon) = (52.2053, 0.1218)  # Cambridge UK
-    # caches["weather"] = {}  # Stop caching during testing
-    result = get_weather(lat, lon, t)
-    print "get_weather returned ", result
-    result = get_weather(lat, lon, t+HOUR)
-    print "an hour later, get_weather returned ", result
+    caches["weather"] = {}  # Stop caching during testing
+    for h in range(48):
+        result = get_weather(lat, lon, t + h * HOUR)
+        print "get_weather returned ", result
  
 if __name__ == "__main__":
     main()
