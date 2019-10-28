@@ -115,6 +115,7 @@ def enumerate_model_counters(struc):
     for this_key in the_keys:
         # Decode it (correct format is "*#N#*" where * is anything or nothing
         parts = struc["model"][this_key].split("#")
+        assert len(parts) == 3, "Incorrect format of enumerated counter (should be e.g. name#10#) : "+struc["model"][this_key]
         front_parts[this_key] = parts[0]
         totals[this_key] = int(parts[1])
         back_parts[this_key] = parts[2]
@@ -173,7 +174,9 @@ class Model():
             if "devices" in m:
                 properties = self.collect_properties(self.find_matching_models(m))
                 number = m.get("count", 1)
+                assert type(m["devices"]) == list, "This should be a [{'list':{}}, {'of':{}}, {'dicts':{}}]  :  "+str(m["devices"])
                 for device_spec in m["devices"]:
+                    assert type(device_spec) == dict, "This should be a {dict} : "+str(device_spec)
                     for count in range(number):
                         device = self.create_device(device_spec)
                         device.model = self
@@ -230,6 +233,10 @@ class Model():
         return peers
 
     def get_peers_and_below(self, device):
+        # Should perhaps be called "get_peers_and_above"!
+        # Finds other devices whose model hiearchy matches this device's, insofar as the others define the hierarchy
+        # In other words, if other devices only specify one of the hierarchy levels, but in that they match this device, then return the device
+        # So for example if a weather device defines "site=X" and you call this function from a device which also defines "site=X" (whatever other model hierarchy levels it defines), it will match
         desired = device.model_spec
         devs = []
         for d in self.devices:
