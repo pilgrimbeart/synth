@@ -353,8 +353,8 @@
                     { "model" : { "customer" : "Boots" },                                                                       "functions" : [ "opening_hours" ] },
                     { "model" : { "customer" : "Boots", "site" : "Cambridge" },                                                 "properties" : { "latitude" : 52.206839, "longitude" : 0.120750 } },
                     { "model" : { "customer" : "Boots", "site" : "Cambridge" },                                                 "devices" : [ {"aggregate" : { "numbers" : ["kW", "temperature"], "booleans" : ["occupied"]} } ] },
-                    { "model" : { "customer" : "Boots", "site" : "Cambridge"},                                                  "devices" : [ {"weather" : {}} , { "energy" : { "opening_times" : "nine_to_five"}} ] },
-                    { "model" : { "customer" : "Boots", "site" : "Cambridge", "floor" : "Ground Floor", "zone" : "Admin"  },    "devices" : [ {"occupancy" : { "times" : "nine_to_five"}, "co2" : {}, 
+                    { "model" : { "customer" : "Boots", "site" : "Cambridge"},                                                  "devices" : [ {"weather" : {"occupied_bodge":true}} , { "energy" : { "opening_times" : "nine_to_five", "occupied_bodge" : true}} ] },
+                    { "model" : { "customer" : "Boots", "site" : "Cambridge", "floor" : "Ground Floor", "zone" : "Admin"  },    "devices" : [ {"occupancy" : { "opening_times" : "nine_to_five"}, "co2" : {}, 
                         "variable" : [ { "name" : "$x", "series" : [805, 832, 600, 808, 820]}, { "name" : "$y", "series" : [697, 154, 793, 630, 485] }]}], "count" : 5} ,
                     { "model" : { "customer" : "Boots", "site" : "Cambridge", "floor" : "Ground Floor", "zone" : "Admin"  },    "devices" : [ {"co2" : {}}]} ,
                     { "model" : { "customer" : "Boots", "site" : "Cambridge", "floor" : "Ground Floor", "zone" : "Retail" },    "devices" : [ {"occupancy" : {}, "co2" : {},
@@ -365,22 +365,22 @@
                                  { "model" : { "customer" : "Boots", "site" : "Cambridge", "floor" : "First Floor",  "zone" : "Maintenance" }, "devices" : [ {"occupancy" : {} , "co2" : {}, "variable" : [{"name":"$x","value":520}, {"name":"$y","value":714}]}]  },
                 
                     { "model" : { "customer" : "Boots", "site" : "Oxford" },                                                    "properties" : { "latitude" : 51.752814, "longitude" : -1.257859 } },
-                    { "model" : { "customer" : "Boots", "site" : "Oxford" },                                                    "devices" : [ {"weather" : {}}, {"energy" : { "opening_times" : "eight_to_six"}} ] },
+                    { "model" : { "customer" : "Boots", "site" : "Oxford" },                                                    "devices" : [ {"weather" : {"occupied_bodge":true}}, {"energy" : { "opening_times" : "eight_to_six", "occupied_bodge" : true}} ] },
                     { "model" : { "customer" : "Boots", "site" : "Oxford" },                                                    "devices" : [ {"aggregate" : { "numbers" : ["kW", "temperature"], "booleans" : ["occupied"]} } ] },
                     { "model" : { "customer" : "Boots", "site" : "Oxford", "floor" : "Ground Floor", "zone" : "Office" },       "devices" : [ {"occupancy" : {}, "co2" : {}} ], "count" : 3},
                                  { "model" : { "customer" : "Boots", "site" : "Oxford", "floor" : "Ground Floor", "zone" : "Retail" },       "devices" : [ {"occupancy" : {}, "co2" : {}} ], "count" : 8},
                     { "model" : { "customer" : "Boots", "site" : "Oxford", "floor" : "First Floor", "zone" : "Retail" },        "devices" : [ {"occupancy" : {}, "co2" : {}} ], "count" : 5},
 
                     { "model" : { "customer" : "Boots", "site" : "London, Piccadilly" },                                                    "properties" : { "latitude": 51.507630, "longitude" : -0.141915 } },
-                    { "model" : { "customer" : "Boots", "site" : "London, Piccadilly" },                                                    "devices" : [ {"weather" : {}} , { "energy" : { "opening_times" : "six_day"}} ] },
+                    { "model" : { "customer" : "Boots", "site" : "London, Piccadilly" },                                                    "devices" : [ {"weather" : {"occupied_bodge" : true}} , { "energy" : { "opening_times" : "six_day", "occupied_bodge" : true}} ] },
                     { "model" : { "customer" : "Boots", "site" : "London, Piccadilly" },                                                    "devices" : [ {"aggregate" : { "numbers" : ["kW", "temperature"], "booleans" : ["occupied"]} } ] },
-                    { "model" : { "customer" : "Boots", "site" : "London, Piccadilly", "floor" : "Ground Floor", "zone" : "Retail" },       "devices" : [ { "occupancy" : { "times" : "six_day"}, "co2" : {}}], "count" : 6 },
-                    { "model" : { "customer" : "Boots", "site" : "London, Piccadilly", "floor" : "First Floor", "zone" : "Retail" },        "devices" : [ { "occupancy" : { "times" : "six_day"}, "co2" : {}}], "count" : 5 },
-                    { "model" : { "customer" : "Boots", "site" : "London, Piccadilly", "floor" : "Second Floor", "zone" : "Retail" },       "devices" : [ { "occupancy" : { "times" : "six_day"}, "co2" : {}}], "count" : 3 },
-                    { "model" : { "customer" : "Boots", "site" : "London, Piccadilly", "floor" : "Second Floor", "zone" : "Admin" },        "devices" : [ { "occupancy" : { "times" : "nine_to_five"}, "co2" : {}}] },
+                    { "model" : { "customer" : "Boots", "site" : "London, Piccadilly", "floor" : "Ground Floor", "zone" : "Retail" },       "devices" : [ { "occupancy" : { "opening_times" : "six_day"}, "co2" : {}}], "count" : 6 },
+                    { "model" : { "customer" : "Boots", "site" : "London, Piccadilly", "floor" : "First Floor", "zone" : "Retail" },        "devices" : [ { "occupancy" : { "opening_times" : "six_day"}, "co2" : {}}], "count" : 5 },
+                    { "model" : { "customer" : "Boots", "site" : "London, Piccadilly", "floor" : "Second Floor", "zone" : "Retail" },       "devices" : [ { "occupancy" : { "opening_times" : "six_day"}, "co2" : {}}], "count" : 3 },
+                    { "model" : { "customer" : "Boots", "site" : "London, Piccadilly", "floor" : "Second Floor", "zone" : "Admin" },        "devices" : [ { "occupancy" : { "opening_times" : "nine_to_five"}, "co2" : {}}] },
                 
                     { "model" : { "customer" : "Boots", "site" : "Southampton"},                                                            "properties" : { "latitude": 50.910847, "longitude" : -1.410974 } },
-                    { "model" : { "customer" : "Boots", "site" : "Southampton"},                                                            "devices" : [ {"weather" : {}} , { "energy" : { "opening_times" : "nine_to_five"}} ] },
+                    { "model" : { "customer" : "Boots", "site" : "Southampton"},                                                            "devices" : [ {"weather" : {"occupied_bodge":true}} , { "energy" : { "opening_times" : "nine_to_five", "occupied_bodge" : true}} ] },
                     { "model" : { "customer" : "Boots", "site" : "Southampton"},                                                            "devices" : [ {"aggregate" : { "numbers" : ["kW", "temperature"], "booleans" : ["occupied"]} } ] },
                     { "model" : { "customer" : "Boots", "site" : "Southampton", "floor" : "Ground Floor", "zone" : "Retail" },              "devices" : [ { "occupancy" : {}, "co2" : {}}], "count" : 3 },
                 
@@ -390,17 +390,17 @@
                 
                     { "model" : { "customer" : "Marks and Spencer", "site" : "Birmingham, Bath Row"},                                       "properties" : { "latitude" : 52.472919, "longitude" : -1.912178}},
                     { "model" : { "customer" : "Marks and Spencer", "site" : "Birmingham, Bath Row"},                                       "devices" : [ {"aggregate" : { "numbers" : ["kW", "temperature"], "booleans" : ["occupied"]} } ] },
-                    { "model" : { "customer" : "Marks and Spencer", "site" : "Birmingham, Bath Row"},                                       "devices" : [ {"weather" : {}} , { "energy" : { "opening_times" : "nine_to_five"}} ] },
+                    { "model" : { "customer" : "Marks and Spencer", "site" : "Birmingham, Bath Row"},                                       "devices" : [ {"weather" : {"occupied_bodge":true}} , { "energy" : { "opening_times" : "nine_to_five", "occupied_bodge" : true}} ] },
                     { "model" : { "customer" : "Marks and Spencer", "site" : "Birmingham, Bath Row", "floor" : "Ground Floor", "zone" : "Retail" }, "devices" : [ { "occupancy" : {}, "co2" : {} } ], "count" : 2},
                 
                     { "model" : { "customer" : "Marks and Spencer", "site" : "Leeds, Turk's Head Yard"},                                    "properties" : { "latitude" : 53.797149, "longitude" : -1.542778}},
                     { "model" : { "customer" : "Marks and Spencer", "site" : "Leeds, Turk's Head Yard"},                                    "devices" : [ {"aggregate" : { "numbers" : ["kW", "temperature"], "booleans" : ["occupied"]} } ] },
-                    { "model" : { "customer" : "Marks and Spencer", "site" : "Leeds, Turk's Head Yard"},                                    "devices" : [ {"weather" : {}} , { "energy" : { "opening_times" : "nine_to_five"}} ] },
+                    { "model" : { "customer" : "Marks and Spencer", "site" : "Leeds, Turk's Head Yard"},                                    "devices" : [ {"weather" : {"occupied_bodge":true}} , { "energy" : { "opening_times" : "nine_to_five", "occupied_bodge" : true}} ] },
                     { "model" : { "customer" : "Marks and Spencer", "site" : "Leeds, Turk's Head Yard", "floor" : "Ground Floor", "zone" : "Retail" }, "devices" : [ { "occupancy" : {}, "co2" : {} } ], "count" : 2},
                 
                     { "model" : { "customer" : "Marks and Spencer", "site" : "Hitchin"},                                                    "properties" : { "latitude" : 51.949257, "longitude" : -0.277516}},
                     { "model" : { "customer" : "Marks and Spencer", "site" : "Hitchin"},                                                    "devices" : [ {"aggregate" : { "numbers" : ["kW", "temperature"], "booleans" : ["occupied"]} } ] },
-                    { "model" : { "customer" : "Marks and Spencer", "site" : "Hitchin"},                                                    "devices" : [ {"weather" : {}} , { "energy" : { "opening_times" : "eight_to_six"}} ] },
+                    { "model" : { "customer" : "Marks and Spencer", "site" : "Hitchin"},                                                    "devices" : [ {"weather" : {"occupied_bodge":true}} , { "energy" : { "opening_times" : "eight_to_six", "occupied_bodge" : true}} ] },
                     { "model" : { "customer" : "Marks and Spencer", "site" : "Hitchin", "floor" : "Ground Floor", "zone" : "Retail" }, "devices" : [ { "occupancy" : {}, "co2" : {} } ], "count" : 3}
                 ]
             }
