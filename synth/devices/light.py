@@ -23,6 +23,8 @@ from device import Device
 from helpers.solar import solar
 import math, random
 
+TICK_INTERVAL_S = 60*60
+
 DEFAULT_GEN_SCALAR = -0.5
 
 class Light(Device):
@@ -63,9 +65,12 @@ class Light(Device):
                     math.sin(months * 1.3) + math.sin(months*1.7) + math.sin(months * 7)) / (10 * 2.0)
             light *= cloud_effect
 
-        self.set_property("light", light, always_send = False)
+        p = { "light" : light }
         if self.generate:
-            p = light * self.gen_light_to_power_ratio
-            self.set_property("power", p, always_send = False)
-            self.set_property("energy", self.get_property("energy") + p, always_send = False)
-        self.engine.register_event_in(60*60, self.tick_light, self, self)
+            pow = light * self.gen_light_to_power_ratio
+            p.update( {
+                "power" : pow,
+                "energy" : self.get_property("energy") + pow * TICK_INTERVAL_S/(60*60.0)
+                })
+            self.set_properties(p)
+        self.engine.register_event_in(TICK_INTERVAL_S, self.tick_light, self, self)
