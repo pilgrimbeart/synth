@@ -268,8 +268,10 @@ def main():
     exit(-1)
 
 if __name__ == "__main__":
-    # import cProfile, pstats
-    # cProfile.run('main()', 'profiling')
-    # p = pstats.Stats('profiling')
-    # p.sort_stats('time').print_stats(20)
-    main()
+    if False:    # Profile
+        import cProfile, pstats
+        cProfile.run('main()', 'profiling')
+        p = pstats.Stats('profiling')
+        p.sort_stats('time').print_stats(20)
+    else:
+        main()
