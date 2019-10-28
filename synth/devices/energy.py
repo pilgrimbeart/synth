@@ -42,7 +42,9 @@ class Energy(Device):
         if not self.property_exists("device_type"):
             self.set_property("device_type", "energy")
         self.set_property("kWh", int(random.random() * 100000))
-        self.set_property("occupied", False)    # !!!!!!!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
+        self.occupied_bodge = params["energy"].get("occupied_bodge", False)
+        if self.occupied_bodge:
+            self.set_property("occupied", False)    # !!!!!!!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
         self.engine.register_event_in(ENERGY_READING_INTERVAL_S, self.tick_reading, self, self)
 
     def comms_ok(self):
@@ -69,7 +71,8 @@ class Energy(Device):
         self.start_property_group() # -->
         self.set_property("kW", kW)
         self.set_property("kWh", kWh)
-        self.set_property("occupied", not self.get_property("occupied"))    # !!!!!!!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
+        if self.occupied_bodge:
+            self.set_property("occupied", not self.get_property("occupied"))    # !!!!!!!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
         self.end_property_group() # <--
         self.engine.register_event_in(ENERGY_READING_INTERVAL_S, self.tick_reading, self, self)
 

@@ -19,6 +19,7 @@ Device properties created::
 
 from device import Device
 from helpers import dark_sky
+import logging
 
 MEASUREMENT_INTERVAL_S = 60*60
 
@@ -27,7 +28,9 @@ class Weather(Device):
         super(Weather,self).__init__(instance_name, time, engine, update_callback, context, params)
         if not self.property_exists("device_type"):
             self.set_property("device_type", "weather")
-        self.set_property("occupied", False)    # !!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
+        self.occupied_bodge = params["weather"].get("occupied_bodge", False)
+        if self.occupied_bodge:
+            self.set_property("occupied", False)    # !!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
         engine.register_event_in(0, self.tick_weather, self, self)
 
     def comms_ok(self):
@@ -46,6 +49,7 @@ class Weather(Device):
         lon = self.get_property("longitude")
         props = dark_sky.get_weather(lat, lon, int(self.engine.get_now()))
         self.set_properties(props)
-        self.set_property("occupied", not self.get_property("occupied"))
+        if self.occupied_bodge:
+            self.set_property("occupied", not self.get_property("occupied"))
         self.engine.register_event_in(MEASUREMENT_INTERVAL_S, self.tick_weather, self, self)
 
