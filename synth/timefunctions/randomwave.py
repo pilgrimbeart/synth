@@ -6,7 +6,7 @@ Generates a random value between 0 and 1, of programmable period.
 Arguments::
 
     {
-        "period" : the period with which the random value is updated e.g. "PT10M"
+        "period" : the period with which the random value is updated e.g. "PT1H"
         "lower" : (optional) numbers will be returned within range (lower,upper) - if not specified then range is (0.0, 1.0]
         "upper" : (optional)
         "precision" : (optional) 1 for integer, 10 for 1 decimal point, 100 for 2 decimals etc.
@@ -26,7 +26,7 @@ class Randomwave(Timefunction):
     def __init__(self, engine, device, params):
         self.engine = engine
         self.device = device
-        self.period = float(isodate.parse_duration(params["period"]).total_seconds())
+        self.period = float(isodate.parse_duration(params.get("period", "PT1H")).total_seconds())
         self.lower = params.get("lower", 0.0)
         self.upper = params.get("upper", 1.0)
         self.precision = params.get("precision", None)
