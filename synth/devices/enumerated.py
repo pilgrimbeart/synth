@@ -11,6 +11,7 @@ Configurable parameters::
         "values" :      [a,set,          of, possible,values]
         "periods" :     [a,corresponding,set,of,      periods] (each is an ISO8601 duration e.g. "P1D" means the event will happen once a day)
         "sigmas" :      [a,corresponding,set,of,      standard-deviations] (optional, e.g. "PT1H" means the period will vary randomly with 1 standard deviation of 1 hour)
+        "always_send" : true (optional)  If true then values will be sent even if they haven't changed
     }
 
 If sigmas are not specified, they default to 50% of the periods to create a good amount of random spread. If you want to remove all randomness, specify sigmas of "PT0S".
@@ -37,6 +38,7 @@ class Enumerated(Device):
         """Create a property with enumerated events"""
         super(Enumerated, self).__init__(instance_name, time, engine, update_callback, context, params)
         p = params["enumerated"]
+        self.enumerated_always_send = p.get("always_send", True)
         self.enumerated_name = p["name"]
         self.enumerated_values = p["values"]
         periods = p["periods"]
@@ -84,6 +86,6 @@ class Enumerated(Device):
         self.engine.register_event_in(dt, self.change_enumerated_value, index, self)
 
     def change_enumerated_value(self, index):
-        self.set_property(self.enumerated_name, self.enumerated_values[index])
+        self.set_property(self.enumerated_name, self.enumerated_values[index], always_send = self.enumerated_always_send)
         self.schedule_next_event(index)
 
