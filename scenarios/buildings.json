@@ -1,9 +1,10 @@
 #define HVAC_BEHAVIOURS
 "enumerated" : {
     "name" : "error",
-    "values" :  [ null,             "sensor failure", "compressor failure",   "electrical failure",   "fan failure",  "heat and cool overlap",    "hardware fault",   "comms failure"],
-    "periods" : [ "PT24H",          "P10D",           "P20D",                 "P50D",                 "P10D",         "P15D",                     "P20D",             "P10D"],
-    "sigmas" :  [ "PT0H",           "P5D",           "P10D",                  "P20D",                 "P5D",          "P5D",                      "P10D",             "P5D"]
+    "values" :  [ "no error",       "sensor failure", "compressor failure",   "electrical failure",   "fan failure",  "heat and cool overlap",    "hardware fault",   "comms failure"],
+    "periods" : [ "PT48H",          "P10D",           "P20D",                 "P50D",                 "P10D",         "P15D",                     "P20D",             "P10D"],
+    "sigmas" :  [ "PT24H",           "P5D",           "P10D",                  "P20D",                 "P5D",          "P5D",                      "P10D",             "P5D"],
+    "always_send" : false
 },
 "variable" : { "name" : "hvac_discharge_pressure", "timefunction" : { "randomwave" : { "period" : "PT24H" }} }
 #enddef
