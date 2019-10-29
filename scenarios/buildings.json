@@ -16,6 +16,36 @@
     "always_send" : false
 }
 #enddef
+#define FIRE_DOORS
+"enumerated" : {
+    "name" : "door",
+    "values" :  [ "open",  "closed"],
+    "periods" : [ "P1D",   "PT1H"],
+    "sigmas" :  [ "P3D",   "PT8H"],
+    "always_send" : false
+}
+#enddef
+#define WATER_TEMP_DEVICE
+"variable" : [
+    {
+        "name" : "device_type",
+        "value" : "hot_water"
+    }, 
+    {
+        "name" : "water_temp",
+        "timefunction" : {
+            "sinewave" : {
+                "period" : ["PT7M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
+                "overall_amplitude" : 20.0,
+                "overall_offset" : 58,
+                "sample_period" : "PT1H",
+                "randomise_phase_by" : "$id",
+                "precision" : 1
+            }
+        }
+    }
+]
+#enddef
 {
     "restart_log" : true,
     "engine" : {
@@ -176,19 +206,20 @@
                     { "hierarchy" : "site/home" },
                     { "model" : { } , "properties" : { "demo" : "affordable_homes" } },
 
-                    { "model" : { "site" : "Leon House" }, "devices" : [ { "weather" : {}}, {"hvac" : { "opening_times" : "domestic"}, WINDOWS} ], "properties" : { "address" : "Leon House, Croydon, UK",
+                    { "model" : { "site" : "Leon House" }, "devices" : [ { "weather" : {}}, {"hvac" : { "opening_times" : "domestic", "kWh_per_degree_day" : 200}} ], "properties" : { "address" : "Leon House, Croydon, UK",
                         "latitude" : 51.369297,  "longitude" : -0.099033}},
                     { "model" : { "site" : "Leon House", "home" : "Apartment #167#" }},
+                    { "model" : { "site" : "Leon House" }, "devices" : [ { "basic" : { "label_root" : "Fire Door " }, "variable" : { "name" : "device_type" , "value" : "fire_door" }, FIRE_DOORS } ], "count" : 16 }, 
 
                     { "model" : { "site" : "Cornwall" }, "devices" : [ { "weather" : {} } ], "properties" : { "address" : "Bickland Water Road, Falmouth, Cornwall, UK", "latitude" : 50.152019, "longitude" : -5.097288}},
-                    { "model" : { "site" : "Cornwall", "home" : "Home #44#" },  "devices" : [ { "hvac": { "opening_times" : "domestic"}, WINDOWS} ] },
+                    { "model" : { "site" : "Cornwall", "home" : "Home #44#" },  "devices" : [ { "hvac": { "opening_times" : "domestic", "kWh_per_degree_day" : 300}, WINDOWS}, {WATER_TEMP_DEVICE} ] },
 
                     { "model" : { "site" : "Dunstable" }, "devices" : [ { "weather" : {} } ], "properties" : { "address" : "Phoenix Park, Church St, Dunstable, LU5 4HU, UK", "latitude" : 51.888033,   "longitude" : -0.513375}},
-                    { "model" : { "site" : "Dunstable", "home" : "Home #23#" }, "devices" : [ { "hvac" : { "opening_times" : "domestic"}, WINDOWS}] },
+                    { "model" : { "site" : "Dunstable", "home" : "Home #23#" }, "devices" : [ { "hvac" : { "opening_times" : "domestic", "kWh_per_degree_day" : 240}, WINDOWS}, {WATER_TEMP_DEVICE}] },
 
                     { "model" : { "site" : "Shrivenham" }, "devices" : [ { "weather" : {} } ], "properties" : { "address" : "Cross Trees Park, Highworth Rd, Shrivenham, Oxfordshire, SN6 8BL, UK",
                         "latitude" : 51.600697,  "longitude" : -1.660247}},
-                    { "model" : { "site" : "Shrivenham", "home" : "Home #161#" }, "devices" : [ { "hvac" : { "opening_times" : "domestic"}, WINDOWS}] }
+                    { "model" : { "site" : "Shrivenham", "home" : "Home #161#" }, "devices" : [ { "hvac" : { "opening_times" : "domestic", "kWh_per_degree_day" : 270}, WINDOWS}, {WATER_TEMP_DEVICE}] }
                 ]
             }
         }
