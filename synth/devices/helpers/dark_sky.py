@@ -95,7 +95,8 @@ def extract_and_cache(DS_results, latitude, longitude, epoch_seconds=None):
         "wind_speed" : DS_results.get("windSpeed", 0.0), # m/s
         "precipitation_intensity" : DS_results.get("precipIntensity", 0.0), # mm/hour
         "precipitation_probability" : DS_results.get("precipProbability", 0.0), # 0..1
-        "cloud_cover" : DS_results.get("cloudCover", 0.5)   # 0..1
+        "cloud_cover" : DS_results.get("cloudCover", 0.5),   # 0..1
+        "humidity" : DS_results.get("humidity", 0.5)    # 0..1
         }
 
     add_to_cache("weather", cache_key, result)

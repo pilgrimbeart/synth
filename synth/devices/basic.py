@@ -33,7 +33,8 @@ class Basic(Device):
         self.creation_time = time
         self.engine = engine
         self.update_callback = update_callback
-        self.properties = {}
+        if not hasattr(self, "properties"):
+            self.properties = {}
         self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
         self.model = None   # May get set later if we're in a model
         label_root = "Device "
@@ -45,7 +46,8 @@ class Basic(Device):
         if use_label_as_id:
             self.properties["$id"] = label.replace(" ","_") # Should really replace ALL illegal characters
         else:
-            self.properties["$id"] = "-".join([format(Basic.myRandom.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
+            if not "$id" in self.properties:
+                self.properties["$id"] = "-".join([format(Basic.myRandom.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
             self.properties["label"] = label
         self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down).
         logging.info("Created device " + str(Basic.device_number+1) + " : " + self.properties["$id"])
@@ -60,6 +62,12 @@ class Basic(Device):
 
     def comms_ok(self):
         return True
+
+    def set_id(self, new_id):
+        """Set device id - call this before super() in child classes if you want to override the id that this base class will normally set """
+        if not hasattr(self, "properties"):
+            self.properties = {}
+        self.properties.update({ "$id" : new_id })
 
     def transmit(self, the_id, ts, properties, force_comms):
         if not self.comms_ok() and not force_comms:

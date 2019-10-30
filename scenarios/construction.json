@@ -1,0 +1,40 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P1D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "comment" : "some gateways",
+            "repeats" : 4, 
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "lora_gateway" : {},
+                        "latlong" : {
+                            "addresses" : ["Oxford, UK", "Colchester, UK", "Portsmouth, UK", "Hastings, UK"]
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "comment" : "some devices",
+            "repeats" : 100, 
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "lora_device" : {},
+                        "latlong" : {
+                            "area_centre" : "London, UK",
+                            "area_radius" : "Birmingham, UK",
+                            "map_file" : "habitable_land.jpg"
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
