@@ -124,15 +124,6 @@ def lon_lat_to_address(lng, lat, google_maps_api_key=None):
     add_to_cache("reverse", str((lng,lat)), results)
     return results
 
-# https://maps.googleapis.com/maps/api/directions/json?origin=Tesco%2CWalkden%2CUK&destination=Manchester%2CUK&mode=walking&key=AIzaSyDF6uyDi5Nq6EQ58FrViRv1JTs-1ZtQF6o
-
-# result.status == "OK"
-# for step in result.routes[0].legs[0].steps:
-    # step.duration.value (seconds)
-    # step.start_location["lat"]  ["lng"]
-    # step.end_location["lat"]  ["lng"]
-
-
 def get_route_from_lat_lons(from_lat, from_lng, to_lat, to_lng, mode="walking", google_maps_api_key=None):
     hash = str((from_lat, from_lng, to_lat, to_lng))
     if hash in caches["route"]:
