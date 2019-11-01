@@ -45,13 +45,16 @@ try:
     logging.info("Used existing Google Maps cache "+CACHE_FILE)
 except:
     logging.info("No existing Google Maps cache")
-    caches = {"geo" : {}, "reverse" : {}}
+    caches = {"geo" : {}, "reverse" : {}, "route" : {}}
 
 def add_to_cache(cache, key, contents):
     caches[cache][key] = contents
-    f = open(CACHE_FILE, "wt")
-    f.write(json.dumps(caches))
-    f.close()
+    try:
+        f = open(CACHE_FILE, "wt")
+        f.write(json.dumps(caches))
+        f.close()
+    except Exception as exc:
+        print exc
 
 def address_to_lon_lat(address, google_maps_api_key=None):
     if address in caches["geo"]:
@@ -77,7 +80,6 @@ def address_to_lon_lat(address, google_maps_api_key=None):
         logging.error(json.dumps(data))
         raise
     (lng,lat) = (geo["lng"], geo["lat"])
-    # geo_cache[address] = (lng,lat)
     add_to_cache("geo", address, (lng,lat))
     return (lng,lat)
 
@@ -122,10 +124,65 @@ def lon_lat_to_address(lng, lat, google_maps_api_key=None):
     add_to_cache("reverse", str((lng,lat)), results)
     return results
 
+# https://maps.googleapis.com/maps/api/directions/json?origin=Tesco%2CWalkden%2CUK&destination=Manchester%2CUK&mode=walking&key=AIzaSyDF6uyDi5Nq6EQ58FrViRv1JTs-1ZtQF6o
+
+# result.status == "OK"
+# for step in result.routes[0].legs[0].steps:
+    # step.duration.value (seconds)
+    # step.start_location["lat"]  ["lng"]
+    # step.end_location["lat"]  ["lng"]
+
+
+def get_route_from_lat_lons(from_lat, from_lng, to_lat, to_lng, mode="walking", google_maps_api_key=None):
+    hash = str((from_lat, from_lng, to_lat, to_lng))
+    if hash in caches["route"]:
+        return caches["route"][hash]
+
+    logging.info("Looking up route "+hash+" in Google Maps")
+    conn = httplib.HTTPSConnection("maps.googleapis.com")
+    URL = '/maps/api/directions/json' + '?mode='+str(mode)
+    URL += '&origin='+str(from_lat)+","+str(from_lng)
+    URL += "&destination="+str(to_lat)+","+str(to_lng)
+    if google_maps_api_key is None:
+        logging.info("No Google Maps key so Google maps API may limit your requests")
+    else:
+        URL += '&' + urllib.urlencode({'key':google_maps_api_key})
+    print "URL is "+URL
+    conn.request('GET', URL, None, set_headers())
+    resp = conn.getresponse()
+    result = resp.read()
+    try:
+        data = json.loads(result)
+        assert data["status"] == "OK"
+        route = []
+        for step in data["routes"][0]["legs"][0]["steps"]:
+            route.append( {
+                "start_lat" : step["start_location"]["lat"],
+                "start_lng" : step["start_location"]["lng"],
+                "end_lat"   : step["end_location"]["lat"],
+                "end_lng"   : step["end_location"]["lng"],
+                "duration" : step["duration"]["value"]    # seconds
+                })
+
+    except:
+        logging.error(URL)
+        logging.error(json.dumps(data))
+        raise
+    add_to_cache("route", hash, route)
+    return route 
+     
+
 def main():
-    address = "Cambridge, UK"
-    lon,lat = address_to_lon_lat(address)
-    print "For address",address,"Lon,Lat = ",lon,lat
+    key = json.loads(open("../../../../synth_accounts/default.json","rt").read())["google_maps_key"]
+    from_lon, from_lat = address_to_lon_lat("Cambridge, UK", google_maps_api_key=key)
+    to_lon, to_lat = address_to_lon_lat("Oxford, UK", google_maps_api_key=key)
+    route = get_route_from_lat_lons(from_lat, from_lon, to_lat, to_lon, google_maps_api_key=key)
+    print "route:",route
  
 if __name__ == "__main__":
+    import os
+    cwd = os.getcwd()
+    print cwd
     main()
+
+
