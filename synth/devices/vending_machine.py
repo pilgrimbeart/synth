@@ -7,6 +7,7 @@ Configurable parameters::
 
     {
             "product_catalogue" : (optional) [ "name" : "Mars Bar", "price" : 0.80, "category" : "snack", "lifetime" : "P1000D", ... ]
+            "send_available_positions" : (optional) False
     }
 
 Device properties created::
@@ -106,7 +107,9 @@ class Vending_machine(Device):
         else:
             self.product_catalogue = default_product_catalogue
 
-        # self.set_property("positions_total", self.machine_rows * self.machine_columns)
+        self.send_available_positions = params["vending_machine"].get("send_available_positions", False)
+        if self.send_available_positions:
+            self.set_property("positions_total", self.machine_rows * self.machine_columns)
 
         # Put some stock in machine
         self.restock_time = create_2d_array(self.machine_rows, self.machine_columns)  # the time when each position was last restocked (to detect past-sellby date items). We don't send a literal restock_time property, we just "bonk" the *_event_restock and then we can look at use $ts/*_event_restock in DevicePilot
@@ -340,7 +343,8 @@ class Vending_machine(Device):
             for c in range(self.machine_columns):
                     if self.get_level(r,c) > 0:
                         avail_count += 1
-        # self.set_property("positions_available", avail_count)
+        if self.send_available_positions:
+            self.set_property("positions_available", avail_count)
 
     def replenish(self):
         for r in range(self.machine_rows):

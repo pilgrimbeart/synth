@@ -55,7 +55,7 @@
                             "area_centre" : "Stockton, Kansas, USA",
                             "area_radius" : "Key Largo, USA"
                         },
-                        "vending_machine" : {},
+                        "vending_machine" : { "send_available_positions" : true },
                         "variable" : {"name" : "device_type", "value" : "vending_machine"}
                     }
                 }
