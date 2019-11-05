@@ -51,7 +51,7 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-P90D",
+        "start_time" : "-P14D",
         "end_time" : null
     },
     "events" : [
