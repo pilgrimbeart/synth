@@ -174,6 +174,7 @@ def get_params():
         s = remove_C_comments(s) # Remove Javascript-style comments
         # We no-longer support Python-style comments, because interferes with auto-numbering in models s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
         s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
+        open("../synth_logs/latest.json", "wt").write(s+"\n (from "+file+")\n")  # If we get a parsing error, output the processed file so we can find the line & column easily
         j = json.loads(s)
         if "client" in j:   # We inherit the instance name from whichever file specifies the client
             g_instance_name = file
