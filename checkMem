@@ -1,0 +1,7 @@
+#
+GBFREE=$(awk '/MemFree/ { printf "%d \n", $2/1024/1024 }' /proc/meminfo)
+echo $GBFREE "GB free"
+if [ $GBFREE -lt 2 ]; then 
+    echo MEMORY LOW - RESTART SOME JOBS OR MACHINE WILL SOON DIE
+    exit -1
+fi
