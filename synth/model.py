@@ -152,6 +152,7 @@ class Model():
         self.update_callback = update_callback
         self.context = context
         self.devices = []
+        self.cache_gpab = {}    # If we anticipate changing the model after loading, we should invalidate this cache then
 
         self.load_file(specification)
         self.enact_models(self.models)
@@ -237,6 +238,8 @@ class Model():
         # Finds other devices whose model hiearchy matches this device's, insofar as the others define the hierarchy
         # In other words, if other devices only specify one of the hierarchy levels, but in that they match this device, then return the device
         # So for example if a weather device defines "site=X" and you call this function from a device which also defines "site=X" (whatever other model hierarchy levels it defines), it will match
+        if device in self.cache_gpab:
+            return self.cache_gpab[device]
         desired = device.model_spec
         devs = []
         for d in self.devices:
@@ -249,6 +252,7 @@ class Model():
                                 match = False
                 if match:
                     devs.append(d)
+        self.cache_gpab[device] = devs
         return devs
 
 

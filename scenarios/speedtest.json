@@ -1,0 +1,224 @@
+#define HVAC_BEHAVIOURS
+"enumerated" : {
+    "name" : "error",
+    "values" :  [ "no error",       "sensor failure", "compressor failure",   "electrical failure",   "fan failure",  "heat and cool overlap",    "hardware fault",   "comms failure"],
+    "periods" : [ "PT48H",          "P10D",           "P20D",                 "P50D",                 "P10D",         "P15D",                     "P20D",             "P10D"],
+    "sigmas" :  [ "PT24H",           "P5D",           "P10D",                  "P20D",                 "P5D",          "P5D",                      "P10D",             "P5D"],
+    "always_send" : false
+},
+"variable" : { "name" : "hvac_discharge_pressure", "timefunction" : { "randomwave" : { "period" : "PT24H" }} }
+#enddef
+#define WINDOWS
+"enumerated" : {
+    "name" : "window",
+    "values" :  [ "open",  "closed"],
+    "periods" : [ "PT48H", "PT1H"],
+    "sigmas" :  [ "PT24H", "PT1H"],
+    "always_send" : false
+}
+#enddef
+#define FIRE_DOORS
+"enumerated" : {
+    "name" : "door",
+    "values" :  [ "open",  "closed"],
+    "periods" : [ "P1D",   "PT1H"],
+    "sigmas" :  [ "P3D",   "PT8H"],
+    "always_send" : false
+}
+#enddef
+#define WATER_TEMP_DEVICE
+{
+    "variable" : [
+        {
+            "name" : "device_type",
+            "value" : "hot_water"
+        }, 
+        {
+            "name" : "water_temp",
+            "timefunction" : {  "sinewave" : {  "period" : ["PT7M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
+                                                "overall_amplitude" : 20.0, "overall_offset" : 58, "sample_period" : "PT1H", "randomise_phase_by" : "$id", "precision" : 1 } }
+        },
+        {
+            "name" : "HWS_SupWtrTemp", 
+            "timefunction" : {  "sinewave" : {  "period" : ["PT5M", "PT13M", "PT17M", "PT29M", "PT39M", "PT5H", "PT17H", "PT29H", "P5D", "P9D", "P19D"],
+                                                "overall_amplitude" : 20.0, "overall_offset" : 68, "sample_period" : "PT1H", "randomise_phase_by" : "$id", "precision" : 1 } }
+        },
+        {
+            "name" : "HWS_RetWtrTemp", 
+            "timefunction" : {  "sinewave" : {  "period" : ["PT3M", "PT17M", "PT19M", "PT37M", "PT39M", "PT5H", "PT19H", "PT29H", "P5D", "P9D", "P23D"],
+                                                "overall_amplitude" : 20.0, "overall_offset" : 48, "sample_period" : "PT1H", "randomise_phase_by" : "$id", "precision" : 1 } }
+        }
+    ]
+}
+#enddef
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "2019-10-24T00:00:00",
+        "end_time" : "2019-10-24T12:00:00"
+    },
+    "events" : [
+        {
+            "comment" : "Smoke detectors",
+            "repeats" : 50,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "basic" : {
+                            "label_root" : "Smoke Detector "
+                        },
+                        "battery" : {
+                            "life_mu" : "P360D",
+                            "life_sigma" : "P120D",
+                            "autoreplace" : true,
+                            "autoreplace_delay" : "P14D"
+                        },
+                        "comms" : {
+                            "reliability" : "rssi",
+                            "period" : "PT1H",
+                            "suppress_messages" : true
+                        },
+                        "enumerated" : {
+                            "name" : "event",
+                            "values" :  ["heartbeat", "alarm", "battery low", "mains loss", "cover removed", "hardware fault", "calibration error", "sensor needs cleaning", "internal fault", "link interference", "over-temperature"],
+                            "periods" : ["PT1H",      "P30D",  "P20D",        "P20D",       "P15D",          "P60D",           "P100D",             "P20D",                  "P50D",           "P23D",              "P50D"],
+                            "sigmas" :  ["PT0S",      "P10D",  "P8D",         "P8D",        "P5D",           "P20D",           "P33D",              "P8D",                   "P18D",           "P8D",               "P18D"]
+                        },
+                        "variable" : [
+                            { "name" : "demo", "value" : "BMS" },
+                            { "name" : "device_type", "value" : "smoke_alarm" },
+                            { "name" : "hardware_version", "value" : [0.4,0.6,0.9,1.1,1.5] },
+                            { "name" : "$x", "value" : [1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500] },
+                            { "name" : "$y", "value" : [1000,1250,1500,1750,2000,2250,2500,2750,3000] },
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  //  Mountain View, California 
+                        ]
+                    }
+                }
+            }
+        },
+        { 
+           "comment" : "PV array",
+            "repeats" : 8,
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "light" : { "clouds" : true, "generate" : true },
+                        "variable" : [
+                            { "name" : "demo", "value" : "BMS" },
+                            { "name" : "device_type", "value" : "pv_array" },
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  //  Mountain View, California 
+                        ]
+                    }
+                }
+            }
+        },
+        { 
+            "comment" : "Weather sensor",
+            "repeats" : 1,
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "weather" : {},
+                        "variable" : [
+                            { "name" : "demo", "value" : "BMS" },
+                            { "name" : "device_type", "value" : "weather_sensor" },
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  //  Mountain View, California 
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "comment" : "light bulbs",
+            "repeats" : 10,
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "bulb" : { "power" : [12,20,36]},
+                        "variable" : [
+                            { "name" : "demo", "value" : "BMS" },
+                            { "name" : "device_type", "value" : "bulb" },
+                            { "name" : "$x", "value" : [100,150,200,250,300,350,400,450,500,550,600,650] },
+                            { "name" : "$y", "value" : [100,125,150,175,200,225,250,275,300] },
+                            { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  //  Mountain View, California 
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "comment" : "energy and occupancy in retail buildings",
+            "action" : {
+                "use_model" : [
+                    { "comment" : "x,y coordinates in first site match this floorplan: https://mir-s3-cdn-cf.behance.net/project_modules/fs/284b1728142003.563704a2ac3db.jpg"},
+                    { "hierarchy" : "customer/site/floor/zone" },
+                    { "model" : {}, "properties" : { "demo" : "energy in buildings" } },
+                    { "model" : { "customer" : "EllisDon" },                                                                     "functions" : [ "opening_hours" ] },
+                    { "model" : { "customer" : "EllisDon", "site" : "Forest Hill" }, "properties" : {"latitude": 43.693309, "longitude" : -79.403761, "address" : "Upper Canada College, Forest Hill, Toronto, ON M4V 1W6, Canada", "square_metres" : 2000} },
+                    { "model" : { "customer" : "EllisDon", "site" : "Forest Hill"},                                                  "devices" : [ { "weather" : {}} , { "hvac" : { "opening_times" : "nine_to_five", "kWh_per_degree_day" : 2000 }, HVAC_BEHAVIOURS} ] },
+                    { "model" : { "customer" : "EllisDon", "site" : "Forest Hill", "floor" : "Ground Floor", "zone" : "Admin"  },    "devices" : [ { "occupancy" : { "opening_times" : "nine_to_five", "max_occupancy" : 0.8}, "co2" : {}, 
+                        "variable" : [ { "name" : "$x", "series" : [805, 832, 600, 808, 820]}, { "name" : "$y", "series" : [697, 154, 793, 630, 485] }]}], "count" : 5} ,
+                    { "model" : { "customer" : "EllisDon", "site" : "Forest Hill", "floor" : "Ground Floor", "zone" : "Admin"  },    "devices" : [ { "co2" : {}}]} ,
+                    { "model" : { "customer" : "EllisDon", "site" : "Forest Hill", "floor" : "Ground Floor", "zone" : "Retail" },    "devices" : [ { "occupancy" : {}, "co2" : {},
+                        "variable" : [ { "name" : "$x", "series" : [1168, 814, 1099]}, {"name" : "$y", "series" : [355, 563, 610] }]}], "count" : 3 },
+                    { "model" : { "customer" : "EllisDon", "site" : "Forest Hill", "floor" : "Ground Floor", "zone" : "Storage" },   "devices" : [ { "occupancy" : {}, "co2" : {},
+                        "variable": [{"name":"$x","value":1237},{"name":"$y","value":116}]}  ] },
+                    { "model" : { "customer" : "EllisDon", "site" : "Forest Hill", "floor" : "First Floor",  "zone" : "Retail" },    "devices" : [ { "occupancy" : {}, "co2" : {},
+                        "variable" : [ { "name" : "$x", "series" : [789, 835, 831]}, { "name" : "$y", "series" : [782, 303, 399]}]}], "count" : 3 },
+                    { "model" : { "customer" : "EllisDon", "site" : "Forest Hill", "floor" : "First Floor",  "zone" : "Maintenance" }, "devices" : [ { "occupancy" : {} , "co2" : {},
+                        "variable" : [{"name":"$x","value":520}, {"name":"$y","value":714}]}]  },
+                
+                    { "model" : { "customer" : "EllisDon", "site" : "QE Towers" }, "properties" : {"latitude" : 45.415543, "longitude" : -75.705613, "address" : "500-530 Laurier Ave W, Ottawa, ON K1R 5E1 Canada", "square_metres" : 1500 }},
+                    { "model" : { "customer" : "EllisDon", "site" : "QE Towers" },                                                    "devices" : [ { "weather" : {}}, {"hvac" : { "opening_times" : "eight_to_six", "kWh_per_degree_day" : 1500}, HVAC_BEHAVIOURS} ] },
+                    { "model" : { "customer" : "EllisDon", "site" : "QE Towers", "floor" : "Ground Floor", "zone" : "Office" },       "devices" : [ { "occupancy" : {"opening_times" : "nine_to_five"}, "co2" : {}} ], "count" : 3},
+                    { "model" : { "customer" : "EllisDon", "site" : "QE Towers", "floor" : "Ground Floor", "zone" : "Retail" },       "devices" : [ { "occupancy" : {"opening_times" : "nine_to_five"}, "co2" : {}} ], "count" : 8},
+                    { "model" : { "customer" : "EllisDon", "site" : "QE Towers", "floor" : "First Floor", "zone" : "Retail" },        "devices" : [ { "occupancy" : {"opening_times" : "nine_to_five"}, "co2" : {}} ], "count" : 5},
+
+                    { "model" : { "customer" : "EllisDon", "site" : "The Strand" }, "properties" : {"latitude" : 45.414789, "longitude" : -75.698491, "address" :  "429 Somerset St W, Ottawa, ON K2P 2P5, Canada", "square_metres" : 3500}},
+                    { "model" : { "customer" : "EllisDon", "site" : "The Strand" },                                        "devices" : [ { "weather" : {}} , { "hvac" : { "opening_times" : "six_day", "kWh_per_degree_day" : 3500, "occupied_target_temp_min" : 22, "occupied_target_temp_max" : 24}, HVAC_BEHAVIOURS} ] },
+                    { "model" : { "customer" : "EllisDon", "site" : "The Strand", "floor" : "Ground Floor", "zone" : "Retail" },       "devices" : [ { "occupancy" : { "opening_times" : "six_day"}, "co2" : {}}], "count" : 6 },
+                    { "model" : { "customer" : "EllisDon", "site" : "The Strand", "floor" : "First Floor", "zone" : "Retail" },        "devices" : [ { "occupancy" : { "opening_times" : "six_day"}, "co2" : {}}], "count" : 5 },
+                    { "model" : { "customer" : "EllisDon", "site" : "The Strand", "floor" : "Second Floor", "zone" : "Retail" },       "devices" : [ { "occupancy" : { "opening_times" : "six_day"}, "co2" : {}}], "count" : 3 },
+                    { "model" : { "customer" : "EllisDon", "site" : "The Strand", "floor" : "Second Floor", "zone" : "Admin" },        "devices" : [ { "occupancy" : { "opening_times" : "nine_to_five"}, "co2" : {}}] },
+                
+                    { "model" : { "customer" : "EllisDon", "site" : "Mix Condos"}, "properties" : {"latitude" : 49.798780, "longitude" : -97.193544, "address" : "10 Hill Grove Point, Winnipeg, MB R3Y 1G5, Canada", "square_metres" : 1200 }},
+                    { "model" : { "customer" : "EllisDon", "site" : "Mix Condos"},                                                "devices" : [ {"weather" : {}} , { "hvac" : { "opening_times" : "nine_to_five", "kWh_per_degree_day" : 1000}, HVAC_BEHAVIOURS} ] },
+                    { "model" : { "customer" : "EllisDon", "site" : "Mix Condos", "floor" : "Ground Floor", "zone" : "Retail" },  "devices" : [ { "occupancy" : { "peak_occupancy" : 0.8 }, "co2" : {}}], "count" : 3 },
+                
+                    { "model" : { "customer" : "EllisDon","site" : "The Theodore"}, "properties" : {"latitude" : 51.053980, "longitude" : -114.086394, "address" : "101, 227 10 St NW, Calgary, AB T2N 1V5, Canada", "square_metres" : 300}},
+                    { "model" : { "customer" : "EllisDon", "site" : "The Theodore"},                                      "devices" : [ { "weather" : {}} , { "hvac" : { "opening_times" : "nine_to_five", "kWh_per_degree_day" : 500}, HVAC_BEHAVIOURS} ] },
+                    { "model" : { "customer" : "EllisDon", "site" : "The Theodore", "floor" : "Ground Floor", "zone" : "Retail" },    "devices" : [ { "occupancy" : { "peak_occupancy" : 0.7}, "co2" : {}}], "count" : 2},
+                
+                    { "model" : { "customer" : "EllisDon", "site" : "Olympic Village"}, "properties": {"latitude" : 49.271475, "longitude" : -123.106204, "address" : "Salt St, Vancouver, BC V5Y 0E4, Canada", "square_metres" : 1900 }},
+                    { "model" : { "customer" : "EllisDon", "site" : "Olympic Village"},                           "devices" : [ { "weather" : {}} , { "hvac" : { "opening_times" : "seven_day", "kWh_per_degree_day" : 1000}, HVAC_BEHAVIOURS} ] },
+                    { "model" : { "customer" : "EllisDon", "site" : "Olympic Village", "floor" : "Ground Floor", "zone" : "Retail" }, "devices" : [ { "occupancy" : {}, "co2" : {} } ], "count" : 2}
+                ]
+            }
+        },
+        {
+            "comment" : "affordable homes",
+            "action" : {
+                "use_model" : [
+                    { "hierarchy" : "site/home" },
+                    { "model" : { } , "properties" : { "demo" : "affordable_homes" } },
+
+                    { "model" : { "site" : "Leon House" }, "devices" : [ { "weather" : {}}, {"hvac" : { "opening_times" : "domestic", "kWh_per_degree_day" : 200}} ], "properties" : { "address" : "Leon House, Croydon, UK",
+                        "latitude" : 51.369297,  "longitude" : -0.099033}},
+                    { "model" : { "site" : "Leon House", "home" : "Apartment #167#" }},
+                    { "model" : { "site" : "Leon House" }, "devices" : [ { "basic" : { "label_root" : "Fire Door " }, "variable" : { "name" : "device_type" , "value" : "fire_door" }, FIRE_DOORS } ], "count" : 16 }, 
+
+                    { "model" : { "site" : "Cornwall" }, "devices" : [ { "weather" : {} } ], "properties" : { "address" : "Bickland Water Road, Falmouth, Cornwall, UK", "latitude" : 50.152019, "longitude" : -5.097288}},
+                    { "model" : { "site" : "Cornwall", "home" : "Home #44#" },  "devices" : [ { "hvac": { "opening_times" : "domestic", "kWh_per_degree_day" : 300}, WINDOWS}, WATER_TEMP_DEVICE ] },
+
+                    { "model" : { "site" : "Dunstable" }, "devices" : [ { "weather" : {} } ], "properties" : { "address" : "Phoenix Park, Church St, Dunstable, LU5 4HU, UK", "latitude" : 51.888033,   "longitude" : -0.513375}},
+                    { "model" : { "site" : "Dunstable", "home" : "Home #23#" }, "devices" : [ { "hvac" : { "opening_times" : "domestic", "kWh_per_degree_day" : 240}, WINDOWS}, WATER_TEMP_DEVICE ] },
+
+                    { "model" : { "site" : "Shrivenham" }, "devices" : [ { "weather" : {} } ], "properties" : { "address" : "Cross Trees Park, Highworth Rd, Shrivenham, Oxfordshire, SN6 8BL, UK",
+                        "latitude" : 51.600697,  "longitude" : -1.660247}},
+                    { "model" : { "site" : "Shrivenham", "home" : "Home #161#" }, "devices" : [ { "hvac" : { "opening_times" : "domestic", "kWh_per_degree_day" : 270}, WINDOWS}, WATER_TEMP_DEVICE ] }
+                ]
+            }
+        }
+    ]
+}
