@@ -76,13 +76,10 @@ def add_to_cache(cache, key, contents):
 
 def write_cache():
     if CACHE_FILE:
-        t1 = time.time()
         s = json.dumps(caches)
-        t2 = time.time()
-        logging.info("Dark Sky cache file is "+str(len(s))+" bytes")
+        if len(s) > 1e7:
+            logging.warning("Dark Sky cache file size is getting large: "+str(len(s))+" bytes")
         open(CACHE_FILE, "wt").write(s)
-        t3 = time.time()
-        logging.info("Caching times are "+str(t2-t1)+","+str(t3-t2))
     else:
         logging.info("Not writing Dark Sky back to cache")
 
@@ -150,7 +147,10 @@ def get_weather(latitude, longitude, epoch_seconds):
 
     time_end = time.time()
 
-    logging.info("(took "+str(time_result-time_start)+"s to fetch and "+str(time_end-time_result)+"s to process)")
+    t_fetch = time_result - time_start
+    t_process = time_end - time_result
+    if t_fetch > 1 or t_process > 1:
+        logging.warning("(Dark Sky took "+str(time_fetch)+"s to fetch and "+str(time_process)+"s to process)")
 
     return result
 
