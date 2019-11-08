@@ -5,6 +5,7 @@ import json
 import logging
 
 def dumps(props):
+    return json.dumps(props, sort_keys = True) # Fall back to the slow way!
     try:
         s = "{"
         for k,v in sorted(props.iteritems()):
