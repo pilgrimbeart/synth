@@ -1,1 +1,2 @@
+ps uax | head -n 1
 ps uax | grep python | grep -v grep
