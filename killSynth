@@ -1,3 +1,4 @@
 set -e
 command="python synth $@"
+echo `whoami` `date` "KILLED " $command >> ../synth_logs/jobs_run.txt
 pkill -f "$command" || echo "No such task running"
