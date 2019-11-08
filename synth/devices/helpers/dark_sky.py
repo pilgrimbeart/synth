@@ -73,8 +73,16 @@ def set_headers():
 
 def add_to_cache(cache, key, contents):
     caches[cache][key] = contents
+
+def write_cache():
     if CACHE_FILE:
-        open(CACHE_FILE, "wt").write(json.dumps(caches))
+        t1 = time.time()
+        s = json.dumps(caches)
+        t2 = time.time()
+        logging.info("Dark Sky cache file is "+str(len(s))+" bytes")
+        open(CACHE_FILE, "wt").write(s)
+        t3 = time.time()
+        logging.info("Caching times are "+str(t2-t1)+","+str(t3-t2))
     else:
         logging.info("Not writing Dark Sky back to cache")
 
@@ -133,6 +141,7 @@ def get_weather(latitude, longitude, epoch_seconds):
         result = extract_and_cache(data["currently"], latitude, longitude, epoch_seconds)   # Requested reading
         for r in data["hourly"]["data"]:
             extract_and_cache(r, latitude, longitude)   # Also cache info for other hours that DS has given us
+        write_cache()
     except:
         logging.error(URL)
         logging.error(str(result))
