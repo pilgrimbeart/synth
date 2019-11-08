@@ -27,25 +27,29 @@
 }
 #enddef
 #define WATER_TEMP_DEVICE
-"variable" : [
-    {
-        "name" : "device_type",
-        "value" : "hot_water"
-    }, 
-    {
-        "name" : "water_temp",
-        "timefunction" : {
-            "sinewave" : {
-                "period" : ["PT7M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
-                "overall_amplitude" : 20.0,
-                "overall_offset" : 58,
-                "sample_period" : "PT1H",
-                "randomise_phase_by" : "$id",
-                "precision" : 1
-            }
+{
+    "variable" : [
+        {
+            "name" : "device_type",
+            "value" : "hot_water"
+        }, 
+        {
+            "name" : "water_temp",
+            "timefunction" : {  "sinewave" : {  "period" : ["PT7M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
+                                                "overall_amplitude" : 20.0, "overall_offset" : 58, "sample_period" : "PT1H", "randomise_phase_by" : "$id", "precision" : 1 } }
+        },
+        {
+            "name" : "HWS_SupWtrTemp", 
+            "timefunction" : {  "sinewave" : {  "period" : ["PT5M", "PT13M", "PT17M", "PT29M", "PT39M", "PT5H", "PT17H", "PT29H", "P5D", "P9D", "P19D"],
+                                                "overall_amplitude" : 20.0, "overall_offset" : 68, "sample_period" : "PT1H", "randomise_phase_by" : "$id", "precision" : 1 } }
+        },
+        {
+            "name" : "HWS_RetWtrTemp", 
+            "timefunction" : {  "sinewave" : {  "period" : ["PT3M", "PT17M", "PT19M", "PT37M", "PT39M", "PT5H", "PT19H", "PT29H", "P5D", "P9D", "P23D"],
+                                                "overall_amplitude" : 20.0, "overall_offset" : 48, "sample_period" : "PT1H", "randomise_phase_by" : "$id", "precision" : 1 } }
         }
-    }
-]
+    ]
+}
 #enddef
 {
     "restart_log" : true,
@@ -205,14 +209,14 @@
                     { "model" : { "site" : "Leon House" }, "devices" : [ { "basic" : { "label_root" : "Fire Door " }, "variable" : { "name" : "device_type" , "value" : "fire_door" }, FIRE_DOORS } ], "count" : 16 }, 
 
                     { "model" : { "site" : "Cornwall" }, "devices" : [ { "weather" : {} } ], "properties" : { "address" : "Bickland Water Road, Falmouth, Cornwall, UK", "latitude" : 50.152019, "longitude" : -5.097288}},
-                    { "model" : { "site" : "Cornwall", "home" : "Home #44#" },  "devices" : [ { "hvac": { "opening_times" : "domestic", "kWh_per_degree_day" : 300}, WINDOWS}, {WATER_TEMP_DEVICE} ] },
+                    { "model" : { "site" : "Cornwall", "home" : "Home #44#" },  "devices" : [ { "hvac": { "opening_times" : "domestic", "kWh_per_degree_day" : 300}, WINDOWS}, WATER_TEMP_DEVICE ] },
 
                     { "model" : { "site" : "Dunstable" }, "devices" : [ { "weather" : {} } ], "properties" : { "address" : "Phoenix Park, Church St, Dunstable, LU5 4HU, UK", "latitude" : 51.888033,   "longitude" : -0.513375}},
-                    { "model" : { "site" : "Dunstable", "home" : "Home #23#" }, "devices" : [ { "hvac" : { "opening_times" : "domestic", "kWh_per_degree_day" : 240}, WINDOWS}, {WATER_TEMP_DEVICE}] },
+                    { "model" : { "site" : "Dunstable", "home" : "Home #23#" }, "devices" : [ { "hvac" : { "opening_times" : "domestic", "kWh_per_degree_day" : 240}, WINDOWS}, WATER_TEMP_DEVICE ] },
 
                     { "model" : { "site" : "Shrivenham" }, "devices" : [ { "weather" : {} } ], "properties" : { "address" : "Cross Trees Park, Highworth Rd, Shrivenham, Oxfordshire, SN6 8BL, UK",
                         "latitude" : 51.600697,  "longitude" : -1.660247}},
-                    { "model" : { "site" : "Shrivenham", "home" : "Home #161#" }, "devices" : [ { "hvac" : { "opening_times" : "domestic", "kWh_per_degree_day" : 270}, WINDOWS}, {WATER_TEMP_DEVICE}] }
+                    { "model" : { "site" : "Shrivenham", "home" : "Home #161#" }, "devices" : [ { "hvac" : { "opening_times" : "domestic", "kWh_per_degree_day" : 270}, WINDOWS}, WATER_TEMP_DEVICE ] }
                 ]
             }
         }
