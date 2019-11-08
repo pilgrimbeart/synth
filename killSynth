@@ -1,0 +1,3 @@
+set -e
+command="python synth $@"
+pkill -f "$command" || echo "No such task running"

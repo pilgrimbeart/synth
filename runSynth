@@ -1,12 +1,19 @@
 # Runs a new synth instance, with logging, having first killed any already-running instance
 # NOTE: The pkill should really check only against the first argument (which by convention is the instance name) - so that if you run another scenario on the same instance, the previous instance is killed first
+set -e
 command="python synth $@"
 echo $command
-pkill -f "$command"
+pkill -f "$command" || echo "(wasn't already running so no need to kill)"
+rm ../synth_logs/$1.out || echo "(no previous log file to remove)"
 echo -n `date` " " >> ../synth_logs/jobs_run.txt
 echo $command >> ../synth_logs/jobs_run.txt
-nohup $command >/dev/null 2>&1 &
-echo "tail -f " ../synth_logs/$1.out
-echo "(^C to stop monitoring - process will continue)"
-sleep 3
-tail -c+0 -f ../synth_logs/$1.out
+nohup $command >/dev/null 2>&1 & 
+sleep 1
+if [ -f ../synth_logs/$1.out ]; then
+    echo "tail -f " ../synth_logs/$1.out
+    echo "(^C to stop monitoring - process will continue)"
+    sleep 2
+    tail -c+0 -f ../synth_logs/$1.out
+else 
+    echo "Something went wrong, to see what manually run " $command
+fi

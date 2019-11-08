@@ -1,0 +1,1 @@
+ps uax | grep python | grep -v grep
