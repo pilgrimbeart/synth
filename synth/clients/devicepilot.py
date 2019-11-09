@@ -113,6 +113,7 @@ If you want to change to `interactive` mode within your simulation, you can use 
 
 import logging, time
 import json
+import simplejson   # Better errors
 import requests
 from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
@@ -160,12 +161,13 @@ def gzip_file(filepath):
 
 def upload_to_aws_bucket(dynamo_table, bucket_name, account_key, local_filepath):
     logging.info("upload_to_aws_bucket(" + dynamo_table + "," + bucket_name + "," + account_key + "," + local_filepath + ")")
+    simplejson.loads(open(local_filepath,"rt").read())    # Check for errors
     zipped = gzip_file(local_filepath)
     filename = os.path.split(zipped)[1] # Just the filename
     s3 = boto3.resource("s3")
     (key,account_name) = account_key.split("/") # account_name acts as a double-check to make it really difficult to accidentally provide the wrong acc_ code
     table_name = key[4:]    # without the acc_ underscore
-    logging.info("table_name = "+table_name)
+    # logging.info("table_name = "+table_name)
 
     dynamo = boto3.resource("dynamodb")
     table = dynamo.Table(dynamo_table)
@@ -180,7 +182,8 @@ def upload_to_aws_bucket(dynamo_table, bucket_name, account_key, local_filepath)
         logging.error(str(response))
         raise
     if account_name == actual_an:
-        logging.info("Account name verified as '"+str(account_name)+"'")
+        pass
+        # logging.info("Account name verified as '"+str(account_name)+"'")
     else:
         logging.error("Bulk upload account name MISMATCH: supplied='"+str(account_name)+"' actual='"+str(actual_an)+"'")
         assert False
