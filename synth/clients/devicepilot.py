@@ -228,7 +228,7 @@ class Devicepilot(Client):
         self.min_post_period = isodate.parse_duration(params.get("devicepilot_min_post_period", "PT10S")).total_seconds()
         self.max_items_per_post = params.get("devicepilot_max_items_per_post", 500)
         self.last_post_time = time.time() - self.min_post_period    # Allow first post immediately
-        self.json_stream = json_writer.Stream(instance_name)
+        self.json_stream = json_writer.Stream(instance_name, merge=self.merge_posts)
         self.top = top.top()
 
         # queue_criterion/limit sets how often we flush messages to DevicePilot API
