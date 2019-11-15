@@ -150,7 +150,7 @@ def get_weather(latitude, longitude, epoch_seconds):
     t_fetch = time_result - time_start
     t_process = time_end - time_result
     if t_fetch > 1 or t_process > 1:
-        logging.warning("(Dark Sky took "+str(time_fetch)+"s to fetch and "+str(time_process)+"s to process)")
+        logging.warning("(Dark Sky took "+str(t_fetch)+"s to fetch and "+str(t_process)+"s to process)")
 
     return result
 
