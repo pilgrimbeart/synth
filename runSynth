@@ -15,7 +15,6 @@ sleep 1
 if [ -f ../synth_logs/$1.out ]; then
     echo -n `whoami` `date` "STARTED " >> ../synth_logs/jobs_run.txt
     echo $command >> ../synth_logs/jobs_run.txt
-    echo "tail -f " ../synth_logs/$1.out
     echo "(^C stops monitoring - process will continue)"
     sleep 2
     tail -c+0 -f ../synth_logs/$1.out
