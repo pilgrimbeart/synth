@@ -54,6 +54,7 @@ DEFAULT_TARGET_TEMP_UNOCCUPIED_MIN = 10
 DEFAULT_TARGET_TEMP_UNOCCUPIED_MAX = 28
 DEFAULT_KWH_PER_DEGREE_DAY = 1000 
 DEFAULT_DEGREES_CHANGE_PER_HOUR = 5
+DEFAULT_RELIABILITY = 1.0
 
 class Hvac(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
@@ -66,12 +67,14 @@ class Hvac(Device):
         self.target_temp_unoccupied_max = params["hvac"].get("unoccupied_target_temp_max", DEFAULT_TARGET_TEMP_UNOCCUPIED_MAX)
         self.kwh_per_degree_day = params["hvac"].get("kWh_per_degree_day", DEFAULT_KWH_PER_DEGREE_DAY)
         self.degrees_change_per_s = params["hvac"].get("degrees_change_per_hour", DEFAULT_DEGREES_CHANGE_PER_HOUR) / (60*60.0)
+        self.hvac_reliability = params["hvac"].get("hvac_reliability", DEFAULT_RELIABILITY)
         self.set_property("device_type", "HVAC")
         self.set_property("mode", "fan")
         self.set_property("pump_run", False)
         self.set_property("boiler_selection_mode", random.randrange(1,3))   # A number 0..3 expressing which of two boilers is supposed to be running
         self.pump_run_on_start_time = self.engine.get_now()
         self.temperature = 20
+        self.hvac_functional = True # If false then we won't respond to demand
         self.engine.register_event_in(POLL_INTERVAL_S, self.tick_temperature, self, self)
 
     def comms_ok(self):
@@ -120,6 +123,7 @@ class Hvac(Device):
         return INDOOR_OUTDOOR_COUPLING
 
     def tick_temperature(self, _):
+        self.hvac_functional = random.random() <= self.hvac_reliability
         old_mode = self.get_property("mode")
         # Drive internal temperature according to weather
         external_temp, insolation = self.external_temp_and_insolation()
@@ -130,18 +134,29 @@ class Hvac(Device):
         # Drive internal temperature according to HVAC
         target_temp_min, target_temp_max = self.get_target_temp_min_max()
         if self.temperature < target_temp_min :
+            desired_mode = "heat"
+        elif self.temperature > target_temp_max :
+            desired_mode = "cool"
+        else:
+            desired_mode = "fan"
+
+        if self.hvac_functional:
+            mode = desired_mode
+        else:
+            if desired_mode != "fan":
+                logging.info("HVAC " + str(self.get_property("$id")) + " currently not functional, so ignored call for " + desired_mode)
+            mode = "fan"
+
+        if mode == "heat":
             delta = min(target_temp_min + TEMP_HYSTERESIS - self.temperature, self.degrees_change_per_s * POLL_INTERVAL_S) # Go as fast as you can, but don't shoot beyond the ideal temperature
             self.temperature += delta
             kW = self.kwh_per_degree_day * delta * (float(POLL_INTERVAL_S) / DAYS)
-            mode = "heat"
-        elif self.temperature > target_temp_max :
+        elif mode == "cool":
             delta = min(self.temperature - TEMP_HYSTERESIS - target_temp_max, self.degrees_change_per_s * POLL_INTERVAL_S)
             self.temperature -= delta
             kW = self.kwh_per_degree_day * delta * (float(POLL_INTERVAL_S) / DAYS)  # For now assume cooling costs same as heating
-            mode = "cool"
-        else:
+        else:   # Fan
             kW = 0
-            mode = "fan"
 
         p = {   "kW" : kW,
                 "temperature" : int(self.temperature*10)/10.0,
