@@ -10,6 +10,10 @@ command="python synth $@"
 echo $command
 pkill -f "$command" || echo ""
 rm -f ../synth_logs/$1.out
+rm -f ../synth_logs/$1.evt
+rm -f ../synth_logs/$1.csv
+rm -f ../synth_logs/$1*.json
+rm -f ../synth_logs/$1.nohup
 nohup $command > ../synth_logs/$1.nohup 2>&1 & 
 sleep 1
 if [ -f ../synth_logs/$1.out ]; then
