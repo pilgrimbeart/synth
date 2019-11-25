@@ -58,6 +58,7 @@ def add_to_cache(cache, key, contents):
 
 def address_to_lon_lat(address, google_maps_api_key=None):
     if address in caches["geo"]:
+        logging.info("address_to_lon_lat "+str(address)+" -> "+str(caches["geo"][address]))
         return caches["geo"][address]    # Avoid thrashing Google (expensive!)
 
     (lng,lat) = (None, None)
@@ -81,6 +82,7 @@ def address_to_lon_lat(address, google_maps_api_key=None):
         raise
     (lng,lat) = (geo["lng"], geo["lat"])
     add_to_cache("geo", address, (lng,lat))
+    logging.info("address_to_lon_lat "+str(address)+" -> "+str((lng,lat)))
     return (lng,lat)
 
 
@@ -138,7 +140,6 @@ def get_route_from_lat_lons(from_lat, from_lng, to_lat, to_lng, mode="walking", 
         logging.info("No Google Maps key so Google maps API may limit your requests")
     else:
         URL += '&' + urllib.urlencode({'key':google_maps_api_key})
-    print "URL is "+URL
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
     result = resp.read()

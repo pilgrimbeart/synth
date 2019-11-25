@@ -111,11 +111,12 @@ class point_picker():
         x = max(min(x,self.xlimit), 0)
         y = max(min(y,self.ylimit), 0)
 
+        # logging.info("lon_lat_to_xy "+str(coords)+" -> "+str((x,y)))
         return (x,y)
         
     def pick_point(self, area=None, google_maps_key=None):
         """Returns a (latitude,longitude) point, on population map, within area"""
-        global MINLON,MAXLON,MINLAT,MAXLAT,MINX,MAXX,MINY,MAXY
+        global MINLON, MAXLON, MINLAT, MAXLAT, MINX, MAXX, MINY, MAXY
 
         if area==None:
             self.area = None
@@ -124,33 +125,39 @@ class point_picker():
         
         while True:
             if self.area:
-                radius = point_picker.myRandom.randint(0,int(self.area_radius_pixels+0.5))
+                # logging.info("area_radius_pixels="+str(self.area_radius_pixels))
+                radius = point_picker.myRandom.random() * self.area_radius_pixels
                 angle = point_picker.myRandom.random() * 2 * math.pi
                 ox = math.sin(angle) * radius
                 oy = math.cos(angle) * radius
-                x = int(self.area_centre_xy[0] + ox)
-                y = int(self.area_centre_xy[1] + oy)
+                # logging.info("ox,oy="+str((ox,oy)))
+                x_float = self.area_centre_xy[0] + ox
+                y_float = self.area_centre_xy[1] + oy
+                # logging.info("x,y_float="+str((x_float, y_float)))
             else:
-                x,y = point_picker.myRandom.randint(0,self.xlimit-1), point_picker.myRandom.randint(0,self.ylimit-1)    # Note: INTEGER pick, i.e nearest pixel.
-            v = (self.arr[y][x] / 255.0)
+                x_float, y_float = point_picker.myRandom.randrange(0, self.xlimit-1), point_picker.myRandom.randrange(0, self.ylimit-1)
+            x_int, y_int = int(x_float), int(y_float)
+            v = (self.arr[y_int][x_int] / 255.0)
             if v > point_picker.myRandom.random():
                 break
 
         # Dither our pixels, otherwise all points will be on pixel grid
-        x += point_picker.myRandom.random()
-        y += point_picker.myRandom.random()
+        # x += point_picker.myRandom.random()
+        # y += point_picker.myRandom.random()
 
-        longitude,latitude = self.xy_to_lon_lat((x,y))
+        longitude,latitude = self.xy_to_lon_lat((x_float, y_float))
+        # logging.info("longitude, latitude = "+str((longitude, latitude)))
 
         MINLAT = min(MINLAT, latitude)
         MAXLAT = max(MAXLAT, latitude)
         MINLON = min(MINLON, longitude)
         MAXLON = max(MAXLON, longitude)
-        MINX = min(MINX,x)
-        MAXX = max(MAXX,x)
-        MINY = min(MINY,y)
-        MAXY = max(MAXY,y)
+        MINX = min(MINX,x_float)
+        MAXX = max(MAXX,x_float)
+        MINY = min(MINY,y_float)
+        MAXY = max(MAXY,y_float)
         # print "x,y=",x,y," longitude,latitude=",longitude,latitude
+        # logging.info("pick_point returning "+str((longitude, latitude)))
         return (longitude, latitude)
 
     def pick_points(self, n=1):
