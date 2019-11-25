@@ -31,6 +31,7 @@ To install Synth type::
 
 then::
 
+    sudo apt-get install python-pip
     sudo -H pip install -r requirements.txt
 
 
