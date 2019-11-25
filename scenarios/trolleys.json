@@ -1,0 +1,47 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 100,
+            "interval" : "PT0S",
+            "comment" : "Lots of trolleys that stay close",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "mobile" : {
+                            "area_centre" : "Tesco, Walkden, UK",
+                            "area_radius" : "M&S, Walkden, UK",
+                            "update_period" : "PT1H",
+                            "num_locations" : 25
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "at" : "PT0S",
+            "repeats" : 10,
+            "interval" : "PT0S",
+            "comment" : "A few really errant trolleys",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "mobile" : {
+                            "area_centre" : "Tesco, Walkden, UK",
+                            "area_radius" : "Bolton, UK",
+                            "route_plan" : "walking",
+                            "update_period" : "PT1M",
+                            "first_location_at_centre" : true
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
