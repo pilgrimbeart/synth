@@ -159,16 +159,16 @@ def gzip_file(filepath):
         shutil.copyfileobj(f_in, f_out)
     return dest_filepath
 
-def upload_to_aws_bucket(dynamo_table, bucket_name, account_key, local_filepath):
-    logging.info("upload_to_aws_bucket(" + dynamo_table + "," + bucket_name + "," + account_key + "," + local_filepath + ")")
-    simplejson.loads(open(local_filepath,"rt").read())    # Check for errors
-    zipped = gzip_file(local_filepath)
-    filename = os.path.split(zipped)[1] # Just the filename
-    s3 = boto3.resource("s3")
-    (key,account_name) = account_key.split("/") # account_name acts as a double-check to make it really difficult to accidentally provide the wrong acc_ code
-    table_name = key[4:]    # without the acc_ underscore
-    # logging.info("table_name = "+table_name)
 
+def check_account_name(dynamo_table, bucket_name, key, account_name):
+    # Checks that account name matches that provided in the key, to avoid accidentally uploading to wrong account
+    # (but don't bother doing this for Development)
+    if bucket_name == "ingest-development":
+        logging.info("Skipping account name check, as on development")
+        return True
+
+    s3 = boto3.resource("s3")
+    table_name = key[4:]    # without the acc_ underscore
     dynamo = boto3.resource("dynamodb")
     table = dynamo.Table(dynamo_table)
     response = table.get_item(Key = {"id" : table_name})
@@ -182,19 +182,28 @@ def upload_to_aws_bucket(dynamo_table, bucket_name, account_key, local_filepath)
         logging.error(str(response))
         raise
     if account_name == actual_an:
-        pass
         # logging.info("Account name verified as '"+str(account_name)+"'")
+        return True
     else:
         logging.error("Bulk upload account name MISMATCH: supplied='"+str(account_name)+"' actual='"+str(actual_an)+"'")
         assert False
+    return False
 
-    k = "recordsByAccount/" + key + "/" + filename
-    # logging.info("Doing bucket.upload_file("+str(local_filepath)+","+str(k)+")")
-    bucket = s3.Bucket(bucket_name)
-    bucket.upload_file(zipped, k)
-    os.remove(zipped)
+def upload_to_aws_bucket(dynamo_table, bucket_name, account_key, local_filepath):
+    logging.info("upload_to_aws_bucket(" + dynamo_table + "," + bucket_name + "," + account_key + "," + local_filepath + ")")
+    simplejson.loads(open(local_filepath,"rt").read())    # Check for errors
+    zipped = gzip_file(local_filepath)
+    filename = os.path.split(zipped)[1] # Just the filename
 
-    time.sleep(BULK_UPLOAD_DELAY_S) # Give time for DP lambdas to pick-up point file so don't force lambda to merge insane numbers of point files
+    (key,account_name) = account_key.split("/")
+    if(check_account_name(dynamo_table, bucket_name, key, account_name)):
+        s3 = boto3.resource("s3")
+        k = "recordsByAccount/" + key + "/" + filename
+        # logging.info("Doing bucket.upload_file("+str(local_filepath)+","+str(k)+")")
+        bucket = s3.Bucket(bucket_name)
+        bucket.upload_file(zipped, k)
+        os.remove(zipped)
+        time.sleep(BULK_UPLOAD_DELAY_S) # Give time for DP lambdas to pick-up point file so don't force lambda to merge insane numbers of point files
 
 def set_headers(token):
     headers = {}
