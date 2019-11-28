@@ -7,6 +7,9 @@
     },
     "events" : [
         {
+            "action" : { "install_analyser" : {} }
+        },
+        {
             "comment" : "notification testing",
             "action" : {
                 "create_device" : {
@@ -24,7 +27,7 @@
             "action" : {
                 "use_model" : [
                     { "hierarchy" : "hospital/building/fridge" },
-                    { "model" : { } , "properties" : { "demo" : "drug fridges" } },
+                    { "model" : { } , "properties" : { "demo" : "drug fridges", "icon" : "snowflake" } },
                     { "model" : { "hospital" : "Addenbrookes" }, "devices" : [ {"weather":{}} ], "properties" : { "latitude" : 52.1730311, "longitude" : 0.1393937}},
                     { "model" : { "hospital" : "Addenbrookes", "building" : "[('Harper','Florence','Whittaker','MRC','NIHR','Crick','Lavellier')]", "fridge" : "Fridge #25#"},
                         "devices" : [
@@ -56,7 +59,10 @@
                             "area_radius" : "Key Largo, USA"
                         },
                         "vending_machine" : { "send_available_positions" : true },
-                        "variable" : {"name" : "device_type", "value" : "vending_machine"}
+                        "variable" : [
+                            {"name" : "device_type", "value" : "vending_machine"},
+                            {"name" : "icon", "value" : "candy-cane"}
+                        ]
                     }
                 }
             }
@@ -71,7 +77,10 @@
                         "latlong" : { "generate_addresses" : true, "area_centre" : "Nijmegen, Holland", "area_radius" : "Arnhem, Holland" },
                         "weather" : {},
                         "pump" : {},
-                        "variable" : {"name" : "device_type", "value" : "sump_pump"}
+                        "variable" : [
+                            {"name" : "device_type", "value" : "sump_pump"},
+                            {"name" : "icon", "value" : "water"}
+                        ]
                     }
                 }
             }
@@ -86,7 +95,10 @@
                         "latlong" : { "generate_addresses" : true, "area_centre" : "Cardiff, UK", "area_radius" : "Newport, Wales, UK" },
                         "weather" : {},
                         "pump" : {},
-                        "variable" : {"name" : "device_type", "value" : "sump_pump"}
+                        "variable" : [
+                            {"name" : "device_type", "value" : "sump_pump"},
+                            {"name" : "icon", "value" : "water"}
+                        ]
                     }
                 }
             }
@@ -130,7 +142,8 @@
                                     }
                                 }
                             },
-                            {	"name" : "device_type", "value" : "pallet"}
+                            {	"name" : "device_type", "value" : "pallet"},
+                            {   "name" : "icon", "value" : "pallet"}
                         ]
                     }
                 }
@@ -165,6 +178,7 @@
                         "variable" : [
                             { "name" : "demo", "value" : "BMS" },
                             { "name" : "device_type", "value" : "smoke_alarm" },
+                            { "name" : "icon", "value" : "gripfire" },
                             { "name" : "hardware_version", "value" : [0.4,0.6,0.9,1.1,1.5] },
                             { "name" : "$x", "value" : [1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500] },
                             { "name" : "$y", "value" : [1000,1250,1500,1750,2000,2250,2500,2750,3000] },
@@ -184,6 +198,7 @@
                         "variable" : [
                             { "name" : "demo", "value" : "BMS" },
                             { "name" : "device_type", "value" : "pv_array" },
+                            { "name" : "icon", "value" : "solar-panel" },
                             { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  //  Mountain View, California 
                         ]
                     }
@@ -200,6 +215,7 @@
                         "variable" : [
                             { "name" : "demo", "value" : "BMS" },
                             { "name" : "device_type", "value" : "weather_sensor" },
+                            { "name" : "icon", "value" : "cloud-sun-rain" },
                             { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  //  Mountain View, California 
                         ]
                     }
@@ -216,6 +232,7 @@
                         "variable" : [
                             { "name" : "demo", "value" : "BMS" },
                             { "name" : "device_type", "value" : "bulb" },
+                            { "name" : "icon", "value" : "lightbulb" },
                             { "name" : "$x", "value" : [100,150,200,250,300,350,400,450,500,550,600,650] },
                             { "name" : "$y", "value" : [100,125,150,175,200,225,250,275,300] },
                             { "name" : "latitude" , "value" : 37.386051}, { "name" : "longitude", "value" : -122.083855}  //  Mountain View, California 
@@ -232,7 +249,10 @@
                     "functions" : {
                         "light" : { "clouds" : true, "generate" : true, "generate_scalar" : 2 },
                         "latlong" : { "generate_addresses" : true, "area_centre" : "Warsaw, Poland", "area_radius" : "Plonsk, Poland" },
-                        "variable" : { "name" : "device_type", "value" : "pv_array"}
+                        "variable" : [
+                            { "name" : "device_type", "value" : "pv_array"},
+                            { "name" : "icon", "value" : "solar-panel"}
+                        ]
                     }
                 }
             }
@@ -271,6 +291,7 @@
                             {   "name" : "vendor",  "value" : ["Landis & Gyr", "EDMI", "Aclara", "Itron", "Kaifa", "Honeywell", "Flonidan", "GWI"]},
                             {   "name" : "model",   "value" : ["E470-5394", "ES-10A", "SGM1412", "EM425-I2", "MA120", "AS203P", "BK-G4E", "E470", "G4-MG-SE"]},
                             {	"name" : "device_type", "value" : "smart_meter"},
+                            {   "name" : "icon", "value" : "bolt"},
                             {   "name" : "energy", "timefunction" : { "count" : { "interval" : "PT1H" } } }
                         ]
                     }
@@ -303,8 +324,8 @@
                             "sigmas"  : ["P40D",           "P45D",         "P40D",         "P22D",      "PT0S"]
                         },
                         "variable" : [
-                            {
-                                "name" : "device_type", "value" : "mobile trucks" },
+                            { "name" : "device_type", "value" : "mobile trucks" },
+                            { "name" : "icon", "value" : "truck" },
                             {
                                 "name" : "temperature_F",
                                 "timefunction" : {
@@ -337,7 +358,7 @@
             "action" : {
                 "use_model" : [
                     { "hierarchy" : "site/fridge" },
-                    { "model" : {}, "properties" : { "demo" : "haccp" } },
+                    { "model" : {}, "properties" : { "demo" : "haccp", "icon" : "snowflake" } },
                     { "model" : { "site" : "Site #10#" } , "properties" : { "latlong" : { "area_centre" :  "Eisenach, Germany", "area_radius" : "Aachen, Germany", "generate_addresses" : true  } } },
                     { "model" : { "site" : "Site #10#" } , "properties" : { "store_manager_email" : "[('Lucas','Max','Oskar','Moritz','Anton','Mia','Emma','Sofia','Johanna','Klara'),'.',('Müller','Schmidt','Schneider','Fischer','Weber'),'@bechstraubel.de']" } },
                     { "model" : { "site" : "Site #10#", "fridge" : "Fridge #4#" } , "devices" : [ { "disruptive" : { "sensor_type" : "temperature", "nominal_temp" : [-18,5], "nominal_temp_deviation" : [2,3], "site_type" : ["freezer", "fridge"], "cooling_mtbf" : "P100D", "cooling_ttf" : "P3D" }} ] }
@@ -350,7 +371,7 @@
                 "use_model" : [
                     { "comment" : "x,y coordinates in Cambridge match this floorplan: https://mir-s3-cdn-cf.behance.net/project_modules/fs/284b1728142003.563704a2ac3db.jpg"},
                     { "hierarchy" : "customer/site/floor/zone" },
-                    { "model" : {}, "properties" : { "demo" : "energy in buildings" } },
+                    { "model" : {}, "properties" : { "demo" : "energy in buildings", "icon" : "building" } },
                     { "model" : { "customer" : "Boots" },                                                                       "functions" : [ "opening_hours" ] },
                     { "model" : { "customer" : "Boots", "site" : "Cambridge" },                                                 "properties" : { "latitude" : 52.206839, "longitude" : 0.120750 } },
                     { "model" : { "customer" : "Boots", "site" : "Cambridge" },                                                 "devices" : [ {"aggregate" : { "numbers" : ["kW", "temperature"], "booleans" : ["occupied"]} } ] },

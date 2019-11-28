@@ -1,4 +1,6 @@
 """
+    MERGEJSON - command-line utility
+
     Given a set of .json files, this merges them in time order.
     Each file must contain a JSON list of messages, of the form:
         [
@@ -8,80 +10,43 @@
     Each message is a dict containing at least a $id and $ts field, already sorted by rising $ts.
     One line per message.
 """
+#
+#
+# Copyright (c) 2019 DevicePilot Ltd.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 import sys, os, glob
 import json
+import json_inc
 import logging
-
-MESSAGES_PER_FILE = 1E5
-
-def find_all_properties(messages):
-    properties = []
-    for message in messages:
-        for prop in message:
-            if prop not in ["$ts", "$id"]:  # Ignore these
-                if prop not in properties:
-                    properties.append(prop)
-    return sorted(properties)   # Keeping the order consistent just helps with readability
-
-class Incremental_json():
-    def __init__(self, file_path):
-        self.file_path = file_path
-        self.file_handle = open(file_path, "rt")
-        L = self.file_handle.readline().strip()
-        assert L == "[", "Expected first line to be [ but it was "+L
-        self.props = None   # The current line of the JSON file
-        self.consume_row()  # Consume the first data row
-
-    def consume_row(self):
-        L = self.file_handle.readline().strip()
-        if L == "]":
-            logging.info("Reached end of file "+self.file_path)
-            self.props = None
-        else:
-            self.props = json.loads(L.strip(","))   # All but last line will have a trailing comma because elements in a list
-
-    def at_eof(self):
-        return self.props is None
-
-class Output_file_series():
-    def __init__(self, filestem):
-        self.filestem = filestem
-        self.file_count = 0
-        self.open()
-
-    def open(self):
-        filename = self.filestem + "%05d.json" % self.file_count
-        logging.info("Writing "+filename)
-        self.out = open(filename, "wt")
-        self.out.write("[\n")
-        self.first_out = True
-
-    def close(self):
-        self.out.write("\n]")
-        self.out.close()
-        self.file_count += 1
-
-    def write(self, props):
-        if not self.first_out:
-            self.out.write(",\n")
-        self.first_out = False
-        self.out.write(json.dumps(props, sort_keys=True))
 
 def merge_json_files(file_list, output_filestem):
 
-    def close_output_file():
-        global out, file_count
-
-    out = Output_file_series(output_filestem)
-    message_count = 0
+    out = json_inc.Writer(output_filestem)
 
     logging.info("Merging files "+str(file_list))
 
     # Open all files
     inc_files = []
     for f in file_list:
-        inc_files.append(Incremental_json(f))
+        inc_files.append(json_inc.Reader(f))
 
     # Scan along files, consuming them in time order
     while True:
@@ -109,12 +74,6 @@ def merge_json_files(file_list, output_filestem):
 
         out.write(earliest_file.props)
         earliest_file.consume_row()
-
-        message_count += 1
-        if message_count >= MESSAGES_PER_FILE:
-            out.close()
-            out.open()
-            message_count = 0
 
     out.close()
 
