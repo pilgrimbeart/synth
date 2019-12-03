@@ -218,9 +218,9 @@ class Mobile(Device):
     def update_moving_and_location(self):
         self.set_property("moving", self.dwell_count == 0)
         if self.dwell_count == 0:
-            self.set_property("location", None)
+            self.set_property("location_mobile", None)
         else:
-            self.set_property("location", self.loc_group.locations[self.points[self.from_point]][2])
+            self.set_property("location_mobile", self.loc_group.locations[self.points[self.from_point]][2])
 
     def update_everything(self):
         self.update_lon_lat()
