@@ -6,7 +6,7 @@ if [ $# -ne 2 ]; then
     exit -1
 fi
 ./checkMem
-command="python synth $@"
+command="python3 synth $@"
 echo $command
 pkill -f "$command" || echo ""
 rm -f ../synth_logs/$1.out

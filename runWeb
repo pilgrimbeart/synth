@@ -1,5 +1,5 @@
 # Run this with sudo, because web server needs them to access the HTTPS port
-command="python -u synth/web_to_zeromq.py"
+command="python3 -u synth/web_to_zeromq.py"
 echo $command
 pkill -f "$command"
 nohup $command > ../synth_logs/web_to_zeromq.out 2>&1 &

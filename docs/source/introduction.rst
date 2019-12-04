@@ -21,9 +21,9 @@ Getting started
 ***************
 To see what Python version you have installed type::
 
-    python -V
+    python3 -V
 
-Synth requires Python 2.7.x so if you're on some other Python version then we recommend using `venv` to create a Python 2.7 environment into which to install Synth.
+Synth requires Python 3 or higher, so if you're on some other Python version then we recommend using `venv` to create e.g. a Python 3.5 environment into which to install Synth
 
 To install Synth type::
 
@@ -31,8 +31,8 @@ To install Synth type::
 
 then::
 
-    sudo apt-get install python-pip
-    sudo -H pip install -r requirements.txt
+    sudo apt-get install python-pip3
+    sudo -H pip3 install -r requirements.txt
 
 
 To test that Synth is installed correctly:
@@ -52,7 +52,7 @@ To test that Synth is installed correctly:
 
 3) On the command line, from the top-level Synth directory (i.e. the one which contains the README file) run::
 
-    python synth OnFStest 10secs
+    python3 synth OnFStest 10secs
 
 This will run for 10 seconds and create output files including::
 
@@ -77,11 +77,11 @@ Command-line arguments
 **********************
 Synth accepts any number of arbitrary command-line parameters::
 
-	python synth {args}
+	python3 synth {args}
 
 Arguments are generally taken to be the names of corresponding JSON files in either the ``../synth_accounts`` or ``scenarios`` directories. The convention (but it's only a convention) is to name account files ``On*`` and list them first::
 
-	python synth OnFStest full_fat_device
+	python3 synth OnFStest full_fat_device
 
 makes Synth run the ``scenarios/full_fat_device.json`` scenario on the account defined in ``../synth_accounts/OnFStest.json``.
 
@@ -94,7 +94,7 @@ Synth merges the JSON files in the order given, so although they'll generally no
 
 Whilst accounts and scenarios are generally defined in parameter files as described below, it is also possible to make (and override) simple definitions by specifying JSON directly on the command line as an argument e.g.::
 
-		python synth OnFStest full_fat_device {\"restart_log\" : true}
+		python3 synth OnFStest full_fat_device {\"restart_log\" : true}
 
 When Synth runs it emits informative log messages and errors. These are time-stamped with the current **simulation** time, which will not be the current real time (unless Synth has caught-up with real time).
 

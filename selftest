@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e # Abort on error
-python synth OnFStest full_fat_device
-python synth OnFStest 10secs_prev
-python synth OnFStest 90000_events
+python3 synth OnFStest full_fat_device
+python3 synth OnFStest 10secs_prev
+python3 synth OnFStest 90000_events
 echo "Self tests PASSED"

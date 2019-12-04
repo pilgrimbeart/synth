@@ -3,6 +3,6 @@ if [ $# -ne 2 ]; then
     echo "Usage: killSynth account scenario"
     exit -1
 fi
-command="python synth $@"
+command="python3 synth $@"
 echo `whoami` `date` "KILLED " $command >> ../synth_logs/jobs_run.txt
 pkill -f "$command" || echo "No such task running"
