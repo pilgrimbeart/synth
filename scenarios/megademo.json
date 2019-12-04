@@ -61,7 +61,7 @@
                         "vending_machine" : { "send_available_positions" : true },
                         "variable" : [
                             {"name" : "device_type", "value" : "vending_machine"},
-                            {"name" : "icon", "value" : "candy-cane"}
+                            {"name" : "icon", "value" : "utensils"}
                         ]
                     }
                 }
