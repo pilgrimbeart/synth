@@ -191,7 +191,7 @@ class Events():
         self.file_mode = "at"
         if restart_log:
             self.file_mode = "wt"
-        self.logfile = open(LOG_DIRECTORY+instance_name+".evt", self.file_mode, 0)    # Unbuffered
+        self.logfile = open(LOG_DIRECTORY+instance_name+".evt", self.file_mode)    # This was unbuffered, but Python3 now doesn't allow text files to be unbuffered
         self.logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
 
         self.logtext = []   # TODO: Probably a Bad Idea to store this in memory. Instead when we want this we should probably close the logfile, read it and then re-open it. We store as an array because appending to a large string gets very slow
