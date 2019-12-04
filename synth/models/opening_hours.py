@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 import logging
-from model import Model
+from .model import Model
 
 class Opening_hours(Model):
     def __init__(self, context, params, properties):

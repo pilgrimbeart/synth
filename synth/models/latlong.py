@@ -23,7 +23,7 @@
 
 import logging
 from common.geo import geo, google_maps
-from model import Model
+from .model import Model
 
 class Latlong(Model):
     def __init__(self, context, params, properties):
