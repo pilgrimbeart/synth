@@ -281,5 +281,5 @@ if __name__ == "__main__":
     test( 2, { "model" : { "a" : "A #2#", "b" : "B #1#" } } )
     test( 4, { "model" : { "a" : "A #2#", "b" : "B #2#" } } )
     test( 27, { "model" : { "a" : "A #3#", "b" : "B #3#", "c" : "C #3#" } } )
-    print "Tests passed"
+    print("Tests passed")
 
