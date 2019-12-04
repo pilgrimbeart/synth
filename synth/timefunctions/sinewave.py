@@ -107,23 +107,23 @@ class dummy_engine():
 
 if __name__ == "__main__":
     if False:
-        print "Sinewave"
+        print("Sinewave")
         s = Sinewave(dummy_engine(), None, { "period" : "P1D" })
         for t in range(0, 60*60*24, 60*60):  # A day in hours
-            print t, s.state(t)
+            print(t, s.state(t))
 
     if True:
-        print "Three sinewaves"
+        print("Three sinewaves")
         s = Sinewave(dummy_engine(), None,
                 {   "period" : ["PT24H", "PT12H", "PT6H"],
                     "amplitude" : [1.0, 0.5, 0.25]
                 } 
                 )
         for t in range(0, 60*60*24, 60*60):  # A day in hours
-            print t, s.state(t)
+            print(t, s.state(t))
 
     if False:
-        print "Many sinewaves"
+        print("Many sinewaves")
         s = Sinewave(dummy_engine(), None,
                 {   "period" : ["PT7M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
                     "overall_amplitude" : 15.0,
@@ -131,11 +131,11 @@ if __name__ == "__main__":
                 } 
                 )
         for t in range(0, 60*60*24*30, 60*60):  # A month of minutes
-            print t, s.state(t)
+            print(t, s.state(t))
 
     # Self-driven timing
     if True:
-        print "Three self-timed sinewaves"
+        print("Three self-timed sinewaves")
         s = Sinewave(dummy_engine(), None,
                 {   "period" : ["PT24H", "PT12H", "PT6H"],
                      "amplitude" : [1.0, 0.5, 0.25]
@@ -144,5 +144,5 @@ if __name__ == "__main__":
         t = 0
         for i in range(1000):
             v = s.state(t)
-            print t,",",v
+            print(t,",",v)
             t = s.next_change(t)
