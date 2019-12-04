@@ -52,7 +52,7 @@ There are no event actions specific to the AWS client.
 
 import logging, json
 import boto3
-from clients.client import Client
+from .client import Client
 
 DEFAULT_TYPENAME = "DemoThingType"
 

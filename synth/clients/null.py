@@ -26,7 +26,7 @@ This client throws everything away! - useful for testing performance impacts of 
 
 import logging
 import json
-from clients.client import Client
+from .client import Client
 from common import evt2csv
 from common import json_writer
 

@@ -117,11 +117,11 @@ import simplejson   # Better errors
 import requests
 from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
-import httplib, urllib
+import http, urllib
 import isodate
 import traceback
 import boto3 # AWS library for bulk upload
-from clients.client import Client
+from .client import Client
 from common import ISO8601, top, json_writer, evt2csv
 import gzip
 import shutil
@@ -393,7 +393,7 @@ class Devicepilot(Client):
             resp = self.session.post(url, verify=True, headers=set_headers(self.key), data=body)
             if debug_post:
                 logging.info("devicePilot::post_device posted "+str(body))
-        except httplib.HTTPException as err:
+        except http.client.HTTPException as err:
             logging.error("ERROR: devicepilot.post_device() couldn't create on server")
             logging.error(str(err))
             logging.error(str(device))
@@ -405,7 +405,7 @@ class Devicepilot(Client):
         else:
             if resp.status_code not in [requests.codes.ok, requests.codes.created, requests.codes.accepted]:
                 logging.error("devicepilot.post_device() couldn't create on server")
-                # print  '%(status)03d (%(text)s)' % {"status": resp.status_code, "text": httplib.responses[resp.status_code]}
+                # print  '%(status)03d (%(text)s)' % {"status": resp.status_code, "text": http.client.responses[resp.status_code]}
                 logging.error("URL:"+str(url))
                 logging.error("Status code:"+str(resp.status_code))
                 logging.error("Text:"+str(resp.text))
