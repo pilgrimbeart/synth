@@ -33,7 +33,7 @@ socket.connect ("tcp://localhost:%s" % ZEROMQ_PORT)
 socket.set_hwm(ZEROMQ_BUFFER)
 
 topicfilter = ""    # ZeroMQ will do filtering for us, but only on client side
-socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
+socket.setsockopt(zmq.SUBSCRIBE, topicfilter.encode('ascii'))
 
 def rxThread(callback):
     logging.info("ZeroMQ rx thread started")
