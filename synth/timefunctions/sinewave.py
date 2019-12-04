@@ -20,7 +20,7 @@ Arguments::
     }
 """
 
-from timefunction import Timefunction
+from .timefunction import Timefunction
 import isodate
 import math
 

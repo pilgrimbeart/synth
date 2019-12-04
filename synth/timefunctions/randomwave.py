@@ -13,7 +13,7 @@ Arguments::
     }
 """
 
-from timefunction import Timefunction
+from .timefunction import Timefunction
 import isodate
 import math
 import random
@@ -74,6 +74,6 @@ class dummy_engine():
 if __name__ == "__main__":
     r = Randomwave(dummy_engine(), {"period" : "PT1S"})
     for t in xrange(1000):
-        print r.state(t/10.0)
+        print(r.state(t/10.0))
     
     

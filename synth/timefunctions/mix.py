@@ -11,7 +11,7 @@ Arguments::
     }
 """
 
-from timefunction import Timefunction
+from .timefunction import Timefunction
 from common import importer
 from common.ordinal import LCMM
 
