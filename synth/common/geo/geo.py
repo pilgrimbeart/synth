@@ -36,7 +36,7 @@ Image.MAX_IMAGE_PIXELS = 1000000000 # We're dealing with large images, so preven
 import numpy
 import random
 import math
-from google_maps import address_to_lon_lat, lon_lat_to_address
+from .google_maps import address_to_lon_lat, lon_lat_to_address
 
 
 MINLON = 100000
@@ -170,10 +170,10 @@ def main():
     p = point_picker()
     L = p.pick_points(n=1000, area=["London,UK","Cambridge,UK"])
 
-    print "LONG:",MINLON, MAXLON,"DIFF",MAXLON-MINLON
-    print "LAT:",MINLAT, MAXLAT,"DIFF",MAXLAT-MINLAT
-    print "X:",MINX, MAXX,"DIFF",MAXX-MINX
-    print "Y:",MINY, MAXY,"DIFF",MAXY-MINY
+    print("LONG:",MINLON, MAXLON,"DIFF",MAXLON-MINLON)
+    print("LAT:",MINLAT, MAXLAT,"DIFF",MAXLAT-MINLAT)
+    print("X:",MINX, MAXX,"DIFF",MAXX-MINX)
+    print("Y:",MINY, MAXY,"DIFF",MAXY-MINY)
 
 class geo_pick():
 # Slightly easier parameter-picking

@@ -18,7 +18,7 @@ class top():
         if not new_id in self.top_devices:
             self.top_devices[new_id] = {}
         existing_props = self.top_devices[new_id]
-        for new_prop, new_value in new_properties.iteritems():
+        for new_prop, new_value in new_properties.items():
             if new_prop not in existing_props:
                 existing_props[new_prop] = (new_ts, new_value)
             else:
@@ -26,7 +26,7 @@ class top():
                 if new_ts >= existing_ts:   # Only update if timestamp is newer
                     existing_props[new_prop] = (new_ts, new_value)
 
-        for (k,v) in new_properties.iteritems():    # Update top, except for null values (see NOTE above)
+        for (k,v) in new_properties.items():    # Update top, except for null values (see NOTE above)
             if v != None:
                 self.top_properties[k] = v
 

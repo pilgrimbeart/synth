@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import json, httplib, urllib
+import json, http, urllib
 import logging
 
 CACHE_FILE = "../synth_logs/geo_cache.txt"
@@ -54,7 +54,7 @@ def add_to_cache(cache, key, contents):
         f.write(json.dumps(caches))
         f.close()
     except Exception as exc:
-        print exc
+        print(exc)
 
 def address_to_lon_lat(address, google_maps_api_key=None):
     if address in caches["geo"]:
@@ -64,15 +64,15 @@ def address_to_lon_lat(address, google_maps_api_key=None):
     (lng,lat) = (None, None)
 
     logging.info("Looking up "+str(address)+" in Google Maps")
-    conn = httplib.HTTPSConnection("maps.google.com")   # Must now use SSL
-    URL = '/maps/api/geocode/json' + '?' + urllib.urlencode({'address':address})
+    conn = http.client.HTTPSConnection("maps.google.com")   # Must now use SSL
+    URL = '/maps/api/geocode/json' + '?' + urllib.parse.urlencode({'address':address})
     if google_maps_api_key is None:
         logging.info("No Google Maps key so Google maps API may limit your requests")
     else:
-        URL += '&' + urllib.urlencode({'key':google_maps_api_key})
+        URL += '&' + urllib.parse.urlencode({'key':google_maps_api_key})
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
-    result = resp.read()
+    result = resp.read().decode('utf-8')
     try:
         data = json.loads(result)
         geo = data["results"][0]["geometry"]["location"]
@@ -101,15 +101,15 @@ def lon_lat_to_address(lng, lat, google_maps_api_key=None):
         return caches["reverse"][s]    # Avoid thrashing Google (expensive!)
 
     logging.info("Looking up "+str((lng,lat))+" in Google Maps")
-    conn = httplib.HTTPSConnection("maps.google.com")   # Must now use SSL
-    URL = '/maps/api/geocode/json' + '?' + urllib.urlencode({'latlng' : str(lat)+","+str(lng)})
+    conn = http.client.HTTPSConnection("maps.google.com")   # Must now use SSL
+    URL = '/maps/api/geocode/json' + '?' + urllib.parse.urlencode({'latlng' : str(lat)+","+str(lng)})
     if google_maps_api_key is None:
         logging.info("No Google Maps key so Google maps API may limit your requests")
     else:
-        URL += '&' + urllib.urlencode({'key':google_maps_api_key})
+        URL += '&' + urllib.parse.urlencode({'key':google_maps_api_key})
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
-    result = resp.read()
+    result = resp.read().decode('utf-8')
     try:
         data = json.loads(result)
         results = {}
@@ -132,17 +132,17 @@ def get_route_from_lat_lons(from_lat, from_lng, to_lat, to_lng, mode="walking", 
         return caches["route"][hash]
 
     logging.info("Looking up route "+hash+" in Google Maps")
-    conn = httplib.HTTPSConnection("maps.googleapis.com")
+    conn = http.client.HTTPSConnection("maps.googleapis.com")
     URL = '/maps/api/directions/json' + '?mode='+str(mode)
     URL += '&origin='+str(from_lat)+","+str(from_lng)
     URL += "&destination="+str(to_lat)+","+str(to_lng)
     if google_maps_api_key is None:
         logging.info("No Google Maps key so Google maps API may limit your requests")
     else:
-        URL += '&' + urllib.urlencode({'key':google_maps_api_key})
+        URL += '&' + urllib.parse.urlencode({'key':google_maps_api_key})
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
-    result = resp.read()
+    result = resp.read().decode('utf-8')
     try:
         data = json.loads(result)
         assert data["status"] == "OK"
@@ -169,12 +169,12 @@ def main():
     from_lon, from_lat = address_to_lon_lat("Cambridge, UK", google_maps_api_key=key)
     to_lon, to_lat = address_to_lon_lat("Oxford, UK", google_maps_api_key=key)
     route = get_route_from_lat_lons(from_lat, from_lon, to_lat, to_lon, google_maps_api_key=key)
-    print "route:",route
+    print("route:",route)
  
 if __name__ == "__main__":
     import os
     cwd = os.getcwd()
-    print cwd
+    print(cwd)
     main()
 
 
