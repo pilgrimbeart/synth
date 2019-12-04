@@ -32,7 +32,7 @@ import time
 from helpers.solar import solar
 import helpers.opening_times as opening_times
 
-from device import Device
+from .device import Device
 
 MINS = 60
 HOURS = MINS * 60

@@ -26,7 +26,7 @@ Device properties created::
 """
 
 
-from device import Device
+from .device import Device
 import random
 import isodate
 import logging

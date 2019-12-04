@@ -27,7 +27,7 @@ Device properties created::
     }
 """
 
-from device import Device
+from .device import Device
 from common.geo import geo, google_maps
 import logging
 

@@ -22,7 +22,7 @@ import random
 import logging
 import time
 
-from device import Device
+from .device import Device
 
 CO2_POLL_INTERVAL_S = 60 * 15
 

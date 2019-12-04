@@ -21,7 +21,7 @@ Device properties created::
 # NOTE: Here we represent cash in CENTS (or whatever, not dollars) to avoid the many perils of floating-point
 # Machines have "positions" (a "tray" in vending-machine parlance is a whole row of positions but we don't use that concept here)
 
-from device import Device
+from .device import Device
 import random
 import isodate
 import logging

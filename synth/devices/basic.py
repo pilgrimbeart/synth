@@ -21,7 +21,7 @@ Device properties created::
 
 import random
 import logging
-from device import Device
+from .device import Device
 from common import importer
 
 class Basic(Device):

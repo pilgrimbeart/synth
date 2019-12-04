@@ -61,7 +61,7 @@ import time
 import isodate
 from math import sin, pi
 
-from device import Device
+from .device import Device
 from helpers.solar import solar
 import device_factory
 import helpers.opening_times

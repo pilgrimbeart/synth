@@ -24,7 +24,7 @@ Device properties created::
     }
 """
 
-from device import Device
+from .device import Device
 from common.geo import google_maps, geo
 import random, math
 import isodate

@@ -23,7 +23,7 @@ import random
 import logging
 import time
 
-from device import Device
+from .device import Device
 import helpers.opening_times as opening_times
 
 ENERGY_READING_INTERVAL_S = 60 * 30

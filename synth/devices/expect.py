@@ -26,7 +26,7 @@ Device properties created::
 import logging, datetime
 import pendulum, isodate
 import requests, httplib, json
-from device import Device
+from .device import Device
 from common import importer
 from common import plotting
 

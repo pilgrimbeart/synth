@@ -19,7 +19,7 @@ Device properties created::
 
 """
 
-from device import Device
+from .device import Device
 from helpers.solar import solar
 import math, random
 

@@ -18,7 +18,7 @@ Device properties created::
 
 """
 
-from device import Device
+from .device import Device
 from common import importer
 import logging
 

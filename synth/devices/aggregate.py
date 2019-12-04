@@ -19,7 +19,7 @@ Device properties created::
 import logging
 import time
 
-from device import Device
+from .device import Device
 
 POLL_INTERVAL_S = 60 * 15
 

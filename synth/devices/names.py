@@ -17,7 +17,7 @@ Device properties created::
     
 """
 
-from device import Device
+from .device import Device
 from helpers import people_names
 
 class Names(Device):

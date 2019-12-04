@@ -18,7 +18,7 @@ Device properties created::
 """
    
 import logging
-from device import Device
+from .device import Device
 from common import importer
 
 class Button(Device):

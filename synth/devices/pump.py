@@ -19,7 +19,7 @@ Device properties created::
 
 """
 
-from device import Device
+from .device import Device
 import random
 
 CHECK_INTERVAL_S = 60*60

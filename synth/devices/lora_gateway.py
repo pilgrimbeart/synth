@@ -18,7 +18,7 @@ import random
 import logging
 import time
 
-from device import Device
+from .device import Device
 import device_factory
 
 MINUTES = 60

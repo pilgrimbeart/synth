@@ -29,7 +29,7 @@ Device properties created::
    
 import logging
 import random
-from device import Device
+from .device import Device
 from common import importer
 from common import randstruct
 

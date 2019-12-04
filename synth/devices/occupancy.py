@@ -21,7 +21,7 @@ import random
 import logging
 import time
 
-from device import Device
+from .device import Device
 import helpers.opening_times as opening_times
 
 OCCUPANCY_POLL_INTERVAL_S = 60 * 15

@@ -20,7 +20,7 @@ Device properties created::
 """
 
 
-from device import Device
+from .device import Device
 import helpers.opening_times as opening_times
 import random
 import isodate
