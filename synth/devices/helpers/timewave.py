@@ -125,7 +125,7 @@ def interp(specStr, t):
 if __name__ == "__main__":
     specStr = "[[0,20],[30,65],[60,50],[90,75]]"
     for day in range(-10,100):
-        print day, interp(specStr, day*60*60*24)
+        print(day, interp(specStr, day*60*60*24))
     
 ##    specW = ["Mon","Tue","Wed","Thu","Fri"]
 ##    specD = "08:00-10:00"

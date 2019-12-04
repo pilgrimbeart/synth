@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import json, httplib, urllib
+import json, http, urllib
 import time
 import logging
 
@@ -125,11 +125,11 @@ def get_weather(latitude, longitude, epoch_seconds):
 
     time_start = time.time()
 
-    conn = httplib.HTTPSConnection(API_DOMAIN)
+    conn = http.client.HTTPSConnection(API_DOMAIN)
     URL = "/forecast/"+str(account_key)+"/"+str(latitude)+","+str(longitude)+","+str(epoch_seconds)+"?units=si&exclude=minutely,daily,flags"    # Using exclude apparently makes it a bit faster?
     conn.request('GET', URL, None, set_headers())
     resp = conn.getresponse()
-    result = resp.read()
+    result = resp.read().decode('utf-8')    # We need a string not bytes[]
 
     time_result = time.time()
 
@@ -164,7 +164,7 @@ def main():
     clear_caches()
     for h in range(48):
         result = get_weather(lat, lon, t + h * HOUR)
-        print result
+        print(result)
  
 if __name__ == "__main__":
     main()
