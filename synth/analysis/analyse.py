@@ -46,7 +46,7 @@ HISTORY_LENGTH = 1000
 def is_value_continuous(value, context):
     if type(value) in [int, float]:
         return True
-    elif type(value) in [bool, str, unicode]:
+    elif type(value) in [bool, str]:
         return False
     elif value==None:
         logging.warning("None type supplied as first value of a property - assuming it's discrete "+str(context))
@@ -64,7 +64,7 @@ class Property_stream_continuous():
         self.history = []       # Last HISTORY_LENGTH values seen (only used to recalculate the histogram]. 
 
     def update(self, value, context):
-        if type(value) == unicode:
+        if isinstance(value,str):
             assert False, "String value passed to continuous update: " + repr(context) + " : " + repr(value)
 
         #if context[1].startswith("f6-70-01"):
@@ -137,7 +137,7 @@ class Property_stream_discrete():
 
     def histo_sum(self):
         sum = 0
-        for k,v in self.histogram.iteritems():
+        for k,v in self.histogram.items():
             sum += v
         return sum
 
@@ -211,7 +211,7 @@ class Analyser():
         t = message["$ts"]
         state_results = []  # A list of (value, property_name) pairs, so we can sort by largest value
         time_results = []
-        for prop, val in message.iteritems():
+        for prop, val in message.items():
             if prop not in ["$id", "$ts"]:
                 if not prop.startswith("ML_"):  # If we're post-processing data that's already had this analysis, don't do analysis on the analysis!
                     if not prop in self.prop_is_continuous:
