@@ -53,7 +53,7 @@ class Stream():
 
         filename = self.file_path + "%05d" % self.file_count + ".json"
         logging.info("Starting new logfile " + filename)
-        self.file = open(filename, self.file_mode, 0)
+        self.file = open(filename, self.file_mode)  # No-longer unbuffered as Python3 doesn't support that on text files
         self.file.write("[\n")
         self.events_in_this_file = 0
         self.files_written.append(filename)
