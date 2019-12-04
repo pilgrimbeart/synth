@@ -36,7 +36,7 @@ There are two types of Property_stream:
 
 import glob
 import json
-import json_inc
+from . import json_inc
 import logging
 from numbers import Number
 
