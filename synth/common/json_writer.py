@@ -3,7 +3,7 @@ Writes events to JSON files, segmenting on max size"""
 
 import logging
 import time
-import json_quick
+from . import json_quick
 
 DEFAULT_DIRECTORY = "../synth_logs/"
 DEFAULT_MAX_EVENTS_PER_FILE = 100000    # FYI 100,000 messages is max JSON file size that DP can ingest (if that's where you end-up putting these files)

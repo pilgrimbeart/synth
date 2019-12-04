@@ -127,7 +127,7 @@ def do_query(params, event_dict):
             else:
                 succ = events[n+1]
             if evaluate(expression, prev,curr,succ):
-                print curr
+                print(curr)
 
 if __name__ == "__main__":
     import sys

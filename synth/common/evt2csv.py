@@ -140,7 +140,7 @@ def read_evt_str(contents):
 if __name__ == "__main__":
     import sys
     for filename in sys.argv[1:] :
-        print "Converting ",filename
+        print("Converting " + str(filename))
         evt = read_evt_file(filename+".evt")
         open(filename+"_converted.csv","wt").write(convert_to_csv(evt))
-    print "Done"
+    print("Done")
