@@ -269,6 +269,9 @@ def main():
     exit(-1)
 
 if __name__ == "__main__":
+    print("Running on Python"+str(sys.version_info.major)+"."+str(sys.version_info.minor))
+    assert sys.version_info.major >= 3, "Synth must be run with python3 or higher"
+
     if False:    # Profile
         import cProfile, pstats
         cProfile.run('main()', 'profiling')
