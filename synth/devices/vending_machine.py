@@ -441,7 +441,7 @@ def add_bags(dest, src):
 
 def bag_value(bag):
     value = 0
-    for (k,v) in bag.iteritems():
+    for (k,v) in bag.items():
         value += k * v
     return value
 

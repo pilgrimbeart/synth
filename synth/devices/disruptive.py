@@ -62,9 +62,9 @@ import isodate
 from math import sin, pi
 
 from .device import Device
-from helpers.solar import solar
+from .helpers import opening_times
+from .helpers.solar import solar
 import device_factory
-import helpers.opening_times
 
 MINS = 60
 HOURS = MINS * 60

@@ -29,8 +29,8 @@ Device properties created::
 import random
 import logging
 import time
-from helpers.solar import solar
-import helpers.opening_times as opening_times
+from .helpers.solar import solar
+from .helpers import opening_times as opening_times
 
 from .device import Device
 

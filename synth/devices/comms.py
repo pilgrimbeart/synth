@@ -23,9 +23,9 @@ Device properties created::
 
 
 from .device import Device
+from .helpers import timewave
 import random
 import isodate
-import helpers.timewave
 import logging
 
 BEST_RSSI = -50.0

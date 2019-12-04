@@ -22,7 +22,7 @@ import logging
 import time
 
 from .device import Device
-import helpers.opening_times as opening_times
+from .helpers import opening_times as opening_times
 
 OCCUPANCY_POLL_INTERVAL_S = 60 * 15
 DEFAULT_OPENING_TIMES = "nine_to_five"

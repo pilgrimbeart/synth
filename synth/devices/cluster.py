@@ -21,7 +21,7 @@ Device properties created::
 
 
 from .device import Device
-import helpers.opening_times as opening_times
+from .helpers import opening_times as opening_times
 import random
 import isodate
 import logging

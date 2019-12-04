@@ -20,7 +20,7 @@ Device properties created::
 """
 
 from .device import Device
-from helpers.solar import solar
+from .helpers.solar import solar
 import math, random
 
 TICK_INTERVAL_S = 60*60

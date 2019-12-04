@@ -45,7 +45,7 @@ class Variable(Device):
                     var_value = random.choice(var_value)
                 variables[var_name] = var_value
             elif "timefunction" in params:
-                tf_name = params["timefunction"].keys()[0]
+                tf_name = list(params["timefunction"].keys())[0]    # We know there's only 1
                 var_value = importer.get_class("timefunction", tf_name)(engine, self, params["timefunction"][tf_name])
                 variables[var_name] = var_value.state()
                 next_change = var_value.next_change()
