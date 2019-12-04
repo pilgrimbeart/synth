@@ -75,7 +75,7 @@ MODEL_FIELDS_BECOME_PROPERTIES = True
 
 def randomise(s):
 # If string s contains a "randomise me" list of choices, then turn it into one of its choices
-    if not isinstance(s, basestring):
+    if not isinstance(s, str):
         return s
     if s.startswith("[") and s.endswith("]"):
         return randstruct.evaluate(s)
@@ -165,6 +165,7 @@ class Model():
                 self.hierarchy = elem["hierarchy"].split("/")
             elif "model" in elem:
                 for e in enumerate_model_counters(elem):
+                    # logging.info("model element is "+str(e))
                     self.render_smart_properties(e)
                     self.models.append(e)
             else:
@@ -196,7 +197,8 @@ class Model():
     def render_smart_properties(self, elem):
         new_props = {}
         if "properties" in elem:
-            for n,v in elem["properties"].copy().iteritems():
+            for n,v in elem["properties"].copy().items():
+                # logging.info("Rendering model smart properties "+str((n,v)))
                 if type(v) == dict:
                     model = importer.get_class('model', n)
                     model(self.context, v, new_props)
