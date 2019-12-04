@@ -111,7 +111,7 @@ def parse_digits(value):
         groups = m.groups()
     except:
         pass
-    print groups
+    print(groups)
     res = [a if a else 0 for a in groups]
     for i in range(len(res)):
         val = float(res[i])
@@ -285,33 +285,33 @@ if __name__ == '__main__':
                (80,-120,   55.89, 17.74),
                (0, 0,     2.26, 66.89)
                ]
-    print "Noon July 1 2014 at 0,0 = 2.26, 66.89"
-    print "",sun_position(2014,7,1, lat=0, longitude=0)
-    print "Noon Dec 22 2012 at 41,0 = 180.03, 25.6"
-    print "",sun_position(2012, 12, 22, lat=41, longitude=0)
-    print "Noon Dec 22 2012 at -41,0 = 359.09, 72.44"
-    print "",sun_position(2012, 12, 22, lat=-41, longitude=0)
-    print
+    print("Noon July 1 2014 at 0,0 = 2.26, 66.89")
+    print("",sun_position(2014,7,1, lat=0, longitude=0))
+    print("Noon Dec 22 2012 at 41,0 = 180.03, 25.6")
+    print("",sun_position(2012, 12, 22, lat=41, longitude=0))
+    print("Noon Dec 22 2012 at -41,0 = 359.09, 72.44")
+    print("",sun_position(2012, 12, 22, lat=-41, longitude=0))
+    print()
 
     for s in samples:
         lat, lon, az, el = s
-        print "\nFor lat,long:", lat, lon,
+        print("\nFor lat,long:", lat, lon)
         calc_az, calc_el = sun_position(2014,7,1, lat=lat, longitude=lon)
         az_ok = abs(az-calc_az) < 0.5
         el_ok = abs(el-calc_el) < 0.5
         if not(az_ok and el_ok):
-            print "\n Azimuth (Noaa,calc)   = %4.2f %4.2f (error %4.2f)" %(az, calc_az, abs(az-calc_az))
-            print " Elevation (Noaa,calc) = %4.2f %4.2f (error %4.2f)" %(el, calc_el, abs(el-calc_el))
+            print("\n Azimuth (Noaa,calc)   = %4.2f %4.2f (error %4.2f)" %(az, calc_az, abs(az-calc_az)))
+            print(" Elevation (Noaa,calc) = %4.2f %4.2f (error %4.2f)" %(el, calc_el, abs(el-calc_el)))
         else:
-            print" OK (<0.5 error)"
+            print (" OK (<0.5 error)")
 
     #
-    print "\nTesting float to string"
+    print("\nTesting float to string")
     latlong = [(38.72409, -9.140625), (-11.953349, -76.992187), (12, 12), (-22.5, 22.5), (-33.125,-33.125), (44, -44)]
     for (lat, lon) in latlong:
-        print lat, lon, "=", latlong_float_conversion(lat, lon)
+        print(lat, lon, "=", latlong_float_conversion(lat, lon))
     #
-    print "\nTesting string parsing"
+    print("\nTesting string parsing")
     latlong = ["38°43'26.724N 9°8'26.25W",
                "33°7'30S 33°7'30W",
                "38° 43' 26.724 N 9° 8' 26.25 W",
@@ -321,6 +321,6 @@ if __name__ == '__main__':
                "38.72409°N 9.140625°W"
                ]
     for s in latlong:
-        print s
-        print "", latlong_str_conversion(s)
+        print(s)
+        print("", latlong_str_conversion(s))
     

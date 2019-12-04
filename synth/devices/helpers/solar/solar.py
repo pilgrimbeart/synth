@@ -24,7 +24,7 @@
 # SOFTWARE.
 
 from math import sin, pi
-import sunpos_2
+from . import sunpos_2
 from common import ISO8601
 
 def second_of_day(epochSecs):
@@ -38,7 +38,7 @@ def diurnal_cycle(epochSecs):
     frac = e / float(days(1))  # Fraction of a day
     return 0.5 + sin(3*pi/2 + frac*pi*2)/2
 
-def sun_angle(epochSecs, (longitude, latitude)):
+def sun_angle(epochSecs, longitude, latitude):
     dateS = ISO8601.epoch_seconds_to_ISO8601(epochSecs)
     year = int(dateS[0:4])
     month = int(dateS[5:7])
@@ -50,7 +50,7 @@ def sun_angle(epochSecs, (longitude, latitude)):
     return azimuthD, elevationD
 
 def sun_bright(epochSecs, longitude, latitude):
-    azD,elevD = sun_angle(epochSecs, (longitude, latitude))
+    azD,elevD = sun_angle(epochSecs, longitude, latitude)
     elevR = 2*pi*(elevD/360.0)
     bright = max(0.0, sin(elevR))
     return bright
@@ -63,10 +63,10 @@ if __name__ == "__main__":
         longitude = random.random()*360-180.0
         latitude = random.random()*180-9.0
         t = int(random.random()*60*60*24*365*50)
-        print longitude, latitude, t
+        print(longitude, latitude, t)
         azD,elevD = sun_bright(t, longitude, latitude)
         elevR = 2*pi*(elevD/360.0)
-        print longitude, latitude, azD,elevD, sin(elevR)
+        print(longitude, latitude, azD,elevD, sin(elevR))
         elevMin = min(elevMin, elevD)
         elevMax = max(elevMax, elevD)
-    print "Min/Max elev:",elevMin, elevMax
+    print("Min/Max elev:",elevMin, elevMax)
