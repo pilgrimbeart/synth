@@ -189,7 +189,13 @@ def check_account_name(dynamo_table, bucket_name, key, account_name):
         assert False
     return False
 
+last_upload_time = 0
 def upload_to_aws_bucket(dynamo_table, bucket_name, account_key, local_filepath):
+    global last_upload_time
+    delay = BULK_UPLOAD_DELAY_S - (time.time() - last_upload_time)
+    if delay > 0:   # Allow time for DP lambdas to pick-up point file, so we don't force a merge of an insane numbers of point files
+        logging.info("waiting "+str(int(delay))+"s between uploads")
+        time.sleep(delay)
     logging.info("upload_to_aws_bucket(" + dynamo_table + "," + bucket_name + "," + account_key + "," + local_filepath + ")")
     simplejson.loads(open(local_filepath,"rt").read())    # Check for errors
     zipped = gzip_file(local_filepath)
@@ -203,7 +209,7 @@ def upload_to_aws_bucket(dynamo_table, bucket_name, account_key, local_filepath)
         bucket = s3.Bucket(bucket_name)
         bucket.upload_file(zipped, k)
         os.remove(zipped)
-        time.sleep(BULK_UPLOAD_DELAY_S) # Give time for DP lambdas to pick-up point file so don't force lambda to merge insane numbers of point files
+        last_upload_time = time.time()
 
 def set_headers(token):
     headers = {}
