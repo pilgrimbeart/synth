@@ -429,7 +429,7 @@
         },
         {
             "comment" : "Inject a problem later into one brand of meters",
-            "at" : "P7D",
+            "at" : "P21D",
              "action": {
                 "change_property" : {
                     "is_attribute" : true,
