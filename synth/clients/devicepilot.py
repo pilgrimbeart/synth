@@ -122,7 +122,7 @@ import isodate
 import traceback
 import boto3 # AWS library for bulk upload
 from .client import Client
-from common import ISO8601, top, json_writer, evt2csv
+from common import ISO8601, top, json_writer, evt2csv, merge_test
 import gzip
 import shutil
 import os
@@ -270,12 +270,11 @@ class Devicepilot(Client):
         if self.mode == "interactive":
             if self.merge_posts:
                 if len(self.post_queue)>0:
-                    if self.post_queue[-1]["$ts"] == props["$ts"]:
-                        if self.post_queue[-1]["$id"] == props["$id"]:
-                            if set(DO_NOT_MERGE_PROPERTIES.keys()) & set(props.keys()) == set([]):  # No non-mergable properties
-                                merged_posts = merged_posts + 1
-                                props.update(self.post_queue[-1])
-                                del(self.post_queue[-1])
+                    prev = self.post_queue[-1]
+                    if merge_test.ok(prev, props):
+                        merged_posts = merged_posts + 1
+                        props.update(self.post_queue[-1])
+                        del(self.post_queue[-1])
             self.post_queue.append(props)
             self.flush_post_queue_if_ready()
         if (self.mode == "bulk") and (record):
