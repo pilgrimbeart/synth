@@ -102,7 +102,8 @@ class Vending_machine(Device):
                 e["name"] = p["name"]
                 e["price"] = p["price"]
                 e["category"] = p["category"]
-                e["lifetime"] = isodate.parse_duration(p["lifetime"]).total_seconds()
+                if "lifetime" in p:
+                    e["lifetime"] = isodate.parse_duration(p["lifetime"]).total_seconds()
                 self.product_catalogue.append(e)
         else:
             self.product_catalogue = default_product_catalogue
@@ -243,12 +244,14 @@ class Vending_machine(Device):
         self.set_properties(props)
 
     def send_heartbeat_message(self):
-        self.set_properties({"eventType" : "heartbeat"})
+        self.set_properties({"heartBeat" : True})
 
     def catalogue_item(self, r,c):
         return self.product_catalogue[self.product_number_in_position[r][c]]
 
     def past_sellby_date(self, r,c):
+        if "lifetime" not in self.catalogue_item(r,c):
+            return False
         return self.engine.get_now() >= self.restock_time[r][c] + self.catalogue_item(r,c)["lifetime"]
 
     def price(self, r,c):
@@ -326,12 +329,14 @@ class Vending_machine(Device):
         for r in range(self.machine_rows):
             for c in range(self.machine_columns):
                 if self.stock_level[r][c] > 0: 
-                    lifetime = self.product_catalogue[self.product_number_in_position[r][c]]["lifetime"]
-                    restocked = self.restock_time[r][c]
-                    if restocked + lifetime < now:
-                        has_expired = True
-                    if restocked + lifetime - 6*60*60 < now:
-                        will_expire_in_6_hrs = True
+                    prod = self.product_catalogue[self.product_number_in_position[r][c]]
+                    if "lifetime" in prod:
+                        lifetime = prod["lifetime"]
+                        restocked = self.restock_time[r][c]
+                        if restocked + lifetime < now:
+                            has_expired = True
+                        if restocked + lifetime - 6*60*60 < now:
+                            will_expire_in_6_hrs = True
         if self.get_property_or_None("expired") != has_expired:
             pass # self.set_property("expired", has_expired)
         if self.get_property_or_None("expire_in_6_hrs") != will_expire_in_6_hrs:
