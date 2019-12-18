@@ -1,0 +1,46 @@
+#define PRODUCT_CATALOGUE
+"product_catalogue" : [
+    { "name" : "HP Wireless Mouse Z4000",                       "category" : "IT Consumable", "price" : 4584 },
+    { "name" : "HP Wireless Business Slim Keyboard and Mouse",  "category" : "IT Consumable", "price" : 9170 },
+    { "name" : "HP K2500 Wireless Keyboard",                    "category" : "IT Consumable", "price" : 3275 },
+    { "name" : "HP USB Keyboard & Mouse C2500 (Black)",         "category" : "IT Consumable", "price" : 2619 },
+    { "name" : "HP Classic Wired Keyboard",                     "category" : "IT Consumable", "price" : 1729 },
+    { "name" : "HP 3-button USB Laser Mouse",                   "category" : "IT Consumable", "price" : 1100 },
+    { "name" : "Jabra Evolve 40 Wired Stereo headset",          "category" : "IT Consumable", "price" : 8736 },
+    { "name" : "Jabra Evolve 75 MS Bluetooth Office headset",   "category" : "IT Consumable", "price" : 27903 },
+    { "name" : "HP 90W Smart AC Adapter",                       "category" : "IT Consumable", "price" : 5030  }
+    ]
+#enddef
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "repeats" : 10,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {}, "latlong" : { "generate_addresses" : true, "addresses" : [
+                            "0560 Dr. Martin Luther King Jr. St. N., St. Petersburg, FL 33716, USA",
+                            "5238 Lamar Avenue, Memphis, TN 38118, USA",
+                            "56, Hilir Sungai Keluang 1, Bayan Lepas Industrial Park Phase 4, Penang 11900, Malaysia",
+                            "30 Great Oaks Blvd., San Jose, CA 95119, USA",
+                            "Alejandro Dumas Av 11341, Complejo Industrial Chihuahua, Chihuahua CP 31109, Mexico",
+                            "Rua Antonio Felamingo, 162, Valinhos, SP, CEP 13279-452, Brazil",
+                            "Kempische Steenweg 297, B-3500 Hasselt, Belgium",
+                            "Lotnicza 2 82-500, Kwidzyn, Poland",
+                            "Huszar Andor ut 1, Tiszaujvaros 3580, Hungary",
+                            "40 Kontsivska St.,  Rozivka Village, Uzhgorod District, Zakarpatska oblast 89424, Ukraine"
+                        ] },
+                        "comms" : { "reliability" : 0.98, "period" : "P3D", "has_buffer" : true, "unbuffered_properties" : ["heartBeat"] },
+                        "vending_machine" : { PRODUCT_CATALOGUE }
+                    }
+                }
+            }
+        }
+    ]
+}

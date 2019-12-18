@@ -1,0 +1,79 @@
+#define PRODUCT_CATALOGUE
+"product_catalogue" : [
+    { "name" : "Balorama RB4089",                     "category" : "men", "price" : 19300 },
+    { "name" : "Chromance RB8319",                    "category" : "men", "price" : 29300 },
+    { "name" : "Chromance RB3542",                    "category" : "men", "price" : 19300 },
+    { "name" : "Chromance RB3566",                    "category" : "men", "price" : 21300 },
+    { "name" : "Scuderia Ferrari Collection RB8305M", "category" : "men", "price" : 30300 },
+    { "name" : "RB4179",                              "category" : "men", "price" : 21800 },
+    { "name" : "Aviator Classic RB3025 001/58",       "category" : "women", "price" : 20300 },
+    { "name" : "Aviator Gradient RB3025 001/3K",      "category" : "women", "price" : 16800 },
+    { "name" : "Erika Metal RB3539",                  "category" : "women", "price" : 14300 },
+    { "name" : "Erika Classic RB4171",                "category" : "women", "price" : 14300 },
+    { "name" : "Shooter RB3138",                      "category" : "women", "price" : 15300 },
+    { "name" : "Wings RB3579",                        "category" : "women", "price" : 18800 },
+    { "name" : "Aviator Junior RJ9506S",              "category" : "kids", "price" : 7300 },
+    { "name" : "IZZY RJ0960S",                        "category" : "kids", "price" : 8300 },
+    { "name" : "Clummaster Junior RJ9050S",           "category" : "kids", "price" : 9000 },
+    { "name" : "General Junior RJ9561S",              "category" : "kids", "price" : 8300 },
+    { "name" : "Round Metal Junior RJ9547S",          "category" : "kids", "price" : 8300 },
+    { "name" : "Hexagonal Junior RJ9551SN",           "category" : "kids", "price" : 12300 }
+    ]
+#enddef
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "repeats" : 34,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {}, "latlong" : { "generate_addresses" : true, "addresses" : [
+                                "865 Market St Unit 144, San Francisco, CA 94103, United States",
+                                "1302 Broadway Plaza #1118, Walnut Creek, CA 94596, United States",
+                                "660 Stanford Shopping Center #151, Palo Alto, CA 94304, United States",
+                                "30 Mall Dr W Ste 131, Jersey City, NJ 07310, United States",
+                                "20 Hudson Yards, New York, NY 10001, United States",
+                                "New York, NY 10036, United States",
+                                "510 6th Ave, New York, NY 10011, United States",
+                                "116 Wooster St, New York, NY 10012, United States",
+                                "5000 Katy Mills Cir Spc #646, Katy, TX 77494, United States",
+                                "29300 Hempstead Rd Ste 930, Cypress, TX 77433, United States",
+                                "303 Memorial City Way SPACE 3510, Houston, TX 77024, United States",
+                                "7925 Farm to Market 1960 Rd W, Houston, TX 77070, United States",
+                                "7500 Harwin Dr, Houston, TX 77036, United States",
+                                "5085 Westheimer Rd Ste 3640, Houston, TX 77056, United States",
+                                "2507 Amherst Spc #Dok, Houston, TX 77005, United States",
+                                "5885 Gulf Fwy Ste 355, Texas City, TX 77591, United States",
+                                "3636 McKinney Ave #110, Dallas, TX 75204, United States",
+                                "8687 N Central Expy, Dallas, TX 75225, United States",
+                                "8687 N. Central Expressway Space #2412, Dallas, TX 75225, United States",
+                                "4200 Conroy Rd Space #G165, Orlando, FL 32839, United States",
+                                "8200 Vineland Ave Ste 1230, Orlando, FL 32821, United States",
+                                "2223 N Westshore Blvd #235, Tampa, FL 33607, United States",
+                                "903 E Sunrise Blvd, Fort Lauderdale, FL 33304, United States",
+                                "446 Lincoln Rd, Miami, FL 33139, United States",
+                                "8888 SW 136th St Ste 120, Miami, FL 33176, United States",
+                                "3301 E Main St, Ventura, CA 93003, United States",
+                                "740 Ventura Blvd Ste 508, Camarillo, CA 93010, United States",
+                                "1334 3rd Street Promenade Ste 104, Santa Monica, CA 90401, United States",
+                                "189 The Grove Dr, Los Angeles, CA 90036, United States",
+                                "100 Citadel Dr Spc 606, Commerce, CA 90040, United States",
+                                "1103 Westminster Mall, Westminster, CA 92683, United States",
+                                "VICTORIA GARDENS, 12511 S Mainstreet Space 1450, Rancho Cucamonga, CA 91739, United States",
+                                "670 Spectrum Center Dr Ste 641, Irvine, CA 92618, United States",
+                                "297 Newport Center Dr Suite 297, Newport Beach, CA 92660, United States"
+                        ] },
+                        "comms" : { "reliability" : 0.98, "period" : "P3D", "has_buffer" : true, "unbuffered_properties" : ["heartBeat"] },
+                        "vending_machine" : { PRODUCT_CATALOGUE }
+                    }
+                }
+            }
+        }
+    ]
+}
