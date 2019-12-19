@@ -8,6 +8,7 @@ Configurable parameters::
     {
             "product_catalogue" : (optional) [ "name" : "Mars Bar", "price" : 0.80, "category" : "snack", "lifetime" : "P1000D", ... ]
             "send_available_positions" : (optional) False
+            "cashless_to_cash_ratio" : (optional) 0..1      # The ratio of cashless transactions to cash-based ones
     }
 
 Device properties created::
@@ -41,7 +42,6 @@ EXPIRY_CHECK_INTERVAL = 1 * HOURS
 
 ALERT_CHECK_INTERVAL =  1 * HOURS
 
-CASH_LIKELIHOOD = 0.5   # How many transactions are done in cash?
 CASH_DENOMINATIONS = [1, 5, 10, 25, 50, 100, 500, 1000, 2000]
 
 alert_types = {
@@ -86,6 +86,8 @@ class Vending_machine(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         self.current_alerts = {}
         super(Vending_machine,self).__init__(instance_name, time, engine, update_callback, context, params)
+
+        self.cashless_to_cash_ratio = params["vending_machine"].get("cashless_to_cash_ratio", 0.5)
 
         # Define machine
         machine_types = params["vending_machine"].get("machine_types", default_machine_types)
@@ -403,7 +405,7 @@ class Vending_machine(Device):
 
     def accept_payment(self, price):
         # Work out what coins were provided to pay for the goods
-        if Vending_machine.myRandom.random() >= CASH_LIKELIHOOD:  # Smartcard payment
+        if Vending_machine.myRandom.random() < self.cashless_to_cash_ratio:  # Smartcard payment
             # self.set_property("vend_event_cashless", price, always_send=True)
             return "cashless"
         else:

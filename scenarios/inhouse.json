@@ -37,7 +37,7 @@
                             "40 Kontsivska St.,  Rozivka Village, Uzhgorod District, Zakarpatska oblast 89424, Ukraine"
                         ] },
                         "comms" : { "reliability" : 0.98, "period" : "P3D", "has_buffer" : true, "unbuffered_properties" : ["heartBeat"] },
-                        "vending_machine" : { PRODUCT_CATALOGUE }
+                        "vending_machine" : { "cashless_to_cash_ratio" : 1.0, PRODUCT_CATALOGUE }
                     }
                 }
             }
