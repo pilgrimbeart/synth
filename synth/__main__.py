@@ -215,6 +215,8 @@ def main():
         return events.event_count
 
     logging.getLogger().setLevel(logging.INFO)
+    os.makedirs("../synth_logs", exist_ok = True)
+    os.makedirs("../synth_accounts", exist_ok = True)
     params = get_params()
     assert g_instance_name is not None, "Instance name has not been defined, but this is required for logfile naming"
     init_logging(params)

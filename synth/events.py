@@ -177,7 +177,7 @@ class Events():
                 s += ","
             s += "\n"
             self.logfile.write(s)
-            self.logtext.append(s)
+            # self.logtext.append(s)
 
             self.event_count += 1
 

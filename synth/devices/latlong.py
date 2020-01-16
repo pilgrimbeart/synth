@@ -42,9 +42,13 @@ class Latlong(Device):
             Latlong.address_index += 1
             if Latlong.address_index > num_addr:
                 logging.warning("Not enough addresses specified in latlong{} for device "+self.get_property("$id")+" so re-using addresses")
-            (lon,lat) = google_maps.address_to_lon_lat(addr, context.get("google_maps_key", None))
+            gmk = context.get("google_maps_key", None)
+            (lon,lat) = google_maps.address_to_lon_lat(addr, gmk)               # address -> (lon,lat)
             self.set_properties( { 'latitude' : lat, 'longitude' : lon } )
             self.set_property("address", addr)
+            address_info = google_maps.lon_lat_to_address(lon,lat, gmk)         # (lon,lat) -> address   (to get detailed address fields)
+            for name,value in address_info.items():
+                self.set_property(name, value)
         else:   # Use geo module to pick locations randomly within an area
             picker = geo.geo_pick(context, params["latlong"])
             (lon, lat) = picker.pick()

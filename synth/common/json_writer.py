@@ -4,6 +4,7 @@ Writes events to JSON files, segmenting on max size"""
 import logging
 import time
 from . import json_quick
+from . import merge_test
 
 DEFAULT_DIRECTORY = "../synth_logs/"
 DEFAULT_MAX_EVENTS_PER_FILE = 100000    # FYI 100,000 messages is max JSON file size that DP can ingest (if that's where you end-up putting these files)
@@ -40,7 +41,7 @@ class Stream():
             self.last_event = properties
             return
 
-        if (self.last_event["$id"] == properties["$id"]) and (self.last_event["$ts"] == properties["$ts"]):  # We can merge if device and timestamp are same
+        if merge_test.ok(self.last_event, properties):
             self.last_event.update(properties)
         else:
             self._write_event(self.last_event)
