@@ -2,39 +2,35 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-P14D",
-        "end_time" : "now"
+        "start_time" : "-P30D",
+        "end_time" : null
     },
     "events" : [
         {
-            "at" : "PT0S",
-            "repeats" : 100,
-            "interval" : "PT0S",
+            "action" : { "install_analyser" : {} }
+        },
+        {
+            "comment" : "SMART METERS across India, where one vendor has a problem",
+            "repeats" : 500,
             "action": {
                 "create_device" : {
                     "functions" : {
                         "basic" : {
                             "label_root" : "Meter "
                         },
-                        "commswave" : {
-                            "threshold" : 0.01, // To give 99% uptime
-                            "timefunction" : {
-                                "randomwave" : {
-                                    "period" : "PT1H",
-                                    "precision" : 100
-                               }
-                            }
-                         },
+                        "comms" : {
+                            "reliability" : "rssi",
+                            "reliability_above_rssi_knee" : 1.00,
+                            "period" : "PT1H",
+                            "suppress_messages" : true
+                        },
                         "enumerated" : {
                             "name" : "fault",
-                            "values" : ["tamper", "mains loss", "cover removed", "hardware fault", "calibration error", "internal fault", "link interference", "over-temperature"],
-                            "periods" : ["P30D",  "P20D",       "P15D",          "P60D",           "P100D",              "P50D",           "P23D",              "P50D"],
-                            "sigmas" : ["P10D",   "P7D",        "P5D",           "P20D",           "P30D",               "P16D",           "P8D",               "P16D"]
+                            "values" :  [null,   "tamper", "mains loss", "cover removed", "hardware fault", "calibration error", "internal fault", "link interference", "over-temperature"],
+                            "periods" : ["P5D",  "P140D",   "P80D",       "P100D",          "P200D",           "P200D",             "P150D",           "P120D",              "P300D"],
+                            "comment" : "we include null as a state too, so that faults get cleared after a while"
                         },
                         "firmware" : {},
-                        "heartbeat" : {
-                            "interval" : "PT1H"
-                        },
                         "latlong" : {
                             "generate_addresses" : true,
                             "area_centre" : "Nagpur, India",
@@ -42,23 +38,51 @@
                         },
                         "variable" : [
                             {   "name" : "vendor",  "value" : ["Landis & Gyr", "EDMI", "Aclara", "Itron", "Kaifa", "Honeywell", "Flonidan", "GWI"]},
-                            {   "name" : "model",   "value" : ["E470-5394", "ES-10A", "SGM1412", "EM425-I2", "MA120", "AS203P", "BK-G4E", "E470", "G4-MG-SE"]}
+                            {   "name" : "model",   "value" : ["E470-5394", "ES-10A", "SGM1412", "EM425-I2", "MA120", "AS203P", "BK-G4E", "E470", "G4-MG-SE"]},
+                            {   "name" : "hardware_version", "value" : [0.4,0.6,0.9,1.1,1.5] },
+                            {	"name" : "device_type", "value" : "smart_meter"},
+                            {   "name" : "icon", "value" : "bolt"},
+                            {   "name" : "energy", "timefunction" : { "count" : { "interval" : "PT1H" } } }
                         ]
                     }
                 }
             }
         },
         {
-            "at" : "P3D",
+            "comment" : "Inject a problem later into one brand of meters",
+            "at" : "P21D",
+            "action": {
+                "change_property" : {
+                    "identity_property" : "vendor",
+                    "identity_value" : "Itron",
+                    "property_name" : "firmware",
+                    "property_value" : 0.8 // Changed firmware version is the cause
+                }
+            }
+        },
+        {
              "action": {
                 "change_property" : {
                     "is_attribute" : true,
                     "identity_property" : "vendor",
                     "identity_value" : "Itron",
-                    "property_name" : "comms_tf_threshold",
-                    "property_value" : 0.20 // Change uptime to 80%
+                    "property_name" : "chance_above_knee",
+                    "property_value" : 0.50 // Reduce uptime (even with good RSSI) is the effect
                 }
-             }
-         }
+            }
+        },
+        {
+            "comment" : "Inject a mains failure in one region",
+            "at" : "P5D",
+            "action": {
+                "change_property" : {
+                    "identity_property" : "address_administrative_area_level_1",
+                    "identity_value" : "Uttar Pradesh",
+                    "property_name" : "fault",
+                    "property_value" : "mains loss"
+                }
+            }
+        }
     ]
 }
+
