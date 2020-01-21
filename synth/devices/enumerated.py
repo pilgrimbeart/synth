@@ -59,6 +59,18 @@ class Enumerated(Device):
             if self.enumerated_sigmas is not None:
                 self.enumerated_sigmas.append(isodate.parse_duration(sigmas[i]).total_seconds())
 
+        # Find most likely current state
+        recip_periods = [1.0/x for x in self.enumerated_periods]    # The shorter the period, the more likely it is to be the current state]
+        total_periods = sum(recip_periods)
+        choice = random.random() * total_periods
+        so_far = 0
+        for i in range(len(self.enumerated_periods)):
+            so_far += recip_periods[i]
+            if so_far >= choice:
+                self.set_property(self.enumerated_name, self.enumerated_values[i])
+                break
+        
+        # Schedule next transitions
         for i in range(len(self.enumerated_values)):
             self.schedule_next_event(i)
 
