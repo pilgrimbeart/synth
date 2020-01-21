@@ -15,6 +15,7 @@ Configurable parameters::
         -or-
         "addresses" : e.g. ["London, UK", "Manchester, UK"] } a set of locations which are picked device-by-device
 
+        "devices_per_address" : [2,5]           If specified, re-uses each address this many times. If this value is a 2-item list, it's used as the range of a random number.
         "map_file" : e.g. "devicepilot_logo" - optional
         "google_maps_key" : "xyz" } Google Maps now requires this. Often defined in ../synth_accounts/default.json
     }
@@ -29,32 +30,53 @@ Device properties created::
 
 from .device import Device
 from common.geo import geo, google_maps
+import random
 import logging
 
 class Latlong(Device):
     address_index = 0
+    prev_address_props = None
+    further_devices_at_this_address = 0
+
     def __init__(self, instance_name, time, engine, update_callback, context, params):
+        def get_new_address():
+            if "addresses" in params["latlong"]:    # Iterate through a provided list of addresses
+                num_addr = len(params["latlong"]["addresses"])
+                addr = params["latlong"]["addresses"][Latlong.address_index % num_addr]
+                Latlong.address_index += 1
+                if Latlong.address_index > num_addr:
+                    logging.warning("Not enough addresses specified in latlong{} for device "+self.get_property("$id")+" so re-using addresses")
+                gmk = context.get("google_maps_key", None)
+                (lon,lat) = google_maps.address_to_lon_lat(addr, gmk)               # address -> (lon,lat)
+                props = { "latitude" : lat, "longitude" : lon, "address" : addr }
+                address_info = google_maps.lon_lat_to_address(lon,lat, gmk)         # (lon,lat) -> address   (to get detailed address fields)
+                for name,value in address_info.items():
+                    props[name] = value
+            else:   # Use geo module to pick locations randomly within an area
+                picker = geo.geo_pick(context, params["latlong"])
+                (lon, lat) = picker.pick()
+                props = { "latitude" : lat, "longitude" : lon }
+                for name, value in picker.addresses():
+                    props[name] = value
+            return props
+
         super(Latlong,self).__init__(instance_name, time, engine, update_callback, context, params)
 
-        if "addresses" in params["latlong"]:    # Defined set of addresses
-            num_addr = len(params["latlong"]["addresses"])
-            addr = params["latlong"]["addresses"][Latlong.address_index % num_addr]
-            Latlong.address_index += 1
-            if Latlong.address_index > num_addr:
-                logging.warning("Not enough addresses specified in latlong{} for device "+self.get_property("$id")+" so re-using addresses")
-            gmk = context.get("google_maps_key", None)
-            (lon,lat) = google_maps.address_to_lon_lat(addr, gmk)               # address -> (lon,lat)
-            self.set_properties( { 'latitude' : lat, 'longitude' : lon } )
-            self.set_property("address", addr)
-            address_info = google_maps.lon_lat_to_address(lon,lat, gmk)         # (lon,lat) -> address   (to get detailed address fields)
-            for name,value in address_info.items():
-                self.set_property(name, value)
-        else:   # Use geo module to pick locations randomly within an area
-            picker = geo.geo_pick(context, params["latlong"])
-            (lon, lat) = picker.pick()
-            self.set_properties( { 'latitude' : lat, 'longitude' : lon } )
-            for name, value in picker.addresses():
-                self.set_property(name, value)
+        dpa = params["latlong"].get("devices_per_address", 1)
+        if dpa == 1:
+            address_props = get_new_address()
+        else:
+            if Latlong.further_devices_at_this_address > 0: # Still some devices to put at this address
+                address_props = Latlong.prev_address_props
+            else:
+                Latlong.further_devices_at_this_address = random.randrange(dpa[0], dpa[1])
+                address_props = get_new_address()
+            Latlong.further_devices_at_this_address -= 1
+                
+
+        self.set_properties(address_props)
+        Latlong.prev_address_props = address_props
+
 
     def comms_ok(self):
         return super(Latlong,self).comms_ok()
