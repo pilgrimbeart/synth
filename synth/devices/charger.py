@@ -13,7 +13,8 @@ Device properties created::
 
     {
             pilot : A|B|C|F     # Pilot signal indicates charging state (A=Available, B=finished, C=Charging, F=fault)
-            energy:         # kWh transferred so far this session
+            energy:         # kWh transferred so far this session (ramp which rises)
+            power:          # instantaneous kW
             uui :           # Charging session token: a random number for each charging session
     }
 
@@ -38,12 +39,40 @@ CHARGE_RATES_KW_PERCENT = [ [3,  30],
 MAX_KWH_PER_CHARGE = 70
 AVERAGE_HOG_TIME_S = 1 * HOURS
 
+HEARTBEAT_PERIOD = 15 * MINS
+
+FAULTS = [
+#       Fault               MTBF
+        ["Earth Relay",     100 * DAYS],
+        ["Mennekes Fault",  200 * DAYS],
+        ["Overcurrent",     40 * DAYS],
+        ["RCD trip",        30 * DAYS],
+        ["Relay Weld",      500 * DAYS],
+        ["Overtemperature", 300 * DAYS]
+        ]
+FAULT_RECTIFICATION_TIME_AV = 30 * DAYS
+
+def pick_a_fault(sampling_interval_s):
+    for (fault, mtbf) in FAULTS:
+        chance = sampling_interval_s / mtbf # 50% point
+        if random.random() < chance * 0.5:
+            return fault
+    return None
+
 class Charger(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Charger,self).__init__(instance_name, time, engine, update_callback, context, params)
         self.set_property("device_type", "charger")
         self.last_charging_start_time = None
-        self.set_property("pilot", "A")
+        self.set_properties( {
+            "pilot" : "A",
+            "energy" : 0,
+            "energy_delta" : 0,
+            "power" : 0,
+            "fault" : None
+            })
+
+        self.engine.register_event_in(HEARTBEAT_PERIOD, self.tick_heartbeat, self, self)
         self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
 
     def comms_ok(self):
@@ -55,61 +84,90 @@ class Charger(Device):
 
     def close(self):
         super(Charger,self).close()
+    
+    def tick_heartbeat(self, _):
+        self.set_properties({
+            "heartbeat" : True
+            })
+        self.engine.register_event_in(HEARTBEAT_PERIOD, self.tick_heartbeat, self, self)
 
     def tick_start_charge(self, _):
         self.uui = random.randrange(0,99999999)
-        self.set_properties({
-            "pilot" : "C",
-            "uui" : self.uui,
-            "energy" : 0})
-        self.charging_rate = self.choose_charging_rate()
+        self.charging_rate_kW = self.choose_charging_rate()
         self.energy_to_transfer = random.random() * MAX_KWH_PER_CHARGE
         self.energy_this_charge = 0
         self.last_charging_start_time = self.engine.get_now()
-        logging.info("Start charging at rate "+str(self.charging_rate)+"kW (will transfer "+str(int(self.energy_to_transfer))+"kWh)")
+        self.set_properties({
+            "pilot" : "C",
+            "uui" : self.uui,
+            "energy" : 0,
+            "energy_delta" : 0,
+            "power" : self.charging_rate_kW,
+            "fault" : None
+            })
+        # logging.info("Start charging at rate "+str(self.charging_rate_kW)+"kW (will transfer "+str(int(self.energy_to_transfer))+"kWh)")
         self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_charge, self, self)
 
     def tick_check_charge(self, _):
-        pilot = self.get_property("pilot")
-        if pilot == "C":    # Charging
-            energy_transferred = (CHARGE_POLL_INTERVAL_S / (60*60)) * self.charging_rate
-            self.energy_this_charge += energy_transferred
-            self.energy_to_transfer -= energy_transferred
+        energy_transferred = (CHARGE_POLL_INTERVAL_S / (60*60)) * self.charging_rate_kW
+        self.energy_this_charge += energy_transferred
+        self.energy_to_transfer -= energy_transferred
+        fault = pick_a_fault(CHARGE_POLL_INTERVAL_S)    # Faults only occur while charging
+        if fault != None:
+            logging.info(str(self.get_property("$id")) + " " + str(fault) + " fault while charging")
+            self.set_properties({
+               "pilot" : "F",
+               "fault" : fault,
+               "energy" : 0,
+               "energy_delta" : 0,
+               "power" : 0
+               })
+            self.engine.register_event_in(random.random() * FAULT_RECTIFICATION_TIME_AV * 2, self.tick_rectify_fault, self, self)
+        else:
             if self.energy_to_transfer > 0: # Still charging
                 self.set_properties({
                     "pilot" : "C",
-                    "energy" : int(self.energy_this_charge) })
+                    "energy" : int(self.energy_this_charge),
+                    "energy_delta" : energy_transferred,
+                    "power" : self.charging_rate_kW })
+                self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_charge, self, self)
             else:   # Finished charging
-                logging.info("Finished charging")
                 self.set_properties({
                     "pilot" : "B",
-                    "energy" : int(self.energy_this_charge) })
+                    "energy" : int(self.energy_this_charge),
+                    "energy_delta" : 0,
+                    "power" : 0})
                 self.time_finished_charging = self.engine.get_now()
                 self.will_hog_for = random.random() * AVERAGE_HOG_TIME_S
-                logging.info("Will hog for "+str(int(self.will_hog_for))+"s or until next charge due")
+                # logging.info("Will hog for "+str(int(self.will_hog_for))+"s or until next charge due")
+                self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
 
-            self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_charge, self, self)
-        elif pilot == "B": # Finished charging, still connected
-            if self.delay_to_next_charge() <= 0:
-                self.tick_start_charge(0)            # Start charging
-            else:
-                if self.engine.get_now() >= self.time_finished_charging + self.will_hog_for:
-                    logging.info("Disconnect")
-                    self.set_properties({
-                        "pilot" : "A",
-                        "energy" : 0})  # Disconnect
-                    self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
-                else:
-                    # logging.info("Hogging for a further "+str(self.engine.get_now() - (self.time_finished_charging + self.will_hog_for)))
-                    self.set_properties({
-                        "pilot" : "B",
-                        "energy" : int(self.energy_this_charge)
-                        })
-                    self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_charge, self, self)
+    def tick_check_blocking(self, _):
+        if self.delay_to_next_charge() <= 0:
+            self.tick_start_charge(0)            # Start charging
         else:
-            logging.warning("Unexpected pilot state "+str(pilot))
-
+            if self.engine.get_now() >= self.time_finished_charging + self.will_hog_for:
+                # logging.info("Disconnect")
+                self.set_properties({
+                    "pilot" : "A",
+                    "energy" : 0})  # Disconnect
+                self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
+            else:
+                # logging.info("Hogging for a further "+str(self.engine.get_now() - (self.time_finished_charging + self.will_hog_for)))
+                self.set_properties({
+                    "pilot" : "B",
+                    "energy" : int(self.energy_this_charge)
+                    })
+                self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
  
+    def tick_rectify_fault(self, _):
+        logging.info(str(self.get_property("$id")) + " fault rectified")
+        self.set_properties({
+            "pilot" : "A",
+            "fault" : None
+            })
+        self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
+
     def delay_to_next_charge(self):
         last = self.last_charging_start_time
         if last is None:
