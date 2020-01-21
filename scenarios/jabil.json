@@ -1,1 +1,113 @@
-../../private_scenarios/jabil.json
+#define PRODUCT_CATALOGUE
+"product_catalogue" : [
+    { "name" : "Mars Bar (Mars)",                       "category" : "candy", "price" : 80,    "lifetime" : "P1000D" },
+    { "name" : "Crunchie (Cadbury)",                    "category" : "candy", "price" : 60,    "lifetime" : "P1000D" },
+    { "name" : "Evian (Danone)",                        "category" : "drink", "price" : 120,   "lifetime" : "P1000D"},
+    { "name" : "Double Decker (Cadbury)",               "category" : "candy", "price" : 56,    "lifetime" : "P1000D" },
+    { "name" : "Snickers (Mars)",                       "category" : "candy", "price" : 80,    "lifetime" : "P1000D" },
+    { "name" : "Kit Kat (Nestle)",                      "category" : "candy", "price" : 90,    "lifetime" : "P1000D" },
+    { "name" : "Toblerone (Mondelez)",                  "category" : "candy", "price" : 130,   "lifetime" : "P1000D" },
+    { "name" : "Galaxy (Mars)",                         "category" : "candy", "price" : 140,   "lifetime" : "P1000D" },
+    { "name" : "Dairy Milk (Cadbury)",                  "category" : "candy", "price" : 130,   "lifetime" : "P1000D" },
+    { "name" : "Doritos (Frito Lay)",                   "category" : "snack", "price" : 130,   "lifetime" : "P1000D" },
+    { "name" : "Spam Sandwich (Freshserve)",            "category" : "sandwich", "price" : 150, "lifetime" : "P3D" },
+    { "name" : "Seafood selection (Freshserve)",        "category" : "snack", "price" : 300,   "lifetime" : "P1D" },
+    { "name" : "Crispy salad and chips (Freshserve)",   "category" : "snack", "price" : 230,   "lifetime" : "P1D" }
+    ]
+#enddef
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "repeats" : 30,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {}, "latlong" : { "generate_addresses" : true, "area_centre" : "Stockton, Kansas, USA", "area_radius" : "Key Largo, USA" },
+                        "comms" : { "reliability" : 0.98, "period" : "P3D", "has_buffer" : true, "unbuffered_properties" : ["heartBeat"] },
+                        "vending_machine" : { PRODUCT_CATALOGUE }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 10,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {}, "latlong" : { "generate_addresses" : true, "area_centre" : "Columbus Ohio, USA", "area_radius" : "Youngstown, Ohio, USA" },
+                        "comms" : { "reliability" : 1.00, "period" : "P3D", "has_buffer" : true, "unbuffered_properties" : ["heartBeat"] },
+                        "vending_machine" : { PRODUCT_CATALOGUE }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 30,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {}, "latlong" : { "generate_addresses" : true, "area_centre" : "Injebreck, Isle of Man", "area_radius" : "Dover, UK" },
+                        "comms" : { "reliability" : 0.98, "period" : "P3D", "has_buffer" : true, "unbuffered_properties" : ["heartBeat"] },
+                        "vending_machine" : { PRODUCT_CATALOGUE }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 30,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {}, "latlong" : { "generate_addresses" : true, "area_centre" : "Bourges, France", "area_radius" : "Oyonnax, France" },
+                        "comms" : { "reliability" : 0.98, "period" : "P3D", "has_buffer" : true, "unbuffered_properties" : ["heartBeat"] },
+                        "vending_machine" : { PRODUCT_CATALOGUE }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 30,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {}, "latlong" : { "generate_addresses" : true, "area_centre" : "Bern, Switzerland", "area_radius" : "Geneva, Switzerland" },
+                        "comms" : { "reliability" : 0.98, "period" : "P3D", "has_buffer" : true },
+                        "vending_machine" : { PRODUCT_CATALOGUE }
+                    }
+                }
+            }
+        },
+        {
+            "comment" : "North of Italy (it's a strange shape so our circle approach to region-picking doesn't work so well)",
+            "repeats" : 15,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {}, "latlong" : { "generate_addresses" : true, "area_centre" : "Bologna, Italy", "area_radius" : "Turin, Italy" },
+                        "comms" : { "reliability" : 0.98, "period" : "P3D", "has_buffer" : true },
+                        "vending_machine" : { PRODUCT_CATALOGUE }
+                    }
+                }
+            }
+        },
+        {
+            "comment" : "South of Italy",
+            "repeats" : 30,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "firmware" : {}, "latlong" : { "generate_addresses" : true, "area_centre" : "Potenza, Italy", "area_radius" : "Roma, Italy" },
+                        "comms" : { "reliability" : 0.98, "period" : "P3D", "has_buffer" : true },
+                        "vending_machine" : { PRODUCT_CATALOGUE }
+                    }
+                }
+            }
+        }
+    ]
+}
