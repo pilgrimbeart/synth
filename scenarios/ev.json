@@ -1,0 +1,35 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "comment" : "EV charging",
+            "repeats" : 1000,
+            "interval" : "PT1H",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "charger" : {
+                        },
+                        "firmware" : {
+                        },
+                        "latlong" : {
+                            "generate_addresses" : true,
+                            "area_centre" : "Sheffield, UK",
+                            "area_radius" : "Edinburgh, UK",
+                            "devices_per_address" : [2,10]
+                        },
+                        "variable" : [
+                            {"name" : "icon", "value" : "bolt"}
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
+
