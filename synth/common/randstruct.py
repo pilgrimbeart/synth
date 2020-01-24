@@ -24,24 +24,24 @@
 import random, ast
 import logging
 
-def ev(x):
+def ev(x, randomclass):
     if isinstance(x, list):     # Concatenate lists
         if len(x)==0:
             return None
         if len(x)==1:
-            return ev(x[0])      # Don't force things to be lists
+            return ev(x[0], randomclass)      # Don't force things to be lists
         r = ""
         for e in x:
-            r = r + ev(e) 
+            r = r + ev(e, randomclass) 
         return r
     if isinstance(x, tuple):    # Choose from tuples
-        n = random.randrange(0, len(x))
-        return ev(x[n])
+        n = randomclass.randrange(0, len(x))
+        return ev(x[n], randomclass)
     return x
 
-def evaluate(s):
+def evaluate(s, randomclass=random):
     a = ast.literal_eval(s)
-    return ev(a)
+    return ev(a, randomclass)
 
 if __name__ == "__main__":
     s = '"hello"'
