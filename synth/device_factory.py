@@ -23,6 +23,7 @@
 
 import logging
 import traceback
+import copy
 import json
 import pendulum
 from common import importer
@@ -34,17 +35,39 @@ g_devices = []
 def compose_class(class_names):
     """Create a composite class from a list of class names."""
     classes = []
+    classes.append(Basic)   # Class is the root of inheritance
     for class_name in class_names:
-        if class_name != "basic":   # Normally this is not explicitly specified, so is implicit, but even it is explict we want to ensure that it's the last class added
+        if class_name != "basic":   # Normally this is not explicitly specified, so is implicit, but even it is explicit we want to ensure that it's the last class added
             classes.append(importer.get_class('device', class_name))
-    classes.append(Basic)   # Class at END of the list is the root of inheritance
+    classes.reverse()   # In each device class constructor, the first thing we do is to call super(). This means that (in terms of the order of execution of all the init code AFTER that call to super()), the last shall be first
     return type("compositeDeviceClass", tuple(classes), {})
+
+def sort_by_suffix(dictionary):
+    # Given a dictionary whose keys may each have an optional ":N" at the end,
+    # a) produce a list of keys sorted by that number
+    # b) remove the number from the dictionary keys and the list
+    # (any strings without such a suffix are sorted last)
+    pairs = []
+    for item in list(dictionary.keys()).copy():   # Iterate on a copy, because we're going to mutate the original
+        prefix = item
+        suffix = 1e99
+        if ":" in item:
+            two = item.split(":")
+            (prefix, suffix) = two[0], int(two[1])
+            dictionary[prefix] = copy.deepcopy(dictionary[item])    # Key without suffix
+            del dictionary[item]
+        pairs.append((suffix, prefix))
+
+    pairs.sort()
+    result = [x[1] for x in pairs]
+    return result
 
 def create_device(args):
     global g_devices
     (instance_name, client, engine, update_callback, context, params) = args
     
-    C = compose_class(params["functions"].keys())        # Create a composite device class from all the given class names
+    sorted_class_names = sort_by_suffix(params["functions"])
+    C = compose_class(sorted_class_names)        # Create a composite device class from all the given class names
     d = C(instance_name, engine.get_now(), engine, update_callback, context, params["functions"])   # Instantiate it
     client.add_device(d.properties["$id"], engine.get_now(), d.properties)
 
