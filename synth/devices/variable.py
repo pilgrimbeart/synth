@@ -13,6 +13,8 @@ Configurable parameters::
         "random_lower", "random_upper" : a range of values to pick randomly within (with optional "precision" parameter) OR
         "randstruct" : "["A definition like this where",[" lists "," are "," concatenated"], " and tuples are ("chosen from","selected betwixt"), "randomly]" OR
         "series" : a list: first device gets first value, second device second value etc.
+
+        "randomness_property": Name of a property whose value to use for randomness (e.g. location)
     }
 
     -or-
@@ -38,11 +40,19 @@ class Variable(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         """A property whose value is static or driven by some time function."""
         def create_var(params):
+            self.my_random = random.Random() # We use our own random-number generator, one per variable per device
+            rp = params.get("randomness_property", None)
+            if rp is None:
+                self.my_random.seed(self.get_property("$id"))   # Seed each device uniquely
+            else:
+                self.my_random.seed(hash(self.get_property(rp)))
+
             var_name = params["name"]
+
             if "value" in params:
                 var_value = params["value"]
                 if type(var_value) == list:
-                    var_value = random.choice(var_value)
+                    var_value = self.my_random.choice(var_value)
                 variables[var_name] = var_value
             elif "timefunction" in params:
                 tf_name = list(params["timefunction"].keys())[0]    # We know there's only 1
@@ -54,11 +64,11 @@ class Variable(Device):
                 lower = float(params["random_lower"])
                 upper = float(params["random_upper"])
                 precision = params.get("precision", 1)
-                var_value = lower + random.random() * (upper-lower)
+                var_value = lower + self.my_random.random() * (upper-lower)
                 var_value = int(var_value * precision) / float(precision)
                 variables[var_name] = var_value
             elif "randstruct" in params:
-                var_value = randstruct.evaluate(params["randstruct"])
+                var_value = randstruct.evaluate(params["randstruct"], self.my_random)
                 variables[var_name] = var_value
             elif "series" in params:
                 series = params["series"]
@@ -70,6 +80,7 @@ class Variable(Device):
         super(Variable, self).__init__(instance_name, time, engine, update_callback, context, params)
         Variable.device_count += 1
         variables = {} # Keep all variables in the same message, so store them then update them all 
+
         if type(params["variable"]) == dict:
             create_var(params["variable"])
         else:
