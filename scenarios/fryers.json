@@ -1,0 +1,50 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "comment" : "Fast food fryers",
+            "repeats" : 100,
+            "interval" : "PT1H",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "latlong:1" : {
+                            "generate_addresses" : true,
+                            "area_centre" : "Wichita, Kansas, USA",
+                            "area_radius" : "Miami, Florida, USA",
+                            "devices_per_address" : [2,10]
+                        },
+                        "tracker" : {
+                            "opening_times" : ["Mo-Fr 12:00-17:00", "Mo-Sa 12:00-23:00", "Mo-Su 11:00-15:00", "Mo,We,Fr 11:00-14:00"], 
+                            "output_property" : "fryer_temp",
+                            "min_value" : 60,
+                            "max_value" : 350,
+                            "max_value_twosigma" : 40,
+                            "noise" : 10,
+                            "precision" : 1,
+                            "smoothing_alpha" : 0.5,
+                            "period" : "PT15M",
+                            "randomness_property" : "address_postal_code"
+                        },
+                        "enumerated" : {
+                            "name" : "fault",
+                            "values" :  [null,   "tamper", "thermostat", "cover removed", "hardware fault", "calibration error", "internal fault", "link interference", "over-temperature"],
+                            "periods" : ["P5D",  "P140D",   "P80D",       "P100D",          "P200D",           "P200D",             "P150D",           "P120D",              "P300D"],
+                            "comment" : "we include null as a state too, so that faults get cleared after a while"
+                        },
+                        "variable" : [
+                            {"name" : "manager", "randstruct" : "[('Jim','Monica','Thelma','Thor','Ziggy','Keith','Mick','Aaron','Simon','Patrick','Sarah','Laura','Sigourney','Michel'), ' ', ('Aardvark', 'Beerherder', 'Casalima', 'Duerte', 'Heyerdahl', 'Vorsicht', 'Smith', 'van den Built', 'Banks', 'Musk', 'Clinton', 'Balrock', 'Ngyen', 'Trump')]", "randomness_property" : "address_postal_code"},
+                            {"name" : "icon", "value" : "french-fries"}
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
+
