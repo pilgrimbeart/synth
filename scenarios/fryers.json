@@ -3,7 +3,7 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "-P30D",
-        "end_time" : "now"
+        "end_time" : null
     },
     "events" : [
         {

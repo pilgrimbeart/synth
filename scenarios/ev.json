@@ -3,12 +3,12 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "-P30D",
-        "end_time" : "now"
+        "end_time" : null
     },
     "events" : [
         {
             "comment" : "EV charging",
-            "repeats" : 1000,
+            "repeats" : 2000,
             "interval" : "PT1H",
             "action": {
                 "create_device" : {
@@ -23,8 +23,14 @@
                             "area_radius" : "Edinburgh, UK",
                             "devices_per_address" : [2,10]
                         },
+                        "comms" : {
+                            "reliability" : "rssi",
+                            "reliability_above_rssi_knee" : 1.00,
+                            "period" : "PT1H",
+                            "suppress_messages" : true
+                        },
                         "variable" : [
-                            {"name" : "icon", "value" : "bolt"}
+                            {"name" : "icon", "value" : "charging-station"}
                         ]
                     }
                 }

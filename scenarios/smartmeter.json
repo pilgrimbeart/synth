@@ -11,7 +11,7 @@
         },
         {
             "comment" : "SMART METERS across India, where one vendor has a problem",
-            "repeats" : 500,
+            "repeats" : 5000,
             "action": {
                 "create_device" : {
                     "functions" : {
