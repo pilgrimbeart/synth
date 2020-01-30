@@ -69,14 +69,16 @@ class Basic(Device):
             self.properties = {}
         self.properties.update({ "$id" : new_id })
 
-    def transmit(self, the_id, ts, properties, force_comms):
-        if not self.comms_ok() and not force_comms:
-            return
-
+    def _transmit(self, the_id, ts, properties):
         if self.update_callback:
             self.update_callback(the_id, ts, properties)
         else:
             logging.warning("No callback installed to update device properties")
+
+    def transmit(self, the_id, ts, properties, force_comms):
+        if not self.comms_ok() and not force_comms:
+            return
+        self._transmit(the_id, ts, properties)
     
     # Internal methods
 
