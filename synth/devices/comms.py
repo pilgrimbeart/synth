@@ -17,6 +17,7 @@ Configurable parameters::
 Device properties created::
 
     {
+            "connected" : true/false     An MQTT-like connection indicator
     }
     
 """
@@ -53,8 +54,9 @@ class Comms(Device):
         self.messages_attempted = 0
         self.messages_sent = 0
         self.messages_delayed = 0
-        engine.register_event_in(0, self.tick_comms_up_down, self, self)
         super(Comms,self).__init__(instance_name, time, engine, update_callback, context, params)   # Chain other classes last, so we set ourselves up before others do, so comms up/down takes effect even on device "boot"
+        engine.register_event_in(0, self.tick_comms_up_down, self, self)
+        self.set_property("connected", True)
 
     def comms_ok(self): # Overrides base-class's definition
         return super(Comms, self).comms_ok() and self.ok_comms
@@ -111,21 +113,23 @@ class Comms(Device):
             return result
 
     def change_comms(self, ok):
-        if ok and (self.ok_comms == False): # If restoring comms, transmit everything that buffered whilst comms was offline
+        if ok and (not self.ok_comms): # Comms coming back online
+            self.ok_comms = True
+            self.set_property("connected", True)    # Send this *after* restoring comms!
             if not self.suppress_messages:
                 logging.info("comms.py: comms coming back online for device "+str(self.properties["$id"]))
             if self.has_buffer:
                 if not self.suppress_messages:
                     logging.info("comms.py: ... so now transmitting " + str(len(self.buffer)) + " buffered events")
-                for e in self.buffer:
+                for e in self.buffer:   # Transmit everything stored while we were offline
                     self.transmit(e[0],e[1],e[2], True)
                 self.buffer = []
 
-        if (not ok) and self.ok_comms:
+        if (not ok) and self.ok_comms:  # Comms going offline
+            self.set_property("connected", False)   # Send this *before* stopping comms!
+            self.ok_comms = False
             if not self.suppress_messages:
                 logging.info("comms.py: comms going offline for device " + str(self.properties["$id"]))
-
-        self.ok_comms = ok
 
     def tick_comms_up_down(self, _):
         if isinstance(self.comms_reliability, (int,float)):   # Simple probability
