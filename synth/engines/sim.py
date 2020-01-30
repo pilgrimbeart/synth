@@ -46,7 +46,7 @@ class Sim(Engine):
         self.event_count_callback = event_count_callback
         self.events = []     # A sorted list of simulation callbacks: [(epochTime,sortkeycount,function,arg,device), ...]
         self.sort_key_count = 0
-
+        self.next_event_time = None
 
     def set_now(self, epochSecs):
         self.sim_lock.acquire()
@@ -159,8 +159,10 @@ class Sim(Engine):
                 fn(arg)             # Note that this is likely to itself inject more events, so we must have released lock
                 return
         self.sim_lock.release()           # --->
-        if wait >= 1.0:
-            logging.info("Waiting {:.2f}s for real time".format(wait))
+        if t != self.next_event_time:
+            if wait >= 1.0:
+                logging.info("Waiting {:.2f}s for real time".format(wait))
+            self.next_event_time = t
         time.sleep(min(1.0, wait))
         self.set_now(time.time())    # So that any events injected asynchronously will correctly get stamped with current time
 
