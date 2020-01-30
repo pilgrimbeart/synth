@@ -8,6 +8,13 @@ fi
 ./checkMem
 command="python3 synth $@"
 echo $command
+read -p "Have you deleted old data first?" -n 1 -r
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+    then
+        echo "Aborting"
+        exit 1
+        fi
 pkill -f "$command" || echo ""
 rm -f ../synth_logs/$1.out
 rm -f ../synth_logs/$1.evt
