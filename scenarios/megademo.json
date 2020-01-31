@@ -428,9 +428,21 @@
             }
         },
         {
-            "comment" : "Inject a problem later into one brand of meters",
+            "comment" : "some time later, upgrade the software in one brand of meter",
             "at" : "P21D",
-             "action": {
+            "action": {
+                "change_property" : {
+                    "identity_property" : "vendor",
+                    "identity_value" : "Itron",
+                    "property_name" : "firmware",
+                    "property_value" : 0.8 // Changed firmware version is the cause
+                }
+            }
+        },
+        {
+            "comment" : "...but the firmware was duff, so now those meter don't work so good",
+            "at" : "P0D",
+            "action": {
                 "change_property" : {
                     "is_attribute" : true,
                     "identity_property" : "vendor",
