@@ -1,2 +1,9 @@
 ps uax | head -n 1
-ps uax | grep python3 | grep -v grep
+list=`ps uax | grep python3 | grep -v grep`
+IFS=$'\n'
+for item in $list
+    do
+        printf "%-120s" $item
+        account=`echo $item | awk '{print $(NF - 1)}'`
+        tail -n 1 ../synth_logs/$account.out
+    done
