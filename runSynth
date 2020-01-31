@@ -6,6 +6,13 @@ if [ $# -ne 2 ]; then
     exit -1
 fi
 ./checkMem
+
+if [[ `ps uax | grep "python3 synth $1 " | grep -v grep` != "" ]]
+    then
+        echo "A job is already running on this account"
+        exit -1
+fi
+
 command="python3 synth $@"
 echo $command
 read -p "Have you deleted old data first?" -n 1 -r
