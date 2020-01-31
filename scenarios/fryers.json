@@ -39,6 +39,8 @@
                         },
                         "variable" : [
                             {"name" : "manager", "randstruct" : "[('Jim','Monica','Thelma','Thor','Ziggy','Keith','Mick','Aaron','Simon','Patrick','Sarah','Laura','Sigourney','Michel'), ' ', ('Aardvark', 'Beerherder', 'Casalima', 'Duerte', 'Heyerdahl', 'Vorsicht', 'Smith', 'van den Built', 'Banks', 'Musk', 'Clinton', 'Balrock', 'Ngyen', 'Trump')]", "randomness_property" : "address_postal_code"},
+                            {"name" : "manufacturer", "value" : ["Tefal", "Wilko", "Swan", "Royal", "Bartscher", "Bredeco"]},
+                            {"name" : "model", "randstruct" : "[('A','K','L'),('X','Z','W','N'),'-',('1','2','3','4','5','6','7','8','9'),('0','1','2','3','4','5','6','7','8','9'),('0','1','2','3','4','5','6','7','8','9')]"},
                             {"name" : "icon", "value" : "french-fries"}
                         ]
                     }
