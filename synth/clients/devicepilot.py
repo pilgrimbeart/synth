@@ -163,8 +163,8 @@ def gzip_file(filepath):
 def check_account_name(dynamo_table, bucket_name, key, account_name):
     # Checks that account name matches that provided in the key, to avoid accidentally uploading to wrong account
     # (but don't bother doing this for Development)
-    if bucket_name == "ingest-development":
-        logging.info("Skipping account name check, as on development")
+    if bucket_name in ["ingest-development", "ingest-staging"]:
+        logging.info("Skipping account name check, as on development/staging")
         return True
 
     s3 = boto3.resource("s3")
