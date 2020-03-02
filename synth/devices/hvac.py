@@ -20,6 +20,7 @@ Device properties created::
 
     {
             insolation  # Amount of sunshine 
+            external_temperature # Copied from any related weather sensor
             temperature # Internal building temperature
             kW          # Power being used for heating or cooling
             pump_run    # When heating or cooling pumps are running
@@ -160,6 +161,7 @@ class Hvac(Device):
 
         p = {   "kW" : kW,
                 "temperature" : int(self.temperature*10)/10.0,
+                "external_temperature" : external_temp,
                 "target_temp_ideal" : self.target_temp_ideal,
                 "target_temp_min" : target_temp_min,
                 "target_temp_max" : target_temp_max
