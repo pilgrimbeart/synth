@@ -13,6 +13,8 @@
             "action": {
                 "create_device" : {
                     "functions" : {
+                        "bytes" : {
+                        },
                         "charger" : {
                         },
                         "firmware" : {
