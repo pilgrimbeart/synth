@@ -9,18 +9,29 @@
         {
             "action" : { "install_analyser" : {} }
         },
-        {
-            "comment" : "notification testing",
-            "action" : {
-                "create_device" : {
-                    "functions" : {
-                        "variable" : [
-                            { "name" : "sinewave", "timefunction" : { "sinewave" : { "period" : "PT15M" } } },
-                            { "name" : "device_type", "value" : "test" }
-                        ]
-                    }
-                }
-            }
+        {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT1M", "delay" : "PT0M", "phase_absolute" : true } } },
+                                                                            { "name" : "period", "value" : "PT1M" }, { "name" : "device_type", "value" : "test" } ] } } }
+        },
+        {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT2M", "delay" : "PT0M", "phase_absolute" : true } } },
+                                                                            { "name" : "period", "value" : "PT2M" }, { "name" : "device_type", "value" : "test" } ] } } }
+        },
+        {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT4M", "delay" : "PT0M", "phase_absolute" : true } } },
+                                                                            { "name" : "period", "value" : "PT4M" }, { "name" : "device_type", "value" : "test" } ] } } }
+        },
+        {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT8M", "delay" : "PT0M", "phase_absolute" : true } } },
+                                                                            { "name" : "period", "value" : "PT8M" }, { "name" : "device_type", "value" : "test" } ] } } }
+        },
+        {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT16M", "delay" : "PT0M", "phase_absolute" : true } } },
+                                                                            { "name" : "period", "value" : "PT16M" }, { "name" : "device_type", "value" : "test" } ] } } }
+        },
+        {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT32M", "delay" : "PT0M", "phase_absolute" : true } } },
+                                                                            { "name" : "period", "value" : "PT32M" }, { "name" : "device_type", "value" : "test" } ] } } }
+        },
+        {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT64M", "delay" : "PT0M", "phase_absolute" : true } } },
+                                                                            { "name" : "period", "value" : "PT64M" }, { "name" : "device_type", "value" : "test" } ] } } }
+        },
+        {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT128M", "delay" : "PT0M", "phase_absolute" : true } } },
+                                                                            { "name" : "period", "value" : "PT128M" }, { "name" : "device_type", "value" : "test" } ] } } }
         },
         {
             "comment" : "drug fridges",
@@ -454,4 +465,3 @@
         }
     ]
 }
-
