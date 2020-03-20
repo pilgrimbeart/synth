@@ -1,0 +1,41 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P1D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "comment" : "Massive posting - about 50k points per hour, based on EV charging demo",
+            "repeats" : 12000,
+            "interval" : "PT1S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "charger" : {
+                        },
+                        "firmware" : {
+                        },
+                        "latlong" : {
+                            "generate_addresses" : true,
+                            "area_centre" : "Sheffield, UK",
+                            "area_radius" : "Edinburgh, UK",
+                            "devices_per_address" : [2,10]
+                        },
+                        "comms" : {
+                            "reliability" : "rssi",
+                            "reliability_above_rssi_knee" : 1.00,
+                            "period" : "PT1H",
+                            "suppress_messages" : true
+                        },
+                        "variable" : [
+                            {"name" : "icon", "value" : "charging-station"}
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
+
