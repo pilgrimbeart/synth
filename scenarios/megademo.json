@@ -6,9 +6,6 @@
         "end_time" : null
     },
     "events" : [
-        {
-            "action" : { "install_analyser" : {} }
-        },
         {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT1M", "delay" : "PT0M", "phase_absolute" : true } } },
                                                                             { "name" : "period", "value" : "PT1M" }, { "name" : "device_type", "value" : "test" } ] } } }
         },
@@ -32,6 +29,11 @@
         },
         {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT128M", "delay" : "PT0M", "phase_absolute" : true } } },
                                                                             { "name" : "period", "value" : "PT128M" }, { "name" : "device_type", "value" : "test" } ] } } }
+        },
+        {   "repeats" : 20,
+            "action" : { "create_device" : { "functions" : { "heartbeat" : { "interval" : "PT5M" },
+                         "comms" : { "reliability" : 0.75, "period" : "PT5M", "suppress_messages" : true },
+                         "variable" : [ { "name" : "period", "value" : "PT5M with 75% comms relability"}, { "name" : "device_type", "value" : "test" } ] } } }
         },
         {
             "comment" : "drug fridges",
