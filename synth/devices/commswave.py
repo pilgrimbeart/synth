@@ -9,6 +9,7 @@ Configurable parameters::
     {
         "timefunction" : A timefunction definition
         "threshold" : (optional) Comms will only work when the timefunction is returning >= threshold. If missing then any non-zero value will make comms work.
+        "gate_properties" : (optional) ["list", "of", "properties"]  If this is defined, then instead of taking whole comms up and down, only these specific properties are gated
     }
 
 Device properties created::
@@ -28,23 +29,35 @@ class Commswave(Device):
         tf = params["commswave"]["timefunction"]
         self.comms_timefunction = importer.get_class("timefunction", list(tf.keys())[0])(engine, self, tf[list(tf.keys())[0]])
         self.comms_tf_threshold = params["commswave"].get("threshold", None)
+        self.comms_gate_properties = params["commswave"].get("gate_properties", None)
         self.messages_sent = 0
         self.messages_attempted = 0
         super(Commswave,self).__init__(instance_name, time, engine, update_callback, context, params)
 
-    def comms_ok(self):
-        self.messages_attempted += 1
-        is_ok = super(Commswave, self).comms_ok()
+    def timefunction_says_communicate(self):
+        thresh = 0.0
         if self.comms_tf_threshold is not None:
-            tf_ok = self.comms_timefunction.state() >= self.comms_tf_threshold
-            if not tf_ok:
-                pass # logging.info("commswave suppressing a communication due to timefunction state")
-            is_ok = is_ok and tf_ok
+            thresh = self.comms_tf_threshold
+        return self.comms_timefunction.state() > thresh
+
+    def comms_ok(self):
+        if self.comms_gate_properties is not None:  # If we're gating individual properties, then don't gate overall comms
+            return super(Commswave, self).comms_ok()
         else:
-            is_ok = is_ok and self.comms_timefunction.state()
-        if is_ok:
-            self.messages_sent += 1
-        return is_ok
+            self.messages_attempted += 1
+            is_ok = super(Commswave, self).comms_ok()
+            is_ok = is_ok and self.timefunction_says_communicate()
+            if is_ok:
+                self.messages_sent += 1
+            return is_ok
+
+    def transmit(self, the_id, ts, properties, force_comms):
+        if self.comms_gate_properties is not None:  # We're gating properties
+            if not self.timefunction_says_communicate():
+                for p in self.comms_gate_properties:
+                    properties.pop(p, None) # Remove the property, if it's there
+
+        super(Commswave, self).transmit(the_id, ts, properties, force_comms)
 
     def external_event(self, event_name, arg):
         super(Commswave, self).external_event(event_name, arg)
