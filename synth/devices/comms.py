@@ -9,9 +9,10 @@ Configurable parameters::
     {
         "reliability" : 1.0     A fraction 0.0..1.0 or the word "rssi" to generate reliability from RSSI
         "period" :      P1D     Mean period with which device goes up and down [or RSSI varies, if being created] (has exponential tail with max 100x). Defaults to once a day
-        "has_buffer" :  false   If this boolean is true then the device buffers data while comms is down (else it throws it away)
+        "metronomic_period" : false    If true then the up/down period is EXACTLY the above (not random)
+        "has_buffer" :  false          If true then the device buffers data while comms is down (else it throws it away)
         "unbuffered_properties" : ["propname",...] (optional) these properties will be lost (not buffered) when comms goes offline - means that e.g. heartbeat messages don't get magically restored after an outage
-        "suppress_messages" : false If true then wont emit log messages
+        "suppress_messages" : false    If true then wont emit log messages
     }
 
 Device properties created::
@@ -45,6 +46,7 @@ class Comms(Device):
             self.rssi_sigma = rssi_span/12 
             self.set_rssi()
         self.comms_up_down_period = isodate.parse_duration(params["comms"].get("period", "P1D")).total_seconds()
+        self.comms_metronomic_period = params["comms"].get("metronomic_period", False)
         self.has_buffer = params["comms"].get("has_buffer", False)
         self.suppress_messages = params["comms"].get("suppress_messages", False)
         self.unbuffered_properties = params["comms"].get("unbuffered_properties", [])
@@ -140,9 +142,12 @@ class Comms(Device):
         else:
             assert False, "comms_reliability spec of "+str(self.comms_reliability)+" not supported"
 
-        delta_time = random.expovariate(1.0 / self.comms_up_down_period)
-        delta_time = max(delta_time, 60.0) # never more than once a minute
-        delta_time = min(delta_time, self.comms_up_down_period * 10.0) # Limit long tail
+        if self.comms_metronomic_period:
+            delta_time = self.comms_up_down_period
+        else:
+            delta_time = random.expovariate(1.0 / self.comms_up_down_period)
+            delta_time = max(delta_time, 60.0) # never more than once a minute
+            delta_time = min(delta_time, self.comms_up_down_period * 10.0) # Limit long tail
         self.engine.register_event_in(delta_time, self.tick_comms_up_down, self, self)
 
 # Model for comms unreliability
