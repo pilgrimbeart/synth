@@ -1,0 +1,148 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "2020-03-01T00:00:00",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : [
+                            {
+                                "name" : "count", "timefunction" : {
+                                "count" : { "interval" : "PT5S" } }
+                            },
+                            {
+                                "name" : "behaviour", "value" : "does not timeout"
+                            },
+                            {
+                                "name" : "device_type", "value" : "test"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : [
+                            {
+                                "name" : "count", "timefunction" : {
+                                "count" : { "interval" : "PT5S" } }
+                            },
+                            {
+                                "name" : "behaviour", "value" : "times-out with 3-minute period (90s on, 90s off)"
+                            },
+                            {
+                                "name" : "device_type", "value" : "test"
+                            }
+                        ],
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT3M",
+                                    "invert" : true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : [
+                            {
+                                "name" : "count", "timefunction" : {
+                                "count" : { "interval" : "PT5S" } }
+                            },
+                            {
+                                "name" : "behaviour", "value" : "times-out with 10-minute period (5m on, 5m off)"
+                            },
+                            {
+                                "name" : "device_type", "value" : "test"
+                            }
+                        ],
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT10M",
+                                    "invert" : true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : [
+                            {
+                                "name" : "count", "timefunction" : {
+                                "count" : { "interval" : "PT5S" } }
+                            },
+                            {
+                                "name" : "behaviour", "value" : "times-out permanently 1 day after simulation starts"
+                            },
+                            {
+                                "name" : "device_type", "value" : "test"
+                            }
+                        ],
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "P9999D",
+                                    "invert" : true,
+                                    "transition" : "P1D"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "action" : {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : [
+                            {
+                                "name" : "count", "timefunction" : {
+                                "count" : { "interval" : "PT5S" } }
+                            },
+                            {
+                                "name" : "count_gated", "timefunction" : {
+                                "count" : { "interval" : "PT5S" } }
+                            },
+                            {
+                                "name" : "behaviour", "value" : "count_gated property (only) times-out with 3-minute period (90s on, 90s off)"
+                            },
+                            {
+                                "name" : "device_type", "value" : "test"
+                            }
+                        ],
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "PT3M",
+                                    "invert" : true
+                                }
+                            },
+                            "gate_properties" : ["count_gated"]
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
