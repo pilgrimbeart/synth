@@ -30,10 +30,23 @@
         {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT128M", "delay" : "PT0M", "phase_absolute" : true } } },
                                                                             { "name" : "period", "value" : "PT128M" }, { "name" : "device_type", "value" : "test" } ] } } }
         },
-        {   "repeats" : 20,
-            "action" : { "create_device" : { "functions" : { "heartbeat" : { "interval" : "PT5M" },
-                         "comms" : { "reliability" : 0.75, "period" : "PT5M", "suppress_messages" : true },
-                         "variable" : [ { "name" : "period", "value" : "PT5M with 75% comms relability"}, { "name" : "device_type", "value" : "test" } ] } } }
+        {
+            "repeats" : 20,
+            "action" : {
+                "create_device" : {
+                    "functions" : { 
+                         "comms" : { "reliability" : 0.75, "period" : "PT5M", "metronomic_period" : true, "suppress_messages" : true },
+                         "variable" : [
+                             { "name" : "period", "value" : "PT5M with 75% comms reliability"},
+                             { "name" : "device_type", "value" : "test" },
+                             { "name" : "count", "timefunction" : { "count" : { "interval" : "PT5M" } } }
+                         ]
+                    }
+                }
+            }
+        },
+        {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "sinewave 15m", "timefunction" : { "sinewave" : { "period" : "PT15M" } } },
+                                                                            { "name" : "period", "value" : "PT15M" }, { "name" : "device_type", "value" : "test" } ] } } }
         },
         {
             "comment" : "drug fridges",
