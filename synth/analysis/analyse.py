@@ -224,6 +224,9 @@ class Analyser():
         state_results.sort()
         time_results.sort()
 
+        if len(state_results) == 0:
+            return {}
+
         struc = { "$id" : d, "$ts" : t,
                 "ML_anomaly" : state_results[0][0],     "ML_anomaly_property" : state_results[0][1],
                 "ML_ts_anomaly" : time_results[0][0],   "ML_ts_anomaly_property" : time_results[0][1],
