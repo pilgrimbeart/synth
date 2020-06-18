@@ -6,11 +6,11 @@
         "end_time" : null
     },
     "events" : [
+        //{
+        //    "action" : { "install_analyser" : {} }
+        //},
         {
-            "action" : { "install_analyser" : {} }
-        },
-        {
-            "comment" : "SMART METERS across India, where one vendor has a problem",
+            "comment" : "Smart Meters across the UK",
             "repeats" : 5000,
             "action": {
                 "create_device" : {
@@ -20,7 +20,7 @@
                         },
                         "comms" : {
                             "reliability" : "rssi",
-                            "reliability_above_rssi_knee" : 1.00,
+                            "reliability_above_rssi_knee" : 0.90,
                             "period" : "PT1H",
                             "suppress_messages" : true
                         },
@@ -33,8 +33,9 @@
                         "firmware" : {},
                         "latlong" : {
                             "generate_addresses" : true,
-                            "area_centre" : "Nagpur, India",
-                            "area_radius" : "Jodhpur, India"
+                            "area_centre" : "Sheffield, UK",
+                            "area_radius" : "Edinburgh, UK",
+                            "devices_per_address" : [1,3]
                         },
                         "variable" : [
                             {   "name" : "vendor",  "value" : ["Landis & Gyr", "EDMI", "Aclara", "Itron", "Kaifa", "Honeywell", "Flonidan", "GWI"]},
@@ -49,37 +50,14 @@
             }
         },
         {
-            "comment" : "Inject a problem later into one brand of meters",
-            "at" : "P21D",
+            "comment" : "Inject a comms failure in one region",
+            "at" : "P20D",
             "action": {
                 "change_property" : {
-                    "identity_property" : "vendor",
-                    "identity_value" : "Itron",
-                    "property_name" : "firmware",
-                    "property_value" : 0.8 // Changed firmware version is the cause
-                }
-            }
-        },
-        {
-             "action": {
-                "change_property" : {
-                    "is_attribute" : true,
-                    "identity_property" : "vendor",
-                    "identity_value" : "Itron",
+                    "identity_property" : "address_administrative_area_level_2",
+                    "identity_value" : "South Yorkshire",
                     "property_name" : "chance_above_knee",
-                    "property_value" : 0.50 // Reduce uptime (even with good RSSI) is the effect
-                }
-            }
-        },
-        {
-            "comment" : "Inject a mains failure in one region",
-            "at" : "P5D",
-            "action": {
-                "change_property" : {
-                    "identity_property" : "address_administrative_area_level_1",
-                    "identity_value" : "Uttar Pradesh",
-                    "property_name" : "fault",
-                    "property_value" : "mains loss"
+                    "property_value" : 0.5
                 }
             }
         }
