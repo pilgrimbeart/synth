@@ -203,7 +203,7 @@ class Events():
                 end_time = engine.get_end_time()    # This may not be a time
                 assert type(end_time) in [int, float], "An event is defined at 'end', but simulation end time is not a definitive time"
                 at_time = engine.get_end_time() - 0.001 # Ensure they happen BEFORE the end, as sim end time is non-inclusive
-            elif timespec[0] in "-+P":    # Time relative to current sim time
+            elif timespec[0] in "-+P":    # Time relative to current 'at' time
                 at_time = at_time + isodate.parse_duration(timespec).total_seconds()
             else:
                 at_time = ISO8601.to_epoch_seconds(timespec)
@@ -211,27 +211,29 @@ class Events():
             action = event.get("action", None)
             repeats = event.get("repeats", 1)    # MAY also specify a repeat and interval
             interval = event.get("interval","PT0S")
+            time_advance = event.get("time_advance", True)
 
+            insert_time = at_time
             while repeats > 0:
                 # Built-in actions. TODO: Make these plug-in too?
                 if action is None:
                     pass
                 elif "create_device" in action:
-                    engine.register_event_at(at_time,
+                    engine.register_event_at(insert_time,
                                              device_factory.create_device,
                                              (instance_name, client, engine, update_callback, context, action["create_device"]),
                                              None)
                 elif "use_model" in action:
-                    engine.register_event_at(at_time,
+                    engine.register_event_at(insert_time,
                             model.use_model,
                             (instance_name, client, engine, update_callback, context, action["use_model"]), None)
                 elif "query" in action:
-                    engine.register_event_at(at_time,
+                    engine.register_event_at(insert_time,
                                              query_action,
                                              action["query"],
                                              None)
                 elif "change_property" in action:
-                    engine.register_event_at(at_time,
+                    engine.register_event_at(insert_time,
                                              change_property_action,
                                              action["change_property"],
                                              None)
@@ -244,7 +246,7 @@ class Events():
                     if not name.startswith("client."):
                         logging.error("Ignoring unrecognised action "+name)
                     else:
-                        engine.register_event_at(at_time,
+                        engine.register_event_at(insert_time,
                                                  client_action,
                                                  (name[7:], action[name]),
                                                  None)
@@ -255,8 +257,10 @@ class Events():
 ##                else:
 ##                    logging.warning("Ignoring unknown event action type "+str(event["action"]))
 
-                at_time += isodate.parse_duration(interval).total_seconds()
+                insert_time += isodate.parse_duration(interval).total_seconds()
                 repeats -= 1
+            if time_advance:
+                at_time = insert_time
 
     def flush(self):
         """Call at exit to clean up."""
