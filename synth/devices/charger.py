@@ -50,7 +50,7 @@ FAULTS = [
         ["Relay Weld",      500 * DAYS],
         ["Overtemperature", 300 * DAYS]
         ]
-FAULT_RECTIFICATION_TIME_AV = 30 * DAYS
+FAULT_RECTIFICATION_TIME_AV = 3 * DAYS
 
 def pick_a_fault(sampling_interval_s):
     for (fault, mtbf) in FAULTS:
