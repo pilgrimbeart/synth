@@ -227,6 +227,10 @@ class Devicepilot(Client):
         self.instance_name = instance_name
         self.context = context
         self.params = params
+        if "setenv" in params:
+            for (key, value) in params["setenv"].items():
+                logging.info("SETENV "+key+" "+value)
+                os.environ[key] = value
         self.url = params["devicepilot_api"]
         self.key = params["devicepilot_key"]
         if "aws_dp_account" in params:
