@@ -1,11 +1,13 @@
 """JSONwriter
 Writes events to JSON files, segmenting on max size"""
 
+import os, pathlib
 import logging
 import time
 from . import json_quick
 from . import merge_test
 
+TEMP_DIRECTORY = "/tmp/synth_json_writer/"  # We build each file in a temporary directory, then move when it's finished (so that anyone watching the destination directory doesn't ever encounter partially-written files
 DEFAULT_DIRECTORY = "../synth_logs/"
 DEFAULT_MAX_EVENTS_PER_FILE = 100000    # FYI 100,000 messages is max JSON file size that DP can ingest (if that's where you end-up putting these files)
 
@@ -13,12 +15,16 @@ class Stream():
     """Write properties into JSON files, splitting by max size.
        If you access .files_written property then call close() first"""
     def __init__(self, filename, directory = DEFAULT_DIRECTORY, file_mode="wt", max_events_per_file = DEFAULT_MAX_EVENTS_PER_FILE, merge = False):
-        self.file_path = directory + filename
+        pathlib.Path(TEMP_DIRECTORY).mkdir(exist_ok=True)   # Ensure temp directory exists
+
+        self.target_directory = directory
+        self.filename_root = filename
         self.file_mode = file_mode
         self.max_events_per_file = max_events_per_file
         self.merge = merge
 
         self.file = None
+        self.filename = None
         self.files_written = []
         self.file_count = 1
         self.last_event = {}    # Used to merge messages
@@ -52,12 +58,11 @@ class Stream():
         if self.file is not None:
             self._close()
 
-        filename = self.file_path + "%05d" % self.file_count + ".json"
-        logging.info("Starting new logfile " + filename)
-        self.file = open(filename, self.file_mode)  # No-longer unbuffered as Python3 doesn't support that on text files
+        self.filename = self.filename_root + "%05d" % self.file_count + ".json"
+        logging.info("Starting new logfile " + self.filename)
+        self.file = open(TEMP_DIRECTORY + self.filename, self.file_mode)  # No-longer unbuffered as Python3 doesn't support that on text files
         self.file.write("[\n")
         self.events_in_this_file = 0
-        self.files_written.append(filename)
 
     def check_next_file(self):
         """Check if time to move to next json file"""
@@ -74,7 +79,10 @@ class Stream():
             # logging.info("Closing JSON file")
             self.file.write("\n]\n")
             self.file.close()
+            os.rename(TEMP_DIRECTORY + self.filename, DEFAULT_DIRECTORY + self.filename)
+            self.files_written.append(DEFAULT_DIRECTORY + self.filename)
             self.file = None
+            self.filename = None
             self.file_count += 1
 
     def close(self):
