@@ -57,7 +57,10 @@ class Filesystem(Client):
     def __init__(self, instance_name, context, params):
         self.params = params
         self.events = {} # A dict of events in a format handled by evt2csv
-        self.json_stream = json_writer.Stream(instance_name)
+        if "max_events_per_file" in self.params:
+            self.json_stream = json_writer.Stream(instance_name, max_events_per_file = self.params["max_events_per_file"])
+        else:
+            self.json_stream = json_writer.Stream(instance_name)
 
     def add_device(self, device_id, time, properties):
         # self.update_device(device_id, time, properties) - NO, this will cause duplicate creation events to be written to JSON file
