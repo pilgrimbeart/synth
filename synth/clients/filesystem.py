@@ -13,7 +13,10 @@ The client accepts the following parameters
     "client" :
     {
         "type" : "filesystem",
-        "filename" :"OnFStest"
+        "filename" :"OnFStest",
+        "max_events_per_file" : N,  # Maximum number of events to emit per output file
+        "timestamp_prefix" : false,  # If true then prefix filename with ISO8601 timestamp (so filenames will sort by timestamp order)
+        "messages_prefix" : false,  # If true then prefix filename with the number of points the file contains
     }
 
 There are no client event actions specific to the Filesystem client.
@@ -57,10 +60,12 @@ class Filesystem(Client):
     def __init__(self, instance_name, context, params):
         self.params = params
         self.events = {} # A dict of events in a format handled by evt2csv
+        ts_prefix = params.get("timestamp_prefix", False)
+        messages_prefix = params.get("messages_prefix", False)
         if "max_events_per_file" in self.params:
-            self.json_stream = json_writer.Stream(instance_name, max_events_per_file = self.params["max_events_per_file"])
+            self.json_stream = json_writer.Stream(instance_name, ts_prefix = ts_prefix, messages_prefix=messages_prefix, max_events_per_file = self.params["max_events_per_file"])
         else:
-            self.json_stream = json_writer.Stream(instance_name)
+            self.json_stream = json_writer.Stream(instance_name, ts_prefix = ts_prefix, messages_prefix=messages_prefix)
 
     def add_device(self, device_id, time, properties):
         # self.update_device(device_id, time, properties) - NO, this will cause duplicate creation events to be written to JSON file
