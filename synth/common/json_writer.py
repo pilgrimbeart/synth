@@ -4,6 +4,7 @@ Writes events to JSON files, segmenting on max size"""
 import os, pathlib
 import logging
 import time
+from datetime import datetime
 from . import json_quick
 from . import merge_test
 
@@ -14,7 +15,9 @@ DEFAULT_MAX_EVENTS_PER_FILE = 100000    # FYI 100,000 messages is max JSON file 
 class Stream():
     """Write properties into JSON files, splitting by max size.
        If you access .files_written property then call close() first"""
-    def __init__(self, filename, directory = DEFAULT_DIRECTORY, file_mode="wt", max_events_per_file = DEFAULT_MAX_EVENTS_PER_FILE, merge = False):
+    def __init__(self, filename, directory = DEFAULT_DIRECTORY, file_mode="wt",
+            max_events_per_file = DEFAULT_MAX_EVENTS_PER_FILE, merge = False,
+            ts_prefix = False, messages_prefix = False):
         pathlib.Path(TEMP_DIRECTORY).mkdir(exist_ok=True)   # Ensure temp directory exists
 
         self.target_directory = directory
@@ -22,20 +25,25 @@ class Stream():
         self.file_mode = file_mode
         self.max_events_per_file = max_events_per_file
         self.merge = merge
+        self.ts_prefix = ts_prefix
+        self.messages_prefix = messages_prefix
 
         self.file = None
         self.filename = None
         self.files_written = []
         self.file_count = 1
         self.last_event = {}    # Used to merge messages
+        self.first_timestamp = None
  
     def _write_event(self, properties):
         self.check_next_file()
         jprops = properties.copy()
+        if self.first_timestamp is None:
+            self.first_timestamp = jprops["$ts"]
         jprops["$ts"] = int(jprops["$ts"] * 1000) # Convert timestamp to ms as that's what DP uses internally in JSON files
-        if self.events_in_this_file > 0:
-            self.file.write(",\n")
         s = json_quick.dumps(jprops)
+        if self.events_in_this_file > 0:
+            s = ",\n" + s
         self.file.write(s)
 
     def write_event(self, properties):
@@ -69,20 +77,28 @@ class Stream():
         if self.file is None:
             self.move_to_next_file()
             return
-        if self.events_in_this_file >= self.max_events_per_file-1:
+        self.events_in_this_file += 1
+        if self.events_in_this_file >= self.max_events_per_file:
             self.move_to_next_file()
             return
-        self.events_in_this_file += 1
 
     def _close(self):
         if self.file is not None:
             # logging.info("Closing JSON file")
             self.file.write("\n]\n")
             self.file.close()
-            os.rename(TEMP_DIRECTORY + self.filename, DEFAULT_DIRECTORY + self.filename)
+            if self.ts_prefix:
+                dt = datetime.fromtimestamp(self.first_timestamp)
+                prefix = dt.strftime("%Y-%m-%dT%H-%M-%S_")
+            else:
+                prefix = ""
+            if self.messages_prefix:
+                prefix += "%010d" % self.events_in_this_file + "_"
+            os.rename(TEMP_DIRECTORY + self.filename, DEFAULT_DIRECTORY + prefix + self.filename)
             self.files_written.append(DEFAULT_DIRECTORY + self.filename)
             self.file = None
             self.filename = None
+            self.first_timestamp = None
             self.file_count += 1
 
     def close(self):
