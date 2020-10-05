@@ -270,9 +270,26 @@ def main():
     post_to_slack(err_str)
     exit(-1)
 
+def check_install():
+    if os.path.exists("../synth_logs") and os.path.exists("../synth_accounts"):
+        return
+
+    print("For further info please see https://devicepilot-synth.readthedocs.io/")
+    if input("Missing log directory - would you like me to set up directories? (y/n)").lower().strip()[0] == "y":
+        os.makedirs("../synth_logs", exist_ok = True)
+        os.makedirs("../synth_accounts", exist_ok = True)
+        if not os.path.exists("../synth_logs/OnFStest.json"):
+            open("../synth_accounts/OnFStest.json", "wt").write('{\n    "client" : {\n        "type" : "filesystem",\n        "filename" : "OnFStest"\n    }\n}')
+        print("Done.")
+        print("Please try again.")
+    exit()
+
 if __name__ == "__main__":
+    print("Synth")
     print("Running on Python"+str(sys.version_info.major)+"."+str(sys.version_info.minor))
     assert sys.version_info.major >= 3, "Synth must be run with python3 or higher"
+
+    check_install()
 
     if False:    # Profile
         import cProfile, pstats
