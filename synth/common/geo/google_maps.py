@@ -102,7 +102,7 @@ def lon_lat_to_address(lng, lat, google_maps_api_key=None):
 
     logging.info("Looking up "+str((lng,lat))+" in Google Maps")
     conn = http.client.HTTPSConnection("maps.google.com")   # Must now use SSL
-    URL = '/maps/api/geocode/json' + '?' + urllib.parse.urlencode({'latlng' : str(lat)+","+str(lng)})
+    URL = '/maps/api/geocode/json' + '?' + urllib.parse.urlencode({'latlng' : ("%.9f" % lat) + "," + ("%.9f" % lng)})  # Avoid exponential notation for small values of lat/lng
     if google_maps_api_key is None:
         logging.info("No Google Maps key so Google maps API may limit your requests")
     else:
