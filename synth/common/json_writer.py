@@ -1,7 +1,7 @@
 """JSONwriter
 Writes events to JSON files, segmenting on max size"""
 
-import os, pathlib
+import os, pathlib, shutil
 import logging
 import time
 from datetime import datetime
@@ -94,7 +94,7 @@ class Stream():
                 prefix = ""
             if self.messages_prefix:
                 prefix += "%010d" % self.events_in_this_file + "_"
-            os.rename(TEMP_DIRECTORY + self.filename, DEFAULT_DIRECTORY + prefix + self.filename)
+            shutil.copy(TEMP_DIRECTORY + self.filename, DEFAULT_DIRECTORY + prefix + self.filename) # os.rename() fails if they're on different drives
             self.files_written.append(DEFAULT_DIRECTORY + self.filename)
             self.file = None
             self.filename = None
