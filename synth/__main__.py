@@ -28,6 +28,7 @@ Generate and exercise synthetic devices for testing and demoing IoT services.
 import logging
 import os
 import time, sys, json, re, traceback
+import signal
 import requests
 import random   # Might want to replace this with something we control
 from datetime import datetime
@@ -43,6 +44,7 @@ LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 g_get_sim_time = None   # TODO: Find a more elegant way for logging to discover simulation time
 g_slack_webhook = None
 g_instance_name = None
+g_asked_to_pause = False
 
 # Set up Python logger to report simulated time
 def in_simulated_time(self,secs=None):
@@ -199,9 +201,21 @@ def get_params():
             load_param_file(arg, params)
     return params    
 
+def signal_catcher(signal_received, frame):
+    global g_asked_to_pause
+    logging.info("Received signal "+str(signal_received))
+    if signal_received == signal.SIGUSR1:
+        logging.info("Pause requested")
+        g_asked_to_pause = True
+
+def install_signal_catcher():
+    signal.signal(signal.SIGUSR1, signal_catcher)
+    signal.signal(signal.SIGUSR2, signal_catcher)
+
 def main():
     global g_get_sim_time
     global g_instance_name
+    global g_asked_to_pause
     
     def postWebEvent(webParams):    # CAUTION: Called asynchronously from the web server thread
         if "action" in webParams:
@@ -217,12 +231,15 @@ def main():
     logging.getLogger().setLevel(logging.INFO)
     os.makedirs("../synth_logs", exist_ok = True)
     os.makedirs("../synth_accounts", exist_ok = True)
+
     params = get_params()
     assert g_instance_name is not None, "Instance name has not been defined, but this is required for logfile naming"
     init_logging(params)
     logging.info("*** Synth starting at real time "+str(datetime.now())+" ***")
     logging.info("Parameters:\n"+json.dumps(params, sort_keys=True, indent=4, separators=(',', ': ')))
     post_to_slack("Started")
+
+    install_signal_catcher()
 
     Tstart = time.time()
     random.seed(12345)  # Ensure reproduceability
@@ -251,6 +268,11 @@ def main():
         while engine.events_to_come():
             engine.next_event()
             client.tick()
+            if g_asked_to_pause:
+                g_asked_to_pause = False
+                logging.info("Pausing")
+                signal.pause()  # Suspend this process. Receiving any signal will then cause us to resume
+                logging.info("Resuming")
         device_factory.close()
     except:
         err_str = traceback.format_exc()  # Report any exception, but continue to clean-up anyway
