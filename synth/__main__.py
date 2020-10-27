@@ -270,7 +270,7 @@ def main():
             client.tick()
             if g_asked_to_pause:
                 g_asked_to_pause = False
-                logging.info("Pausing")
+                logging.info("Paused")
                 signal.pause()  # Suspend this process. Receiving any signal will then cause us to resume
                 logging.info("Resuming")
         device_factory.close()

@@ -1,0 +1,130 @@
+#!/usr/bin/python3
+import sys
+import subprocess
+import signal
+import os
+import glob
+import time
+
+COMMAND = "python3 synth"
+LOG_DIR = "../synth_logs/"
+HISTORY_FILE = LOG_DIR + "jobs_run.txt"
+
+def delete_file(filepath):
+    try:
+        os.remove(filepath)
+    except:
+        pass
+
+def get_processes():
+    processes = []
+    x = subprocess.run(["ps","x"], capture_output=True, text=True)
+    y = str(x.stdout).split("\n")
+    for line in y:
+        if line.find(COMMAND) >= 0:
+            # print(">"+line+"<")
+            pid = int(line[0:5])
+            command = line[27:]
+            processes.append( (pid, command) )
+    return processes
+
+def list_processes():
+    processes = get_processes()
+    print("      PID JOB                                               OUTPUT")
+    for job in processes:
+        print("    %5d" % job[0], "%-50s" % job[1], end="", flush=True)
+        subprocess.run(["tail", "-n", "1", LOG_DIR + account_from_pid(job[0]) + ".out" ]) 
+
+def command_from_pid(pid):
+    for p in get_processes():
+        if p[0] == pid:
+            return p[1]
+    return None
+
+def pid_from_account(account):
+    for p in get_processes():
+        act = p[1].split(" ")[2]    # python3 synth Account Scenario
+        if account==act:
+            return p[0]
+    return None
+
+def account_from_pid(pid):
+    command = command_from_pid(pid)
+    if command is None:
+        return None
+    account = command.split(" ")[2]
+    return account
+
+def watch(pid):
+    account = account_from_pid(pid)
+    if account is None:
+        print("No such PID")
+    else:
+        subprocess.run(["tail", "-f", LOG_DIR + account + ".out"])
+
+def run(account, scenario):
+    pid = pid_from_account(account)
+    if pid != None:
+        print("ERROR: A Synth job is already running on account",account,"with PID",pid)
+        list_processes()
+        return
+
+    delete_file(LOG_DIR + account + ".out")
+    delete_file(LOG_DIR + account + ".evt")
+    delete_file(LOG_DIR + account + ".csv")
+    delete_file(LOG_DIR + account + ".nohup")
+
+    filelist=glob.glob(LOG_DIR + account + "\0*.json")
+    for file in filelist:
+        delete_file(file)
+
+    with open(LOG_DIR + account + ".nohup", "wt") as outfile:
+        x = subprocess.Popen(["nohup", "python3", "synth", account, scenario], stdout=outfile, stderr=outfile)
+    print("Running",account,scenario,"as PID",x.pid)
+    open(HISTORY_FILE,"at").write(time.ctime() + " " + "Started" + " " + account + " " + scenario + "\n")
+    time.sleep(1)
+    list_processes()
+    # Very important to exit immediately, otherwise a ^C sent to us will also kill our child
+    exit(0)
+
+def signal_pid(pid, sig, english):
+    account = account_from_pid(pid)
+    if account is None:
+        print("No such PID")
+    else:
+        os.kill(pid, sig)
+        print(english,account)
+        open(HISTORY_FILE,"at").write(time.ctime() + " " + english + " " + account + "\n")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        list_processes()
+        print("\nFor available commands type '"+sys.argv[0]+" help'")
+    else:
+        if sys.argv[1] == "list":
+            list_processes()
+        elif sys.argv[1] == "watch":
+            watch(int(sys.argv[2]))
+        elif sys.argv[1] == "run":
+            run(sys.argv[2], sys.argv[3])
+        elif sys.argv[1] == "kill":
+            signal_pid(int(sys.argv[2]), signal.SIGKILL, "Killed")
+        elif sys.argv[1] == "pause":
+            signal_pid(int(sys.argv[2]), signal.SIGUSR1, "Paused")
+        elif sys.argv[1] == "unpause":
+            signal_pid(int(sys.argv[2]), signal.SIGUSR2, "Unpaused")
+        elif sys.argv[1] == "history":
+            print(open(HISTORY_FILE,"rt").read())
+        elif sys.argv[1] == "help":
+            print("Commands:")
+            print("    list                        List all synth jobs, with their PID")
+            print("    watch <pid>                 Monitor the output from a synth job")
+            print("    run <account> <scenario>    Run a synth job. <account> is one of ../synth_accounts and <scenario> is one of ./scenarios e.g. 'run OnFStest 10secs'")
+            print("    kill <pid>                  Kill a synth job")
+            print("    pause <pid>                 Pause a synth job")
+            print("    unpause <pid>               Unpause a synth job")
+            print("    history                     List all recent activities")
+        else:
+            print("Unrecognised command")
+            list_processes()
+            print("\nFor available commands type '"+sys.argv[0]+" help'")
