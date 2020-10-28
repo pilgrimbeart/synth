@@ -36,7 +36,7 @@ from common import importer
 from common import randstruct
 
 class Variable(Device):
-    device_count = -1
+    device_indices = {}  # For every series-type variable we see, this maintains an index into the series
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         """A property whose value is static or driven by some time function."""
         def create_var(params):
@@ -72,13 +72,15 @@ class Variable(Device):
                 variables[var_name] = var_value
             elif "series" in params:
                 series = params["series"]
-                var_value = series[Variable.device_count % len(series)]
+                if var_name not in Variable.device_indices:
+                    Variable.device_indices[var_name] = 0
+                idx = Variable.device_indices[var_name]
+                var_value = series[idx % len(series)]
                 variables[var_name] = var_value
             else:
                 assert False,"variable " + var_name + " must have either value, timefunction, random_lower/upper, randstruct or series"
 
         super(Variable, self).__init__(instance_name, time, engine, update_callback, context, params)
-        Variable.device_count += 1
         variables = {} # Keep all variables in the same message, so store them then update them all 
 
         if type(params["variable"]) == dict:
@@ -86,6 +88,10 @@ class Variable(Device):
         else:
             for v in params["variable"]:
                 create_var(v)
+
+        for k in Variable.device_indices:
+            Variable.device_indices[k] += 1 
+
         self.set_properties(variables)
 
     def comms_ok(self):
