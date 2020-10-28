@@ -366,10 +366,10 @@ class Devicepilot(Client):
     def async_command(self, argv):
         global g_muted
         if len(argv) > 0:
-            if argv[1] == "mute":
+            if argv[0] == "mute":
                 logging.info("DevicePilot client muting output")
                 g_muted = True
-            elif argv[1] == "unmute":
+            elif argv[0] == "unmute":
                 logging.info("DevicePilot client unmuting output")
                 g_muted = False
             else:

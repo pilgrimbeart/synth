@@ -100,6 +100,8 @@ def signal_pid(pid, sig, english):
         os.kill(pid, sig)
         print(english,account)
         open(HISTORY_FILE,"at").write(time.ctime() + " " + english + " " + account + "\n")
+        time.sleep(1)
+        list_processes()
 
 
 # We don't use RX, for now
