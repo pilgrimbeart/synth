@@ -49,6 +49,11 @@ class Client:
         pass
 
     @abstractmethod
+    def async_command(self, argv):
+        """Asynchronous commands into this client"""
+        pass
+
+    @abstractmethod
     def close(self):
         """Write all pending data (e.g. before exiting)."""
         pass

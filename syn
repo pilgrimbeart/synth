@@ -5,6 +5,8 @@ import signal
 import os
 import glob
 import time
+from synth import zeromq_tx
+# from synth import zeromq_rx
 
 COMMAND = "python3 synth"
 LOG_DIR = "../synth_logs/"
@@ -80,11 +82,14 @@ def run(account, scenario):
 
     with open(LOG_DIR + account + ".nohup", "wt") as outfile:
         x = subprocess.Popen(["nohup", "python3", "synth", account, scenario], stdout=outfile, stderr=outfile)
-    print("Running",account,scenario,"as PID",x.pid)
-    open(HISTORY_FILE,"at").write(time.ctime() + " " + "Started" + " " + account + " " + scenario + "\n")
-    time.sleep(1)
-    list_processes()
-    # Very important to exit immediately, otherwise a ^C sent to us will also kill our child
+    if x.errors != None:
+        print(x.errors)
+    else:
+        print("Running",account,scenario,"as PID",x.pid)
+        open(HISTORY_FILE,"at").write(time.ctime() + " " + "Started" + " " + account + " " + scenario + "\n")
+        time.sleep(1)
+        list_processes()
+    # Very important to exit quickly, otherwise a ^C sent to us will also kill our child
     exit(0)
 
 def signal_pid(pid, sig, english):
@@ -95,6 +100,47 @@ def signal_pid(pid, sig, english):
         os.kill(pid, sig)
         print(english,account)
         open(HISTORY_FILE,"at").write(time.ctime() + " " + english + " " + account + "\n")
+
+
+# We don't use RX, for now
+g_connected_account = None
+
+def command_response(packet):
+    # Is it for us?
+    if g_connected_account is None:
+        return
+    if not "headers" in packet:
+        return
+    if not "Instancename" in packet["headers"]:
+        return
+    if packet["headers"]["Instancename"] != g_connected_account:
+        return
+    if not "action" in packet:
+        return
+    if packet["action"] != "response":
+        return
+    print(packet["response"] + "\n> ",end="",flush=True)
+
+def connect(pid):
+    global g_connected_account
+    zeromq_tx.init(emit_logging=False)  # Don't clutter-up screen with logging
+    # zeromq_rx.init(command_response, emit_logging=False)
+    g_connected_account = account_from_pid(pid)
+    if g_connected_account is None:
+        print("No such PID")
+        return
+    print("Connected to",g_connected_account, "- type 'exit'<return> to disconnect")
+    zeromq_tx.socket_send( { "action" : "none" } )  # First packet seems to be ignored
+    while True:
+        inp = input("> ")
+        if inp in ["exit","quit","disconnect","stop","leave"]:
+            break
+        inp = inp.strip()
+        if len(inp) > 0:
+            inp = inp.split(" ")
+            packet = { "headers" : { "Instancename" : g_connected_account }, "action" : "command", "argv" : inp }
+            zeromq_tx.socket_send(packet)
+    print("Disconnected")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -113,16 +159,19 @@ if __name__ == "__main__":
             signal_pid(int(sys.argv[2]), signal.SIGUSR1, "Paused")
         elif sys.argv[1] == "unpause":
             signal_pid(int(sys.argv[2]), signal.SIGUSR2, "Unpaused")
+        elif sys.argv[1] == "connect":
+            connect(int(sys.argv[2]))
         elif sys.argv[1] == "history":
             print(open(HISTORY_FILE,"rt").read())
         elif sys.argv[1] == "help":
             print("Commands:")
             print("    list                        List all synth jobs, with their PID")
-            print("    watch <pid>                 Monitor the output from a synth job")
             print("    run <account> <scenario>    Run a synth job. <account> is one of ../synth_accounts and <scenario> is one of ./scenarios e.g. 'run OnFStest 10secs'")
+            print("    watch <pid>                 Monitor the output from a synth job")
             print("    kill <pid>                  Kill a synth job")
             print("    pause <pid>                 Pause a synth job")
             print("    unpause <pid>               Unpause a synth job")
+            print("    connect <pid>               Connect to a synth job and send commands")
             print("    history                     List all recent activities")
         else:
             print("Unrecognised command")

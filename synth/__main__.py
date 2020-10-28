@@ -36,7 +36,7 @@ from common import ISO8601
 from common import importer
 from events import Events
 import device_factory
-import zeromq_rx
+import zeromq_rx, zeromq_tx
 from directories import *
 
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
@@ -217,13 +217,19 @@ def main():
     global g_instance_name
     global g_asked_to_pause
     
-    def postWebEvent(webParams):    # CAUTION: Called asynchronously from the web server thread
-        if "action" in webParams:
-            if webParams["action"] == "event":
-                if webParams["headers"]["Instancename"] == g_instance_name:
-                    engine.register_event_in(0, device_factory.external_event, webParams, None)
-            elif webParams["action"] == "announce":
-                logging.log(webParams["severity"], "[broadcast message] "+webParams["message"])
+    def incomingAsyncEvent(packet):    # CAUTION: Called asynchronously from the ZeroMQ rx thread
+        if "action" in packet:
+            if packet["action"] == "event":
+                if packet["headers"]["Instancename"] == g_instance_name:
+                    engine.register_event_in(0, device_factory.external_event, packet, None)
+            elif packet["action"] == "announce":
+                logging.log(packet["severity"], "[broadcast message] "+packet["message"])
+            elif packet["action"] == "command":
+                if packet["headers"]["Instancename"] == g_instance_name:
+                    argv = packet["argv"]
+                    logging.info("Received async command " + str(argv))
+                    if len(argv) > 0:
+                        client.async_command(argv)
 
     def event_count_callback():
         return events.event_count
@@ -259,7 +265,8 @@ def main():
         logging.warning("No events defined")
     events = Events(client, engine, g_instance_name, params, params["events"])
 
-    zeromq_rx.init(postWebEvent)
+    zeromq_rx.init(incomingAsyncEvent)
+    zeromq_tx.init()
 
     logging.info("Simulation starts")
 

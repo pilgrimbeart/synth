@@ -97,6 +97,9 @@ class Filesystem(Client):
     def tick(self):
         pass
     
+    def async_command(self, argv):
+        logging.warning("Async command ignored by filesystem client: "+str(argv))
+
     def close(self):
         """Called to clean up on exiting."""
         self.json_stream.close()

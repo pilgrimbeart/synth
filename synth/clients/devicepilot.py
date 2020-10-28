@@ -153,6 +153,8 @@ DEFAULT_AWS_BUCKET_NAME = "ingest-production"
 
 DO_NOT_MERGE_PROPERTIES = { "latitude" : None, "longitude" : None }   # The trouble with merging these is that if the number of merged items gets too long, they could be split between messages, and NO-ONE expects lat & lon to be updated in different messages!
 
+g_muted = False
+
 def gzip_file(filepath):
     dest_filepath = filepath + ".gz"
     with open(filepath, "rb") as f_in, gzip.open(dest_filepath, "wb") as f_out:
@@ -279,7 +281,8 @@ class Devicepilot(Client):
                         merged_posts = merged_posts + 1
                         props.update(self.post_queue[-1])
                         del(self.post_queue[-1])
-            self.post_queue.append(props)
+            if not g_muted:
+                self.post_queue.append(props)
             self.flush_post_queue_if_ready()
         if (self.mode == "bulk") and (record):
             self.json_stream.write_event(props)
@@ -359,6 +362,18 @@ class Devicepilot(Client):
 
     def tick(self):
         self.flush_post_queue_if_ready()
+
+    def async_command(self, argv):
+        global g_muted
+        if len(argv) > 0:
+            if argv[1] == "mute":
+                logging.info("DevicePilot client muting output")
+                g_muted = True
+            elif argv[1] == "unmute":
+                logging.info("DevicePilot client unmuting output")
+                g_muted = False
+            else:
+                logging.info("DevicePilot client didn't understand command: "+str(argv))
 
     def close(self):
         logging.info("Closing DevicePilot client")

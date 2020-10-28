@@ -23,6 +23,8 @@
 import sys, threading, logging, traceback, json, time
 import zmq
 
+g_emit_logging = True
+
 ZEROMQ_PORT = 5556
 ZEROMQ_BUFFER = 100000
 
@@ -36,11 +38,13 @@ topicfilter = ""    # ZeroMQ will do filtering for us, but only on client side
 socket.setsockopt(zmq.SUBSCRIBE, topicfilter.encode('ascii'))
 
 def rxThread(callback):
-    logging.info("ZeroMQ rx thread started")
+    if g_emit_logging:
+        logging.info("ZeroMQ rx thread started")
     while True:
         try:
             string = socket.recv()  # { "action" : {"event"|"spawn"} ... }
-            logging.info("Received on ZeroMQ: " + str(string))
+            if g_emit_logging:
+                logging.info("Received on ZeroMQ: " + str(string))
             params = json.loads(string)
             callback(params)
         except Exception as e:
@@ -50,8 +54,11 @@ def rxThread(callback):
 
     logging.critical("ZeroMQ rx thread exiting")
     
-def init(callback):
-    logging.info("Starting ZeroMQ rx thread")
+def init(callback, emit_logging=True):
+    global g_emit_logging
+    g_emit_logging = emit_logging
+    if emit_logging:
+        logging.info("Starting ZeroMQ rx thread")
     t = threading.Thread(target=rxThread, kwargs={"callback":callback})
     t.daemon = True
     t.start()
