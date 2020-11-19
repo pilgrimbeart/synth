@@ -106,6 +106,7 @@ from common import evt2csv
 from common import ISO8601
 from common import conftime
 from analysis import analyse
+import functools
 
 LOG_DIRECTORY = "../synth_logs/"
 
@@ -126,7 +127,8 @@ class Events():
         def update_callback(device_id, time, properties):
             for c in self.update_callbacks:
                 properties.update(c(properties))  # We MERGE the results of the callback with the original message
-            write_event_log(properties)
+            if self.do_write_log:
+                write_event_log(properties)
             client.update_device(device_id, time, properties)
 
         def query_action(params):
@@ -163,9 +165,13 @@ class Events():
             else:
                 logging.error("Ignoring action '"+str(name)+"' as client "+str(client.__class__.__name__)+" does not support it")
 
+        @functools.lru_cache(maxsize=128)
+        def dt_string(t):
+            return pendulum.from_timestamp(t).to_datetime_string() + " "    # For some reason, this is very slow
+
         def write_event_log(properties):
             """Write .evt entry"""
-            s = pendulum.from_timestamp(properties["$ts"]).to_datetime_string()+" "
+            s = dt_string(properties["$ts"])
 
             for k in sorted(properties.keys()):
                 s += str(k) + ","
@@ -173,26 +179,31 @@ class Events():
                     s += json.dumps(properties[k])  # Use dumps not str so we preserve type in output
                     # s += properties[k].encode('ascii', 'ignore') # Python 2.x barfs if you try to write unicode into an ascii file
                 except:
+                    logging.error("Encoding error in events.py::write_event_log")
                     s += "<unicode encoding error>"
                 s += ","
             s += "\n"
             self.logfile.write(s)
-            # self.logtext.append(s)
 
             self.event_count += 1
 
-        restart_log = context.get("restart_log",True)
+        restart_log = context.get("restart_log", True)
+        self.do_write_log = context.get("write_log", True)
         
         self.client = client
         self.event_count = 0
         self.update_callbacks = []
 
-        mkdir_p(LOG_DIRECTORY)
-        self.file_mode = "at"
-        if restart_log:
-            self.file_mode = "wt"
-        self.logfile = open(LOG_DIRECTORY+instance_name+".evt", self.file_mode)    # This was unbuffered, but Python3 now doesn't allow text files to be unbuffered
-        self.logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
+        if self.do_write_log:
+            mkdir_p(LOG_DIRECTORY)
+            self.file_mode = "at"
+            if restart_log:
+                self.file_mode = "wt"
+            self.logfile = open(LOG_DIRECTORY+instance_name+".evt", self.file_mode)    # This was unbuffered, but Python3 now doesn't allow text files to be unbuffered
+            self.logfile.write("*** New simulation starting at real time "+datetime.now().ctime()+" (local)\n")
+        else:
+            self.logfile = None
+            logging.info("Not writing an event log")
 
         self.logtext = []   # TODO: Probably a Bad Idea to store this in memory. Instead when we want this we should probably close the logfile, read it and then re-open it. We store as an array because appending to a large string gets very slow
 
@@ -264,4 +275,5 @@ class Events():
 
     def flush(self):
         """Call at exit to clean up."""
-        self.logfile.flush()
+        if self.logfile is not None:
+            self.logfile.flush()

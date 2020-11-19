@@ -1,5 +1,6 @@
 {
     "restart_log" : true,
+    "write_log" : false,
     "engine" : {
         "type" : "sim",
         "start_time" : "2020-08-01T00:00:00Z",
