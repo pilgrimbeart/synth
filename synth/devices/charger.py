@@ -12,10 +12,12 @@ Configurable parameters::
 Device properties created::
 
     {
-            pilot : A|B|C|F     # Pilot signal indicates charging state (A=Available, B=finished, C=Charging, F=fault)
+            pilot : A|B|C|F # Pilot signal indicates charging state (A=Available, B=finished, C=Charging, F=fault)
             energy:         # kWh transferred so far this session (ramp which rises)
             power:          # instantaneous kW
             uui :           # Charging session token: a random number for each charging session
+            max_kW :        # Max charging power
+            monthly_value:  # Approx monthly value of charger
     }
 
 """
@@ -32,14 +34,25 @@ DAYS = HOURS * 24
 AVERAGE_CHARGES_PER_DAY = 1.0
 CHARGE_POLL_INTERVAL_S = 5 * MINS
 
-CHARGE_RATES_KW_PERCENT = [ [3,  30],
-                            [7,  50],
-                            [22, 20] ]
+CHARGER_MAX_RATE_PERCENT = [ [7, 20],
+                             [22, 40],
+                             [50, 20],
+                             [100, 10],
+                             [150, 10] ]
+
+CHARGE_RATES_KW_PERCENT = [ [3,  10],
+                            [7,  30],
+                            [22, 30],
+                            [50, 20],
+                            [100,5],
+                            [150,5] ]
 
 MAX_KWH_PER_CHARGE = 70
 AVERAGE_HOG_TIME_S = 1 * HOURS
 
 HEARTBEAT_PERIOD = 15 * MINS
+
+POWER_TO_MONTHLY_VALUE = 8 # Ratio to turn charger's max kW into currency
 
 FAULTS = [
 #       Fault               MTBF
@@ -63,6 +76,10 @@ class Charger(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Charger,self).__init__(instance_name, time, engine, update_callback, context, params)
         self.set_property("device_type", "charger")
+        max_rate = self.choose_percent(CHARGER_MAX_RATE_PERCENT)
+        self.set_property("max_kW", max_rate)
+        self.set_property("monthly_value", max_rate * POWER_TO_MONTHLY_VALUE)
+
         self.last_charging_start_time = None
         self.set_properties( {
             "pilot" : "A",
@@ -93,7 +110,9 @@ class Charger(Device):
 
     def tick_start_charge(self, _):
         self.uui = random.randrange(0,99999999)
-        self.charging_rate_kW = self.choose_charging_rate()
+        rate = self.choose_percent(CHARGE_RATES_KW_PERCENT) # What rate would car like to charge?
+        rate = min(rate, self.get_property("max_kW"))       # Limit to charger capacity
+        self.charging_rate_kW = rate
         self.energy_to_transfer = random.random() * MAX_KWH_PER_CHARGE
         self.energy_this_charge = 0
         self.last_charging_start_time = self.engine.get_now()
@@ -184,12 +203,12 @@ class Charger(Device):
         # logging.info("Delay until start of next charge is "+str(delay/(60*60))+" hours")
         return delay
 
-    def choose_charging_rate(self):
+    def choose_percent(self, table):
         percent = random.randrange(0, 100)
         choice = 0
         cum_likelihood = 0
         while True:
-            rate,likelihood = CHARGE_RATES_KW_PERCENT[choice]
+            rate,likelihood = table[choice]
             cum_likelihood += likelihood
             if percent <= cum_likelihood:
                 break

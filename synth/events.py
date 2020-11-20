@@ -95,6 +95,7 @@ Install an anomaly-analyser::
 # SOFTWARE.
 
 import os, errno
+import sys
 from datetime import datetime
 import logging
 import json
@@ -189,10 +190,13 @@ class Events():
 
         restart_log = context.get("restart_log", True)
         self.do_write_log = context.get("write_log", True)
+        shard_size = context.get("shard_size", None)
+        shard_start = context.get("shard_start", 0) # If not specified, we are shard 0, so get to create the other shards
         
         self.client = client
         self.event_count = 0
         self.update_callbacks = []
+        device_count = 0   # Used to shard device creation
 
         if self.do_write_log:
             mkdir_p(LOG_DIRECTORY)
@@ -230,10 +234,27 @@ class Events():
                 if action is None:
                     pass
                 elif "create_device" in action:
-                    engine.register_event_at(insert_time,
-                                             device_factory.create_device,
+                    do_create = True                 # Is this device in our shard?
+                    if shard_size is not None:
+                        if device_count < shard_start:
+                            do_create = False
+                        if device_count >= shard_start + shard_size:
+                            do_create = False
+
+                        if shard_start == 0:    # We're the first shard
+                            if device_count > 0:
+                                if (device_count % shard_size) == 0:
+                                    logging.info("CREATE NEW SHARD for devices starting at "+str(device_count))
+                                    args = sys.argv.copy()
+                                    args = ["python3"] + args + ["{ shard_start : " + str(device_count) + " } "]
+                                    logging.info(str(args))
+
+                    if do_create:
+                        engine.register_event_at(insert_time, device_factory.create_device,
                                              (instance_name, client, engine, update_callback, context, action["create_device"]),
                                              None)
+
+                    device_count += 1
                 elif "use_model" in action:
                     engine.register_event_at(insert_time,
                             model.use_model,

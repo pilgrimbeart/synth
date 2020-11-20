@@ -69,7 +69,10 @@ class Latlong(Device):
             if Latlong.further_devices_at_this_address > 0: # Still some devices to put at this address
                 address_props = Latlong.prev_address_props
             else:
-                Latlong.further_devices_at_this_address = random.randrange(dpa[0], dpa[1])
+                if (len(dpa) == 1) or (dpa[0] == dpa[1]):
+                    Latlong.further_devices_at_this_address = dpa[0]
+                else:
+                    Latlong.further_devices_at_this_address = random.randrange(dpa[0], dpa[1])
                 address_props = get_new_address()
             Latlong.further_devices_at_this_address -= 1
                 

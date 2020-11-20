@@ -1,0 +1,44 @@
+{
+    "restart_log" : true,
+    "write_log" : false,
+    "shard_size" : 10,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P1D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "comment" : "EV charging",
+            "repeats" : 100,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "bytes" : {
+                        },
+                        "charger" : {
+                        },
+                        "firmware" : {
+                        },
+                        "latlong" : {
+                            "generate_addresses" : true,
+                            "area_centre" : "Sheffield, UK",
+                            "area_radius" : "Edinburgh, UK",
+                            "devices_per_address" : [1000,1000]
+                        },
+                        "comms" : {
+                            "reliability" : "rssi",
+                            "reliability_above_rssi_knee" : 1.00,
+                            "period" : "PT1H",
+                            "suppress_messages" : true
+                        },
+                        "variable" : [
+                            {"name" : "icon", "value" : "charging-station"}
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
+
