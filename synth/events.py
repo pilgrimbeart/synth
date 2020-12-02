@@ -26,6 +26,7 @@ Optionally, an event can repeat, with optionally an interval between each repeat
         "at" : "PT0S",
         "repeats" : 10,
         "interval" : "PT1M",
+        "time_advance" : true,
         "action": {
             "create_device" : {
                 "functions" : {
@@ -145,8 +146,10 @@ class Events():
                     d.set_property(params["property_name"], params["property_value"], timestamp=ts)
                     logging.info("Set property "+str(params["property_name"])+" on device "+d.get_property("$id")+" to "+str(params["property_value"]))
 
-            d = device_factory.get_devices_by_property( params["identity_property"],
-                                                       params["identity_value"])
+            d = device_factory.get_devices_by_property( params["identity_property"], params["identity_value"])
+            if "identity_property2" in params:
+                d2 = device_factory.get_devices_by_property( params["identity_property2"], params["identity_value2"])
+                d = list(set(d) & set(d2))
             logging.info("change property acting on "+str(len(d))+" matching devices")
 
             if "$ts" in params:

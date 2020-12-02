@@ -39,10 +39,12 @@
                          "variable" : [
                              { "name" : "period", "value" : "PT5M with 75% comms reliability"},
                              { "name" : "device_type", "value" : "test" },
-                             { "name" : "count", "timefunction" : { "count" : { "interval" : "PT5M" } } }
-                         ]
-                    }
-                }
+                             { "name" : "count", "timefunction" : { "count" : { "interval" : "PT5M" } } },
+							 { "name" : "customer", "series" : ["CD656092-A", "CD656092-A", "CD656092-A", "CD656092-A", "CD656092-A", "CD451796", "CD451797", "CD451798", "CD451799", "CD451800", "CD439877-C", "CD439877-C", "CD439877-C", "CD439877-C", "CD439877-C", "CD439877-C", "CD355120-B", "CD355120-B", "CD355120-B", "CD355120-B"] },
+							 { "name" : "store_manager_email", "series" : ["jrogers@burlington.com", "jrogers@burlington.com", "jrogers@burlington.com", "jrogers@burlington.com", "jrogers@burlington.com", "sean@edge.com", "sean@edge.com", "sean@edge.com", "sean@edge.com", "sean@edge.com", "barr_tim@grandhotels.com", "barr_tim@grandhotels.com", "barr_tim@grandhotels.com", "barr_tim@grandhotels.com", "barr_tim@grandhotels.com", "barr_tim@grandhotels.com", "ldcruz@uog.com", "ldcruz@uog.com", "ldcruz@uog.com", "ldcruz@uog.com" ] } 
+						]
+                	}
+				}
             }
         },
         {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "sinewave 15m", "timefunction" : { "sinewave" : { "period" : "PT15M" } } },
@@ -284,8 +286,8 @@
             }
         },
         {
-            "comment" : "SMART METERS across India,where one vendor has a problem",
-            "repeats" : 50,
+            "comment" : "SMART METERS across Queensland,where one vendor has a problem",
+            "repeats" : 2000,
             "action": {
                 "create_device" : {
                     "functions" : {
@@ -310,8 +312,8 @@
                         "firmware" : {},
                         "latlong" : {
                             "generate_addresses" : true,
-                            "area_centre" : "Nagpur, India",
-                            "area_radius" : "Jodhpur, India"
+                            "area_centre" : "Aramac, Queensland, Australia",
+                            "area_radius" : "Burleigh Heads, Queensland, Australia"
                         },
                         "variable" : [
                             {   "name" : "vendor",  "value" : ["Landis & Gyr", "EDMI", "Aclara", "Itron", "Kaifa", "Honeywell", "Flonidan", "GWI"]},

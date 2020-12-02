@@ -65,12 +65,15 @@ FAULTS = [
         ]
 FAULT_RECTIFICATION_TIME_AV = 3 * DAYS
 
-def pick_a_fault(sampling_interval_s):
-    for (fault, mtbf) in FAULTS:
-        chance = sampling_interval_s / mtbf # 50% point
-        if random.random() < chance * 0.5:
-            return fault
-    return None
+
+ALT_FAULT_CODES = { # Some chargers emit different fault codes
+    "Earth Relay" : 100,
+    "Mennekes Fault" : 200,
+    "Overcurrent" : 300,
+    "RCD trip" : 400,
+    "Relay Weld" : 500,
+    "Overtemperature" : 600
+}
 
 class Charger(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
@@ -102,6 +105,15 @@ class Charger(Device):
     def close(self):
         super(Charger,self).close()
     
+    def pick_a_fault(self, sampling_interval_s):
+        for (fault, mtbf) in FAULTS:
+            chance = sampling_interval_s / mtbf # 50% point
+            if random.random() < chance * 0.5:
+                if self.get_property("max_kW") == 50:   # 50kW chargers report different error codes (example of a real-world bizarreness)
+                    fault = ALT_FAULT_CODES[fault]
+                return fault
+        return None
+
     def tick_heartbeat(self, _):
         self.set_properties({
             "heartbeat" : True
@@ -109,6 +121,11 @@ class Charger(Device):
         self.engine.register_event_in(HEARTBEAT_PERIOD, self.tick_heartbeat, self, self)
 
     def tick_start_charge(self, _):
+        # Faulty points can't charge
+        if self.get_property("fault") != None:
+            self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
+            return
+
         self.uui = random.randrange(0,99999999)
         rate = self.choose_percent(CHARGE_RATES_KW_PERCENT) # What rate would car like to charge?
         rate = min(rate, self.get_property("max_kW"))       # Limit to charger capacity
@@ -128,10 +145,15 @@ class Charger(Device):
         self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_charge, self, self)
 
     def tick_check_charge(self, _):
+        # (faults can be externally-injected)
+        if self.get_property("fault") != None:
+            self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
+            return
+
         energy_transferred = (CHARGE_POLL_INTERVAL_S / (60*60)) * self.charging_rate_kW
         self.energy_this_charge += energy_transferred
         self.energy_to_transfer -= energy_transferred
-        fault = pick_a_fault(CHARGE_POLL_INTERVAL_S)    # Faults only occur while charging
+        fault = self.pick_a_fault(CHARGE_POLL_INTERVAL_S)    # Faults only occur while charging
         if fault != None:
             logging.info(str(self.get_property("$id")) + " " + str(fault) + " fault while charging")
             self.set_properties({
