@@ -207,6 +207,11 @@ def signal_catcher(signal_received, frame):
     if signal_received == signal.SIGUSR1:
         logging.info("Pause requested")
         g_asked_to_pause = True
+    logging.info("FYI Python stack is:")
+    tb = traceback.format_list(traceback.extract_stack())
+    for L in tb:
+        L = L.replace("\n",": ")
+        logging.info(L)
 
 def install_signal_catcher():
     signal.signal(signal.SIGUSR1, signal_catcher)
