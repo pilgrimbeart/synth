@@ -26,7 +26,7 @@ def get_processes():
         if line.find(COMMAND) >= 0:
             # print(">"+line+"<")
             pid = int(line[0:5])
-            command = line[27:]
+            command = line[27:].strip()
             processes.append( (pid, command) )
     return processes
 
@@ -35,7 +35,8 @@ def list_processes():
     print("      PID JOB                                               OUTPUT")
     for job in processes:
         print("    %5d" % job[0], "%-50s" % job[1], end="", flush=True)
-        subprocess.run(["tail", "-n", "1", LOG_DIR + account_from_pid(job[0]) + ".out" ]) 
+        s = LOG_DIR + account_from_pid(job[0]) + ".out"
+        subprocess.run(["tail", "-n", "1", s ]) 
 
 def command_from_pid(pid):
     for p in get_processes():
