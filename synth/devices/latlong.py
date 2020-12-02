@@ -33,6 +33,8 @@ from common.geo import geo, google_maps
 import random
 import logging
 
+MANDATORY_ADDRESS_FIELDS = set(["address_administrative_area_level_1", "address_administrative_area_level_2"])  # Never pick points which don't have at least these fields
+
 class Latlong(Device):
     address_index = 0
     prev_address_props = None
@@ -54,10 +56,13 @@ class Latlong(Device):
                     props[name] = value
             else:   # Use geo module to pick locations randomly within an area
                 picker = geo.geo_pick(context, params["latlong"])
-                (lon, lat) = picker.pick()
-                props = { "latitude" : lat, "longitude" : lon }
-                for name, value in picker.addresses():
-                    props[name] = value
+                while True: # Keep picking randomly until we find a point with an acceptable address
+                    (lon, lat) = picker.pick()
+                    addresses = picker.addresses()
+                    if len(set(addresses).intersection(MANDATORY_ADDRESS_FIELDS)) == len(MANDATORY_ADDRESS_FIELDS):
+                        props = { "latitude" : lat, "longitude" : lon }
+                        props.update(addresses)
+                        break
             return props
 
         super(Latlong,self).__init__(instance_name, time, engine, update_callback, context, params)

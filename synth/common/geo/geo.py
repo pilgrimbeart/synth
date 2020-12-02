@@ -201,8 +201,8 @@ class geo_pick():
 
     def addresses(self):
         if not self.generate_addresses:
-            return []
-        return lon_lat_to_address(self.lon, self.lat, self.google_maps_key).items()
+            return {}
+        return lon_lat_to_address(self.lon, self.lat, self.google_maps_key)
 
 
 if __name__ == "__main__":
