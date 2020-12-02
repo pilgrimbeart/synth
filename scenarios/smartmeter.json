@@ -11,6 +11,9 @@
                             "period" : "PT1H",
                             "suppress_messages" : true
                         },
+						"energy" : {
+							"opening_times" : "domestic"
+						},
                         "enumerated" : {
                             "name" : "fault",
                             "values" :  [null,   "tamper", "mains loss", "cover removed", "hardware fault", "calibration error", "internal fault", "link interference", "over-temperature"],
@@ -28,9 +31,7 @@
                             {   "name" : "vendor",  "value" : ["Landis & Gyr", "EDMI", "Aclara", "Itron", "Kaifa", "Honeywell", "Flonidan", "GWI"]},
                             {   "name" : "model",   "value" : ["E470-5394", "ES-10A", "SGM1412", "EM425-I2", "MA120", "AS203P", "BK-G4E", "E470", "G4-MG-SE"]},
                             {   "name" : "hardware_version", "value" : [0.4,0.6,0.9,1.1,1.5] },
-                            {	"name" : "device_type", "value" : "smart_meter"},
-                            {   "name" : "icon", "value" : "bolt"},
-                            {   "name" : "energy", "timefunction" : { "count" : { "interval" : "PT1H" } } }
+                            {	"name" : "device_type", "value" : "smart_meter"}
                         ]
                     }
                 }

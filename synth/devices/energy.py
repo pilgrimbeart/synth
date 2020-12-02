@@ -1,7 +1,7 @@
 """
 energy
 =====
-Simulates energy meter
+Simulates energy meter (electricity or gas or both, with associated Comms module)
 
 Configurable parameters::
 
@@ -32,6 +32,10 @@ DEFAULT_MAX_POWER_KW = 10.0
 DEFAULT_BASELOAD_POWER_KW = 2.0
 DEFAULT_POWER_VARIATION_KW = 1.0
 
+READING_FAULT_DAILY_CHANCE = 1.0 / 10000
+
+READING_FAULT_CHANCE = READING_FAULT_DAILY_CHANCE / ((60 * 60 * 24.0) / ENERGY_READING_INTERVAL_S)
+
 class Energy(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Energy,self).__init__(instance_name, time, engine, update_callback, context, params)
@@ -45,6 +49,12 @@ class Energy(Device):
         self.occupied_bodge = params["energy"].get("occupied_bodge", False)
         if self.occupied_bodge:
             self.set_property("occupied", False)    # !!!!!!!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
+        if random.random() > 0.5:
+            self.set_property("meter_type", "electricity")
+            self.set_property("icon", "bolt")
+        else:
+            self.set_property("meter_type", "gas")
+            self.set_property("icon", "flame")
         self.engine.register_event_in(ENERGY_READING_INTERVAL_S, self.tick_reading, self, self)
 
     def comms_ok(self):
@@ -67,6 +77,15 @@ class Energy(Device):
 
         kW = int(100 * kW) / 100.0   # Round
         kWh = int(100 * kWh) / 100.0
+
+        if random.random() < READING_FAULT_CHANCE:
+            if random.random() > 0.5:
+                delta = 1
+            else:
+                delta = -1
+            delta *= random.randrange(1000,10000)    # Jump by at least 1000 (kWh, so if 30min readings that implies insane 2MW load!)
+            logging.info("Energy meter reading fault on "+str(self.get_property("$id"))+" jumping by "+str(delta))
+            kWh += delta
 
         self.start_property_group() # -->
         self.set_property("kW", kW)
