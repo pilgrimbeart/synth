@@ -78,6 +78,7 @@ class Basic(Device):
     def transmit(self, the_id, ts, properties, force_comms):
         if not self.comms_ok() and not force_comms:
             return
+        # logging.info("Doing transmit")
         self._transmit(the_id, ts, properties)
     
     # Internal methods
@@ -89,6 +90,7 @@ class Basic(Device):
             properties["$id"] = self.properties["$id"]
         if not "$ts" in properties: # Ensure there's a timestamp
             properties["$ts"] = timestamp
+        # logging.info("About to self.transmit")
         self.transmit(self.properties["$id"], timestamp, properties, force_comms)
 
     def get_property(self, prop_name, default_value=None):
@@ -113,6 +115,7 @@ class Basic(Device):
 
     def set_property(self, prop_name, value,
                      always_send = True,
+                     force_send = False,
                      timestamp = None):
         """Set device property and transmit an update"""
         if not prop_name in self.properties:
@@ -127,11 +130,15 @@ class Basic(Device):
 
         new_props = { prop_name : value, "$id" : self.properties["$id"], "$ts" : timestamp }
         self.properties.update(new_props)
+        # logging.info("set_prop")
         if changed or always_send:
+            # logging.info("c or as")
             if self.in_property_group:
+                # logging.info("in group")
                 self.property_group.update(new_props)
             else:
-                self.do_comms(new_props, timestamp = timestamp)
+                # logging.info("not in group")
+                self.do_comms(new_props, timestamp = timestamp, force_comms = force_send)
 
     def set_properties(self, new_props):
         np = new_props.copy()
