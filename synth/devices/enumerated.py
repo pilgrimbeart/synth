@@ -10,8 +10,9 @@ Configurable parameters::
         "name" : property name
         "values" :      [a,set,          of, possible,values]
         "periods" :     [a,corresponding,set,of,      periods] (each is an ISO8601 duration e.g. "P1D" means the event will happen once a day)
-        "sigmas" :      [a,corresponding,set,of,      standard-deviations] (optional, e.g. "PT1H" means the period will vary randomly with 1 standard deviation of 1 hour)
+        "sigmas" :      [a,corresponding,set,of,      standard-deviations] (optional, e.g. "PT1H" means the period will vary randomly with 1 standard deviation of 1 hour). Otherwise 1/10th of period.
         "always_send" : true (optional)  If true then values will be sent even if they haven't changed
+        "force_send" : false (optional) If true then values will be sent even if device is offline
     }
 
 If sigmas are not specified, they default to 50% of the periods to create a good amount of random spread. If you want to remove all randomness, specify sigmas of "PT0S".
@@ -39,6 +40,7 @@ class Enumerated(Device):
         super(Enumerated, self).__init__(instance_name, time, engine, update_callback, context, params)
         p = params["enumerated"]
         self.enumerated_always_send = p.get("always_send", True)
+        self.enumerated_force_send = p.get("force_send", False)
         self.enumerated_name = p["name"]
         self.enumerated_values = p["values"]
         periods = p["periods"]
@@ -91,13 +93,19 @@ class Enumerated(Device):
             sigma = self.enumerated_sigmas[index]
         else:
             sigma = period * DEFAULT_SIGMA_RATIO
+        # logging.info("period = " + str(period) + " sigma = " + str(sigma))
+
         dt = random.normalvariate(period, sigma)
         dt = min(dt, period + 2*sigma)
         dt = max(dt, period - 2*sigma)
         dt = max(dt, 1.0)   # Ensure we never create negative durations
+        #if dt < 60*60*24*30:
+        #    logging.info("Registering event "+str(index)+" in "+str(dt))
         self.engine.register_event_in(dt, self.change_enumerated_value, index, self)
 
     def change_enumerated_value(self, index):
-        self.set_property(self.enumerated_name, self.enumerated_values[index], always_send = self.enumerated_always_send)
+        value = self.enumerated_values[index]
+        # logging.info("Changing enumerated value on "+str(self.get_property("$id"))+" to index "+str(index)+" which is "+str(value))
+        self.set_property(self.enumerated_name, value, always_send = self.enumerated_always_send, force_send = self.enumerated_force_send)
         self.schedule_next_event(index)
 
