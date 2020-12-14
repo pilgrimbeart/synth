@@ -7,8 +7,10 @@
                         },
                         "comms" : {
                             "reliability" : "rssi",
-                            "reliability_above_rssi_knee" : 0.90,
-                            "period" : "PT1H",
+                            "reliability_above_rssi_knee" : 0.99,
+							"reliability_at_worst" : 0.80,
+							"rssi_knee" : -110,
+                            "period" : "PT17H",
                             "suppress_messages" : true
                         },
 						"energy" : {
@@ -17,7 +19,10 @@
                         "enumerated" : {
                             "name" : "fault",
                             "values" :  [null,   "tamper", "mains loss", "cover removed", "hardware fault", "calibration error", "internal fault", "link interference", "over-temperature"],
-                            "periods" : ["P5D",  "P140D",   "P80D",       "P100D",          "P200D",           "P200D",             "P150D",           "P120D",              "P300D"],
+                            "periods" : ["P5D",  "P170D",  "P140D",      "P195D",          "P270D",           "P270D",             "P220D",           "P160D",              "P320D"],
+							"sigmas" :  ["P4D",  "P80D",   "P60D",       "P60D",           "P110D",           "P110D",              "P85D",            "P70D",              "P170D"],
+							"force_send" : true,
+							"always_send" : false,
                             "comment" : "we include null as a state too, so that faults get cleared after a while"
                         },
                         "firmware" : {},
@@ -63,7 +68,7 @@
         },
         {
             "comment" : "Inject a comms failure in one region",
-            "at" : "P10D",
+            "at" : "P25D",
             "action": {
                 "change_property" : {
                     "is_attribute" : true,
