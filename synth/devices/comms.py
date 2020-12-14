@@ -32,7 +32,7 @@ import logging
 
 BEST_RSSI = -50.0
 WORST_RSSI = -120.0
-RSSI_KNEE = -80.0           # Below this, comms gets progressively less reliable
+DEFAULT_RSSI_KNEE = -90.0           # Below this, comms gets progressively less reliable
 DEFAULT_CHANCE_ABOVE_KNEE = 0.95    # Chance of any comms being OK if above knee
 DEFAULT_CHANCE_AT_WORST = 0.00      # Chance of any comms being OK if RSSI is at worst
 
@@ -51,7 +51,8 @@ class Comms(Device):
         self.suppress_messages = params["comms"].get("suppress_messages", False)
         self.unbuffered_properties = params["comms"].get("unbuffered_properties", [])
         self.chance_above_knee = params["comms"].get("reliability_above_rssi_knee", DEFAULT_CHANCE_ABOVE_KNEE)
-        self.chance_at_worst = DEFAULT_CHANCE_AT_WORST
+        self.chance_at_worst = params["comms"].get("reliability_at_worst", DEFAULT_CHANCE_AT_WORST)
+        self.rssi_knee = params["comms"].get("rssi_knee", DEFAULT_RSSI_KNEE)
         self.buffer = []
         self.messages_attempted = 0
         self.messages_sent = 0
@@ -103,12 +104,12 @@ class Comms(Device):
         # print "rssi_mean=",self.rssi_mean,"rssi_sigma=",self.rssi_sigma,"so rssi=",self.rssi
 
     def is_rssi_good_enough(self):
-        if self.rssi > RSSI_KNEE:
+        if self.rssi > self.rssi_knee:
             result = random.random() < self.chance_above_knee
             # print "self.rssi = ",self.rssi,"which is above knee, so result is",result
             return result
         else:
-            chance = float(self.rssi - WORST_RSSI)/(RSSI_KNEE-WORST_RSSI)   # normalise our position on line from worst to knee
+            chance = float(self.rssi - WORST_RSSI)/(self.rssi_knee-WORST_RSSI)   # normalise our position on line from worst to knee
             chance = self.chance_at_worst + chance * (self.chance_above_knee - self.chance_at_worst) 
             result = random.random() < chance
             # print "self.rssi = ",self.rssi,"which is below knee, so result is",result
