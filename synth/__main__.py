@@ -38,6 +38,7 @@ from events import Events
 import device_factory
 import zeromq_rx, zeromq_tx
 from directories import *
+import faulthandler
 
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 
@@ -270,11 +271,12 @@ def main():
         logging.warning("No events defined")
     events = Events(client, engine, g_instance_name, params, params["events"])
 
-    zeromq_rx.init(incomingAsyncEvent)
-    zeromq_tx.init()
+    zeromq_rx.init(incomingAsyncEvent, emit_logging=True)
+    zeromq_tx.init(emit_logging=True)
 
     logging.info("Simulation starts")
 
+    faulthandler.dump_traceback_later(600, repeat=True) # TEMP - every 10 minutes emit a stack trace for every thread - to diagnose hanging issue
     err_str = ""
     try:
         while engine.events_to_come():
