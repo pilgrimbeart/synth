@@ -220,9 +220,8 @@ class Charger(Device):
 
         next = last + interval
         delay = next - self.engine.get_now()
-        delay = max(0, delay)
+        delay = max(60, delay)
 
-        # logging.info("Delay until start of next charge is "+str(delay/(60*60))+" hours")
         return delay
 
     def choose_percent(self, table):
