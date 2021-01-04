@@ -94,7 +94,11 @@ Install an anomaly-analyser::
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+#
+# TODO: Started writing a "sharding" mechanism, to split a Synth run across multiple instances. But not finished as
+#       for now it's good-enough to create large loads by just "exploding" device IDs 
+#       (so an explode factor of 100 will generate 100 output devices for every 1 simulated device, and they'll be identical (apart from id))
+# 
 import os, errno
 import sys
 from datetime import datetime
@@ -131,7 +135,17 @@ class Events():
                 properties.update(c(properties))  # We MERGE the results of the callback with the original message
             if self.do_write_log:
                 write_event_log(properties)
-            client.update_device(device_id, time, properties)
+
+            if explode_factor is None:
+                client.update_device(device_id, time, properties)
+            else:
+                new_props = properties.copy()
+                for i in range(explode_factor):
+                    eid = str(device_id) + "_" + str(i)    # Each exploded device is identical, except for trailing "-N" ID (and label, if exists)
+                    new_props["$id"] = eid
+                    if "label" in new_props:
+                        new_props["label"] = properties["label"] + "_" + str(i) 
+                    client.update_device(eid, time, new_props)
 
         def query_action(params):
             events = evt2csv.read_evt_str("".join(self.logtext))
@@ -195,8 +209,10 @@ class Events():
         self.do_write_log = context.get("write_log", True)
         shard_size = context.get("shard_size", None)
         shard_start = context.get("shard_start", 0) # If not specified, we are shard 0, so get to create the other shards
-        
-        self.client = client
+        explode_factor = context.get("explode_factor", None)
+        if explode_factor is not None:
+            logging.info("Running with explode_factor="+str(explode_factor))
+
         self.event_count = 0
         self.update_callbacks = []
         device_count = 0   # Used to shard device creation

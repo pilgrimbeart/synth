@@ -1,16 +1,16 @@
 {
     "restart_log" : true,
     "write_log" : false,
-    "shard_size" : 10,
+    "explode_factor" : 1000,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-P1D",
+        "start_time" : "-P30D",
         "end_time" : null
     },
     "events" : [
         {
             "comment" : "EV charging",
-            "repeats" : 100,
+            "repeats" : 2000,
             "action": {
                 "create_device" : {
                     "functions" : {
