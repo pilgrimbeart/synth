@@ -32,6 +32,5 @@ class Latlong(Model):
         (lon, lat) = picker.pick()
         properties.update( { 'latitude' : lat, 'longitude' : lon } )
 
-        for name, value in picker.addresses(): 
-            properties.update( { name : value } )
+        properties.update(picker.addresses())
 
