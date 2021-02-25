@@ -16,7 +16,8 @@
                         "comms" : {
                             "reliability" : "rssi",
                             "reliability_above_rssi_knee" : 1.00,
-                            "period" : "PT1H",
+							"reliability_at_worst" : 0.66,
+                            "period" : "PT6H",
                             "suppress_messages" : true
                         },
                         "variable" : [

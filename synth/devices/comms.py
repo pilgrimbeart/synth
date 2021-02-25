@@ -8,6 +8,9 @@ Configurable parameters::
 
     {
         "reliability" : 1.0     A fraction 0.0..1.0 or the word "rssi" to generate reliability from RSSI
+        "rssi_knee" : -90.0
+        "reliability_above_rssi_knee" : 1.0
+        "reliability_at_worst" : 0.00
         "period" :      P1D     Mean period with which device goes up and down [or RSSI varies, if being created] (has exponential tail with max 100x). Defaults to once a day
         "metronomic_period" : false    If true then the up/down period is EXACTLY the above (not random)
         "has_buffer" :  false          If true then the device buffers data while comms is down (else it throws it away)
