@@ -23,6 +23,7 @@ Device properties created::
 """
 import logging
 import random
+import isodate
 from .helpers import opening_times as opening_times
 
 from .device import Device
@@ -31,7 +32,9 @@ MINS = 60
 HOURS = MINS * 60
 DAYS = HOURS * 24
 
-AVERAGE_CHARGES_PER_DAY = 1.0
+DEFAULT_AVERAGE_CHARGES_PER_DAY = 1.0
+DEFAULT_AVERAGE_HOG_TIME = "PT1H"
+
 CHARGE_POLL_INTERVAL_S = 5 * MINS
 
 CHARGER_MAX_RATE_PERCENT = [ [7, 20],
@@ -48,7 +51,6 @@ CHARGE_RATES_KW_PERCENT = [ [3,  10],
                             [150,5] ]
 
 MAX_KWH_PER_CHARGE = 70
-AVERAGE_HOG_TIME_S = 1 * HOURS
 
 HEARTBEAT_PERIOD = 15 * MINS
 
@@ -82,6 +84,8 @@ class Charger(Device):
         max_rate = self.choose_percent(CHARGER_MAX_RATE_PERCENT)
         self.set_property("max_kW", max_rate)
         self.set_property("monthly_value", max_rate * POWER_TO_MONTHLY_VALUE)
+        self.average_charges_per_day = params["charger"].get("average_charges_per_day", DEFAULT_AVERAGE_CHARGES_PER_DAY)
+        self.average_hog_time_s = isodate.parse_duration(params["charger"].get("average_hog_time", DEFAULT_AVERAGE_HOG_TIME)).total_seconds()
 
         self.last_charging_start_time = None
         self.set_properties( {
@@ -179,7 +183,7 @@ class Charger(Device):
                     "energy_delta" : 0,
                     "power" : 0})
                 self.time_finished_charging = self.engine.get_now()
-                self.will_hog_for = random.random() * AVERAGE_HOG_TIME_S
+                self.will_hog_for = random.random() * self.average_hog_time_s
                 # logging.info("Will hog for "+str(int(self.will_hog_for))+"s or until next charge due")
                 self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
 
@@ -214,7 +218,7 @@ class Charger(Device):
         if last is None:
             last = self.engine.get_now()
 
-        nominal = DAYS/AVERAGE_CHARGES_PER_DAY
+        nominal = DAYS/self.average_charges_per_day
         interval = random.expovariate(1.0/nominal)
         interval = min(interval, nominal * 10)
 
