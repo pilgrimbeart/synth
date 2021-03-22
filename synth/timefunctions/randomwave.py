@@ -17,9 +17,11 @@ from .timefunction import Timefunction
 import isodate
 import math
 import random
+import logging
 
 # Because any time-function has to be able to generate the value of its waveform instantaneously for any moment
 # in time, we cannot iterate to produce randomness (e.g. LFSR).
+# And also, we have to base the random number off of time (so that if we want a period of e.g. 1D then it only changes every 1D)
  
 class Randomwave(Timefunction):
     """Generates random waves of defined period"""
@@ -33,20 +35,22 @@ class Randomwave(Timefunction):
         self.initTime = engine.get_now()
 
     def state(self, t=None, t_relative=False):
-        """Return a sinewave."""
+        """Return a random wave"""
         if t is None:
             t = self.engine.get_now()
         if (not t_relative):
             t -= self.initTime
 
         r = random.Random() # Our own private random number generator
-        r.seed(t + hash(self.device.get_property("$id")))    # Unique per device
+        quantised_time = int(t / self.period)
+        r.seed(quantised_time + hash(self.device.get_property("$id")))    # Unique per device
         r.random()
         r.random()
         r.random()
         v = self.lower + r.random() * (self.upper-self.lower)
         if self.precision is not None:
             v = int(v * self.precision) / float(self.precision)
+
         return v
     
     def next_change(self, t=None):
