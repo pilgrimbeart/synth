@@ -16,6 +16,7 @@ Configurable parameters::
         "has_buffer" :  false          If true then the device buffers data while comms is down (else it throws it away)
         "unbuffered_properties" : ["propname",...] (optional) these properties will be lost (not buffered) when comms goes offline - means that e.g. heartbeat messages don't get magically restored after an outage
         "suppress_messages" : false    If true then wont emit log messages
+        "suppress_report" : false      If true then won't do final comms report 
     }
 
 Device properties created::
@@ -52,6 +53,7 @@ class Comms(Device):
         self.comms_metronomic_period = params["comms"].get("metronomic_period", False)
         self.has_buffer = params["comms"].get("has_buffer", False)
         self.suppress_messages = params["comms"].get("suppress_messages", False)
+        self.suppress_report = params["comms"].get("suppress_report", False)
         self.unbuffered_properties = params["comms"].get("unbuffered_properties", [])
         self.chance_above_knee = params["comms"].get("reliability_above_rssi_knee", DEFAULT_CHANCE_ABOVE_KNEE)
         self.chance_at_worst = params["comms"].get("reliability_at_worst", DEFAULT_CHANCE_AT_WORST)
@@ -91,7 +93,8 @@ class Comms(Device):
         super(Comms, self).external_event(event_name, arg)
 
     def close(self):
-        logging.info("Comms report for " + str(self.properties["$id"]) + " " +
+        if not self.suppress_report:
+            logging.info("Comms report for " + str(self.properties["$id"]) + " " +
                 str(self.messages_sent) + " sent ("+str(100 * self.messages_sent/self.messages_attempted) + "%) and " +
                 str(self.messages_delayed) + " delayed ("+str(100 * self.messages_delayed/self.messages_attempted) + "%) of " +
                 str(self.messages_attempted) + " total")
