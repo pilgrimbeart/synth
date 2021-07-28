@@ -31,16 +31,27 @@ from common import conftime
 from devices.basic import Basic
 
 g_devices = []
+g_devices_dict = {}   # For quickly checking if a device already exists (g_devices[] above is probably redundant)
+
+g_class_cache = {}  # Creating composite classes in Python seems to get exponentially slower, so we cache
 
 def compose_class(class_names):
     """Create a composite class from a list of class names."""
-    classes = []
-    classes.append(Basic)   # Class is the root of inheritance
-    for class_name in class_names:
-        if class_name != "basic":   # Normally this is not explicitly specified, so is implicit, but even it is explicit we want to ensure that it's the last class added
-            classes.append(importer.get_class('device', class_name))
-    classes.reverse()   # In each device class constructor, the first thing we do is to call super(). This means that (in terms of the order of execution of all the init code AFTER that call to super()), the last shall be first
-    return type("compositeDeviceClass", tuple(classes), {})
+    global g_class_cache
+    s = str(class_names)
+    if s in g_class_cache:
+        return g_class_cache[s] 
+    else:
+        logging.info("Defining new device class "+str(class_names))
+        classes = []
+        classes.append(Basic)   # Class is the root of inheritance
+        for class_name in class_names:
+            if class_name != "basic":   # Normally this is not explicitly specified, so is implicit, but even it is explicit we want to ensure that it's the last class added
+                classes.append(importer.get_class('device', class_name))
+        classes.reverse()   # In each device class constructor, the first thing we do is to call super(). This means that (in terms of the order of execution of all the init code AFTER that call to super()), the last shall be first
+        c = type("compositeDeviceClass", tuple(classes), {})
+        g_class_cache[s] = c
+        return c
 
 def sort_by_suffix(dictionary):
     # Given a dictionary whose keys may each have an optional ":N" at the end,
@@ -75,10 +86,12 @@ def create_device(args):
         at_time = conftime.richTime(params["stop_at"])
         engine.register_event_at(at_time, stop_device, (engine,d), None)
 
-    if get_device_by_property("$id", d.properties["$id"]) != None:
+    the_id = d.properties["$id"]
+    if the_id in g_devices_dict:
         logging.error("FATAL: Attempt to create duplicate device "+str(d.properties["$id"]))
         exit(-1)
     g_devices.append(d)
+    g_devices_dict[the_id] = d
 
     return d
 
