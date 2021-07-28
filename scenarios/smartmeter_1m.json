@@ -1,0 +1,55 @@
+#define INSTALL_METER
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "basic" : {
+                            "label_root" : "Meter "
+                        },
+                        "comms" : {
+                            "reliability" : "rssi",
+                            "reliability_above_rssi_knee" : 0.99,
+							"reliability_at_worst" : 0.80,
+							"rssi_knee" : -110,
+                            "period" : "PT17H",
+                            "suppress_messages" : true
+                        },
+						"energy" : {
+							"opening_times" : "domestic"
+						},
+                        "enumerated" : {
+                            "name" : "fault",
+                            "values" :  [null,   "tamper", "mains loss", "cover removed", "hardware fault", "calibration error", "internal fault", "link interference", "over-temperature"],
+                            "periods" : ["P5D",  "P170D",  "P140D",      "P195D",          "P270D",           "P270D",             "P220D",           "P160D",              "P320D"],
+							"sigmas" :  ["P4D",  "P80D",   "P60D",       "P60D",           "P110D",           "P110D",              "P85D",            "P70D",              "P170D"],
+							"force_send" : true,
+							"always_send" : false,
+                            "comment" : "we include null as a state too, so that faults get cleared after a while"
+                        },
+                        "firmware" : {},
+                        "variable" : [
+                            {   "name" : "vendor",  "value" : ["Landis & Gyr", "EDMI", "Aclara", "Itron", "Kaifa", "Honeywell", "Flonidan", "GWI"]},
+                            {   "name" : "model",   "value" : ["E470-5394", "ES-10A", "SGM1412", "EM425-I2", "MA120", "AS203P", "BK-G4E", "E470", "G4-MG-SE"]},
+                            {   "name" : "hardware_version", "value" : [0.4,0.6,0.9,1.1,1.5] },
+                            {	"name" : "device_type", "value" : "smart_meter"}
+                        ]
+                    }
+                }
+            }
+#enddef
+{
+    "comment" : "A million Smart Meters",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : null
+    },
+    "events" : [
+        {   
+            "comment" : "install lots of meters instanteneously at the start",
+            "repeats" : 1000000,
+            INSTALL_METER
+        }
+    ]
+}
+

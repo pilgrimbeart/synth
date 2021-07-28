@@ -1,0 +1,21 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P1D",
+        "end_time" :   "-P1D"
+    },
+    "events" : [
+        {
+            "comment" : "basic",
+            "repeats" : 1000000,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                    }
+                }
+            }
+        }
+    ]
+}
+

@@ -1,0 +1,41 @@
+{
+    "restart_log" : true,
+    "write_log" : false,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : null
+    },
+    "client" : {
+        "comment" : "Overwriting default behaviour of client",
+        "write_csv" : false
+    },
+    "events" : [
+        {
+            "comment" : "EV charging",
+            "repeats" : 1000000,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "bytes" : {
+                        },
+                        "charger" : {
+                        },
+                        "firmware" : {
+                        },
+                        "comms" : {
+                            "reliability" : "rssi",
+                            "reliability_above_rssi_knee" : 1.00,
+                            "period" : "PT1H",
+                            "suppress_messages" : true
+                        },
+                        "variable" : [
+                            {"name" : "icon", "value" : "charging-station"}
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
+
