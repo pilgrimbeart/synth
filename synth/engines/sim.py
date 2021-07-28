@@ -26,7 +26,7 @@
 import time
 import logging
 import threading
-import bisect
+import queue
 from common import ISO8601
 from common.conftime import richTime
 
@@ -37,15 +37,16 @@ class Sim(Engine):
        and of moving smoothly between the two"""
 
     def __init__(self, params, cb = None, event_count_callback = None):
-        self.sim_lock = threading.Lock() # Protects events[] and sim_time to make sim thread-safe, as event-injection can happen asynchronously (we can't use Queues because we need peeking)
+        self.sim_lock = threading.Lock() # Protects sim_time to make sim thread-safe, as event-injection can happen asynchronously
         self.set_start_time_str(params.get("start_time", "now"))
         self.set_end_time_str(params.get("end_time", None))
         self.end_after_events = params.get("end_after_events", None)
         self.caught_up_callback = cb
         self.caught_up = False
         self.event_count_callback = event_count_callback
-        self.events = []     # A sorted list of simulation callbacks: [(epochTime,sortkeycount,function,arg,device), ...]
-        self.sort_key_count = 0
+        # self.events = []      # A sorted list of simulation callbacks: [(epochTime,sortkeycount,function,arg,device), ...]
+        self.events = queue.PriorityQueue()
+        self.sort_key_count = 0 # A secondary key which ensures that events with identical event times are sorted in order of their insertion
         self.next_event_time = None
 
     def set_now(self, epochSecs):
@@ -54,7 +55,7 @@ class Sim(Engine):
         self.sim_lock.release()
 
     def set_now_str(self,timeString):
-        self.set_time(richTime(timeString))
+        self.set_time(richTime(timeString)) # ??? doesn't seem to exist, is this function ever called?
 
     def set_start_time_str(self, timeString):
         t = richTime(timeString)
@@ -119,7 +120,7 @@ class Sim(Engine):
                 return True
 
             if self.end_time == "when_done":
-                keep_going = len(self.events)>0
+                keep_going = not self.events.empty()
                 if not keep_going:
                     logging.info("No further events")
                 return keep_going
@@ -132,7 +133,7 @@ class Sim(Engine):
                 return True
 
             if self.sim_time >= self.end_time:
-                logging.info("Reached simulation end time with "+str(len(self.events))+" events still in future")
+                logging.info("Reached simulation end time with "+str(self.events.qsize())+" events still in future")
                 return False
             return True
         finally:
@@ -145,19 +146,19 @@ class Sim(Engine):
            new external events can appear asychronously whilst we wait.
            So we wait only a short period and then release so can reassess from scratch again soon (and so any other heartbeats can happen)."""
         self.sim_lock.acquire()           # <---
-        if len(self.events) < 1:
+        if self.events.qsize() < 1:
             logging.info("No events pending")
             wait = 1.0
         else:
-            (t,skc,fn,arg,dev) = self.events[0]
+            (t,skc,fn,arg,dev) = self.events.get_nowait()   # Get earliest event. Raises exception if queue empty.
             wait = t - time.time()
             if wait <= 0:
-                self.events.pop(0)
                 self.sim_lock.release()   # --->
                 self.set_now(t)
                 logging.debug(str(fn.__name__)+"("+str(arg)+")")
                 fn(arg)             # Note that this is likely to itself inject more events, so we must have released lock
                 return
+            self.events.put_nowait((t,skc,fn,arg,dev))  # Push unused event back on the queue
         self.sim_lock.release()           # --->
         if t != self.next_event_time:
             if wait >= 1.0:
@@ -167,15 +168,15 @@ class Sim(Engine):
         self.set_now(time.time())    # So that any events injected asynchronously will correctly get stamped with current time
 
     def _add_event(self, time, func, arg, dev):
-        """If multiple events are inserted at the same time, we guarnatee they'll get executed in order.
+        """If multiple events are inserted at the same time, we guarantee they'll get executed in insertion order.
         We do this by ensuring that the second item in the tuple is a monotonically rising number"""
         if time == 0:
             logging.info("Advisory: Setting event at epoch=0 (not illegal, but often a sign of a mistake)")
         elif time < self.get_now():
             logging.info("Advisory: Setting event in the past (not illegal, but often a sign of a mistake)")
 
-        self.sim_lock.acquire()
-        bisect.insort(self.events, (time, self.sort_key_count, func, arg, dev)) # Efficient since we know the list is kept sorted.
+        self.sim_lock.acquire() # Not strictly needed, as our priority queue has its own thread lock
+        self.events.put_nowait((time, self.sort_key_count, func, arg, dev))
         self.sort_key_count += 1
         self.sim_lock.release()
 
@@ -190,6 +191,7 @@ class Sim(Engine):
 ##            self.sim_Lock.release()   # --->
 
     def remove_all_events_for_device(self, dev):
+        assert(False)   ## TODO: Implement!
         self.sim_lock.acquire()
         old_len = len(self.events)
         self.events = [e for e in self.events if e[4] != dev] # Remove any events with device=dev
@@ -204,7 +206,3 @@ class Sim(Engine):
         assert deltaTime >= 0
         self._add_event(self.get_now() + deltaTime, func, arg, device)
 
-    def dump_events(self):
-        logging.info("EVENT QUEUE:")
-        for e in self.events:
-            logging.info(str(e))
