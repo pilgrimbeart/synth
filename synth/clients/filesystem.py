@@ -62,6 +62,7 @@ class Filesystem(Client):
         self.events = {} # A dict of events in a format handled by evt2csv
         ts_prefix = params.get("timestamp_prefix", False)
         self.write_csv = params.get("write_csv", True)
+        logging.info("write_csv is "+str(self.write_csv))
         messages_prefix = params.get("messages_prefix", False)
         if "max_events_per_file" in self.params:
             self.json_stream = json_writer.Stream(instance_name, ts_prefix = ts_prefix, messages_prefix=messages_prefix, max_events_per_file = self.params["max_events_per_file"])
@@ -75,7 +76,8 @@ class Filesystem(Client):
     def update_device(self, device_id, time, properties):
         properties["$id"] = device_id # Ensure we always specify these
         properties["$ts"] = time
-        evt2csv.insert_properties(self.events, properties)
+        if self.write_csv:
+            evt2csv.insert_properties(self.events, properties)
         self.json_stream.write_event(properties)
         return True
 
