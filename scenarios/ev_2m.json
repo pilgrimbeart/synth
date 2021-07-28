@@ -7,6 +7,10 @@
         "start_time" : "-P30D",
         "end_time" : null
     },
+    "client" : {
+        "comment" : "Overwriting default behaviour of client",
+        "write_csv" : false
+    },
     "events" : [
         {
             "comment" : "EV charging",

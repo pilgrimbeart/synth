@@ -253,7 +253,8 @@ def main():
 
     install_signal_catcher()
 
-    Tstart = time.time()
+    Tstart = time.time()                # Human time
+    Tstart_process = time.process_time()   # Time CPU usage
     random.seed(12345)  # Ensure reproduceability
 
     if not "client" in params:
@@ -298,7 +299,8 @@ def main():
     events.flush()
     client.close()
 
-    logging.info("Elapsed real time: "+str(int(time.time()-Tstart))+" seconds")
+    logging.info("Elapsed real time: " + str(int(time.time()-Tstart))+" seconds.")
+    logging.info("CPU time used: " + str(int(time.process_time()-Tstart_process))+" seconds.")
 
     if err_str=="":
         post_to_slack("Finished OK")
@@ -327,7 +329,7 @@ if __name__ == "__main__":
 
     check_install()
 
-    if False:    # Profile
+    if True:    # Profile
         import cProfile, pstats
         cProfile.run('main()', 'profiling')
         p = pstats.Stats('profiling')
