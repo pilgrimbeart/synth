@@ -94,7 +94,10 @@ class Stream():
                 prefix = ""
             if self.messages_prefix:
                 prefix += "%010d" % self.events_in_this_file + "_"
-            shutil.copy(TEMP_DIRECTORY + self.filename, DEFAULT_DIRECTORY + prefix + self.filename) # os.rename() fails if they're on different drives
+            src = TEMP_DIRECTORY + self.filename
+            shutil.copy(src, DEFAULT_DIRECTORY + prefix + self.filename) # os.rename() fails if they're on different drives
+            os.remove(src)
+            
             self.files_written.append(DEFAULT_DIRECTORY + self.filename)
             self.file = None
             self.filename = None
