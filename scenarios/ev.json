@@ -53,8 +53,8 @@
             }
         },
 		{
-            "comment" : "Inject a problem 1 days before now",
-            "at" : "P31D",
+            "comment" : "Inject a problem 7 days before now",
+            "at" : "P25D",
             "action": {
                 "change_property" : {
                     "identity_property"	 : "address_postal_code", "identity_value" : "CO2",
