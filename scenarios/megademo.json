@@ -305,9 +305,12 @@
                          },
                         "enumerated" : {
                             "name" : "fault",
-                            "values" : ["tamper", "mains loss", "cover removed", "hardware fault", "calibration error", "internal fault", "link interference", "over-temperature"],
-                            "periods" : ["P30D",  "P20D",       "P15D",          "P60D",           "P100D",              "P50D",           "P23D",              "P50D"],
-                            "sigmas" : ["P10D",   "P7D",        "P5D",           "P20D",           "P30D",               "P16D",           "P8D",               "P16D"]
+                            "values" :  [null,   "tamper", "mains loss", "cover removed",  "hardware fault",  "calibration error", "internal fault", "link interference", "over-temperature"],
+                            "periods" : ["P5D",  "P170D",  "P140D",      "P195D",          "P270D",           "P270D",             "P220D",          "P160D",             "P320D"],
+							"sigmas" :  ["P4D",  "P80D",   "P60D",       "P60D",           "P110D",           "P110D",             "P85D",           "P70D",              "P170D"],
+							"always_send" : false,
+							"send_timestamp" : true,
+                            "comment" : "we include null as a state too, so that faults get cleared after a while"
                         },
                         "firmware" : {},
                         "latlong" : {
