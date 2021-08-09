@@ -41,8 +41,8 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-P30D",
-        "end_time" : null
+        "start_time" : "-P3D",
+        "end_time" : "now"
     },
     "events" : [
         {   

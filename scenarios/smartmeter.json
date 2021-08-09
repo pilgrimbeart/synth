@@ -23,6 +23,7 @@
 							"sigmas" :  ["P4D",  "P80D",   "P60D",       "P60D",           "P110D",           "P110D",              "P85D",            "P70D",              "P170D"],
 							"force_send" : true,
 							"always_send" : false,
+							"send_timestamp" : true,
                             "comment" : "we include null as a state too, so that faults get cleared after a while"
                         },
                         "firmware" : {},
