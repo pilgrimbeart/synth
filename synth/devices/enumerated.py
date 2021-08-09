@@ -11,8 +11,9 @@ Configurable parameters::
         "values" :      [a,set,          of, possible,values]
         "periods" :     [a,corresponding,set,of,      periods] (each is an ISO8601 duration e.g. "P1D" means the event will happen once a day)
         "sigmas" :      [a,corresponding,set,of,      standard-deviations] (optional, e.g. "PT1H" means the period will vary randomly with 1 standard deviation of 1 hour). Otherwise 1/10th of period.
-        "always_send" : true (optional)  If true then values will be sent even if they haven't changed
-        "force_send" : false (optional) If true then values will be sent even if device is offline
+        "always_send" : true (optional)    If true then values will be sent even if they haven't changed
+        "force_send" : false (optional)    If true then values will be sent even if device is offline
+        "send_timestamp" : false (optional)    If true then a "_ts" property is set to the current epoch_ms whenever the property is changed to a value which is not null.
     }
 
 If sigmas are not specified, they default to 50% of the periods to create a good amount of random spread. If you want to remove all randomness, specify sigmas of "PT0S".
@@ -41,6 +42,7 @@ class Enumerated(Device):
         p = params["enumerated"]
         self.enumerated_always_send = p.get("always_send", True)
         self.enumerated_force_send = p.get("force_send", False)
+        self.enumerated_send_timestamp = p.get("send_timestamp", False)
         self.enumerated_name = p["name"]
         self.enumerated_values = p["values"]
         periods = p["periods"]
@@ -69,7 +71,7 @@ class Enumerated(Device):
         for i in range(len(self.enumerated_periods)):
             so_far += recip_periods[i]
             if so_far >= choice:
-                self.set_property(self.enumerated_name, self.enumerated_values[i])
+                self.enum_set_value(self.enumerated_values[i], True)
                 break
         
         # Schedule next transitions
@@ -85,6 +87,21 @@ class Enumerated(Device):
     def close(self):
         super(Enumerated,self).close()
 
+    def enum_set_value(self, value, first_time = False):
+        name = self.enumerated_name
+        ts = self.engine.get_now_1000()
+        if first_time:
+            self.set_property(self.enumerated_name, value)
+            if self.enumerated_send_timestamp:
+                if value == None:
+                    self.set_property(name + "_ts", None)
+                else:
+                    self.set_property(name + "_ts", ts)
+        else:
+            self.set_property(name, value, always_send = self.enumerated_always_send, force_send = self.enumerated_force_send)
+            if self.enumerated_send_timestamp:
+                if value != None:
+                    self.set_property(name + "_ts", ts, always_send = self.enumerated_always_send, force_send = self.enumerated_force_send)
 
     def schedule_next_event(self, index):
         period = self.enumerated_periods[index]
@@ -106,6 +123,6 @@ class Enumerated(Device):
     def change_enumerated_value(self, index):
         value = self.enumerated_values[index]
         # logging.info("Changing enumerated value on "+str(self.get_property("$id"))+" to index "+str(index)+" which is "+str(value))
-        self.set_property(self.enumerated_name, value, always_send = self.enumerated_always_send, force_send = self.enumerated_force_send)
+        self.enum_set_value(value)
         self.schedule_next_event(index)
 
