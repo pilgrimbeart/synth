@@ -1,0 +1,27 @@
+#define INSTALL_METER
+            "action": {
+                "create_device" : {
+                    "functions" : {
+						"energy" : {
+						}
+                    }
+                }
+            }
+#enddef
+{
+    "comment" : "Install 500 devices per minute, to test DP partition-growing",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "PT11M"
+    },
+    "events" : [
+        {   
+            "repeats" : 5000,
+			"interval" : "PT0.12S",
+            INSTALL_METER
+        }
+    ]
+}
+

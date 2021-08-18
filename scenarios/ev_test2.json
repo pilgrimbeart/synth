@@ -1,0 +1,74 @@
+#define INSTALL_EV_POINT
+                "create_device" : {
+                    "functions" : {
+                        "bytes" : {
+                        },
+                        "charger" : {
+                        },
+                        "firmware" : {
+                        },
+                        "latlong" : {
+                            "generate_addresses" : true,
+                            "area_centre" : "Sheffield, UK",
+                            "area_radius" : "Edinburgh, UK",
+                            "devices_per_address" : [2,10]
+                        },
+                        "comms" : {
+                            "reliability" : "rssi",
+                            "reliability_above_rssi_knee" : 1.00,
+                            "period" : "PT1H",
+                            "suppress_messages" : true
+                        },
+                        "variable" : [
+                            {"name" : "icon", "value" : "charging-station"}
+                        ]
+                    }
+                }
+#enddef
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P100D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "comment" : "Install points instantaneously",
+            "repeats" : 1000,
+            "action": {
+				INSTALL_EV_POINT
+            }
+        },
+        {
+            "comment" : "Install points gradually. Don't advance time, so we can inject a fault after some time",
+            "repeats" : 2000,
+            "interval" : "PT2H",
+			"time_advance" : false,
+            "action": {
+				INSTALL_EV_POINT
+            }
+        },
+		{
+            "comment" : "Inject a problem 1 days before now",
+            "at" : "P31D",
+            "action": {
+                "change_property" : {
+                    "identity_property"	 : "address_postal_code", "identity_value" : "CO2",
+					"identity_property2" : "max_kW",              "identity_value2" : 50,
+                    "property_name" : "pilot", "property_value" : "F"
+                }
+            }
+        },
+		{
+            "action": {
+                "change_property" : {
+                    "identity_property"	 : "address_postal_code", "identity_value" : "CO2",
+					"identity_property2" : "max_kW",              "identity_value2" : 50,
+                    "property_name" : "fault", "property_value" : 400
+                }
+            }
+        }
+    ]
+}
+

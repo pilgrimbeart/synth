@@ -1,0 +1,51 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P30D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "comment" : "SMART METERS",
+            "repeats" : 1,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "basic" : {
+                            "label_root" : "Meter "
+                        },
+                        "commswave" : {
+                            "threshold" : 0.03, // To give 97% uptime
+                            "timefunction" : {
+                                "randomwave" : {
+                                    "period" : "P1D",
+                                    "precision" : 100
+                               }
+                            }
+                         },
+                        "enumerated" : {
+                            "name" : "fault",
+                            "values" : ["tamper", "mains loss", "cover removed", "hardware fault", "calibration error", "internal fault", "link interference", "over-temperature"],
+                            "periods" : ["P30D",  "P20D",       "P15D",          "P60D",           "P100D",              "P50D",           "P23D",              "P50D"],
+                            "sigmas" : ["P10D",   "P7D",        "P5D",           "P20D",           "P30D",               "P16D",           "P8D",               "P16D"]
+                        },
+                        "firmware" : {},
+                        "latlong" : {
+                            "generate_addresses" : true,
+                            "area_centre" : "Aramac, Queensland, Australia",
+                            "area_radius" : "Burleigh Heads, Queensland, Australia"
+                        },
+                        "variable" : [
+                            {   "name" : "vendor",  "value" : ["Landis & Gyr", "EDMI", "Aclara", "Itron", "Kaifa", "Honeywell", "Flonidan", "GWI"]},
+                            {   "name" : "model",   "value" : ["E470-5394", "ES-10A", "SGM1412", "EM425-I2", "MA120", "AS203P", "BK-G4E", "E470", "G4-MG-SE"]},
+                            {	"name" : "device_type", "value" : "smart_meter"},
+                            {   "name" : "icon", "value" : "bolt"},
+                            {   "name" : "energy", "timefunction" : { "count" : { "interval" : "PT1H" } } }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}

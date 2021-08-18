@@ -1,0 +1,28 @@
+#define INSTALL_METER
+            "action": {
+                "create_device" : {
+                    "functions" : {
+						"energy" : {
+							"reading_interval" : "PT12H",
+							"opening_times" : "domestic"
+						}
+                    }
+                }
+            }
+#enddef
+{
+    "comment" : "Smart Meter doing one reading every 12h",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P7D",
+        "end_time" : "now"
+    },
+    "events" : [
+        {   
+            "repeats" : 1,
+            INSTALL_METER
+        }
+    ]
+}
+
