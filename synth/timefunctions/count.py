@@ -8,6 +8,7 @@ Arguments::
     {
         "interval" : the time between counts
         "modulo" : (optional) the point at which to wrap - if unspecified, never wraps
+        "stop_at" : stop generating values after this value is reached
     }
 """
 
@@ -15,6 +16,7 @@ Arguments::
 from .timefunction import Timefunction
 import isodate
 import math
+import logging
 
 class Count(Timefunction):
     def __init__(self, engine, device, params):
@@ -22,6 +24,7 @@ class Count(Timefunction):
         self.engine = engine
         self.interval = float(isodate.parse_duration(params["interval"]).total_seconds())
         self.modulo = params.get("modulo", None)
+        self.stop_at = params.get("stop_at", None)
 
         self.init_time = engine.get_now()
 
@@ -40,9 +43,14 @@ class Count(Timefunction):
         if t is None:
             t = self.engine.get_now()
 
-        t2 = int(t / self.interval) * self.interval + self.interval
+        tOUT = int(t / self.interval) * self.interval + self.interval   # If called at intervals of (self.interval), will count 0,1,2...
+        
+        if self.stop_at:
+            v = self.state()
+            if v >= self.stop_at:
+                return None
 
-        return t2
+        return tOUT
 
     def period(self):
         return self.interval

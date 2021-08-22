@@ -149,6 +149,7 @@ class Sim(Engine):
         if self.events.qsize() < 1:
             logging.info("No events pending")
             wait = 1.0
+            t = None
         else:
             (t,skc,fn,arg,dev) = self.events.get_nowait()   # Get earliest event. Raises exception if queue empty.
             wait = t - time.time()
@@ -170,6 +171,8 @@ class Sim(Engine):
     def _add_event(self, time, func, arg, dev):
         """If multiple events are inserted at the same time, we guarantee they'll get executed in insertion order.
         We do this by ensuring that the second item in the tuple is a monotonically rising number"""
+        if time == None:
+            return  # It's legal to request an event at time "None" - the event is just thrown away. This is how e.g. timefunctions indicate that there are no more events
         if time == 0:
             logging.info("Advisory: Setting event at epoch=0 (not illegal, but often a sign of a mistake)")
         elif time < self.get_now():
