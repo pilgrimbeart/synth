@@ -1,0 +1,52 @@
+{
+    "comment" : "Install a device per second, to test DP partition-growing and rules execution. Each has a <count> value which counts from 0 to 500 in the first 500 secs. So a rule of (count==400) should be false then true then false.",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "PT100M"
+    },
+    "events" : [
+        {   
+            "action" : {
+				"create_device" : {
+                	"functions" : {
+                    	"variable" : [
+                        	{
+                            	"name" : "ticker",
+								"timefunction" : {
+                            		"count" : {
+										"interval" : "PT10S"
+									}
+								}
+                        	}
+						]
+					}
+				}
+			}
+        },
+        {   
+            "repeats" : 5000,
+			"interval" : "PT1S",
+            "action" : {
+				"create_device" : {
+                	"functions" : {
+                    	"variable" : [
+                        	{
+                            	"name" : "count",
+								"timefunction" : {
+                            		"count" : {
+										"interval" : "PT100S",
+										"increment" : 100,
+										"stop_at" : 500
+									}
+								}
+                        	}
+						]
+					}
+				}
+			}
+        }
+    ]
+}
+

@@ -7,6 +7,7 @@ Arguments::
 
     {
         "interval" : the time between counts
+        "increment" : how much to add each time
         "modulo" : (optional) the point at which to wrap - if unspecified, never wraps
         "stop_at" : stop generating values after this value is reached
     }
@@ -23,6 +24,7 @@ class Count(Timefunction):
         """<interval> is the length between counts"""
         self.engine = engine
         self.interval = float(isodate.parse_duration(params["interval"]).total_seconds())
+        self.increment = params.get("increment", 1)
         self.modulo = params.get("modulo", None)
         self.stop_at = params.get("stop_at", None)
 
@@ -33,7 +35,7 @@ class Count(Timefunction):
         if t is None:
             t = self.engine.get_now()
 
-        v = int((t-self.init_time) / self.interval)
+        v = int((t-self.init_time) / self.interval) * self.increment
         if self.modulo is not None:
             v = v % self.modulo
         return v

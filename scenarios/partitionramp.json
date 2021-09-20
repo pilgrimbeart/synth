@@ -1,0 +1,33 @@
+{
+    "comment" : "Install 500 devices per minute, to test DP partition-growing. Each has a <count> value which counts from 0 to 5 in the first 50 secs. So the sum of all counts should be the same",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "PT12M"
+    },
+    "events" : [
+        {   
+            "repeats" : 5000,
+			"interval" : "PT0.12S",
+            "action" : {
+				"create_device" : {
+                	"functions" : {
+                    	"variable" : [
+                        	{
+                            	"name" : "count",
+								"timefunction" : {
+                            		"count" : {
+										"interval" : "PT10S",
+										"stop_at" : 5
+									}
+								}
+                        	}
+						]
+					}
+				}
+			}
+        }
+    ]
+}
+
