@@ -3,8 +3,8 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "now",
-        "end_time" : "PT100M"
+        "start_time" : "-PT100M",
+        "end_time" : "now"
     },
     "events" : [
         {   
@@ -36,8 +36,8 @@
                             	"name" : "count",
 								"timefunction" : {
                             		"count" : {
-										"interval" : "PT100S",
-										"increment" : 100,
+										"interval" : "PT1S",
+										"increment" : 1,
 										"stop_at" : 500
 									}
 								}
