@@ -3,28 +3,10 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-PT100M",
-        "end_time" : "now"
+        "start_time" : "now",
+        "end_time" : "PT100M"
     },
     "events" : [
-        {   
-            "action" : {
-				"create_device" : {
-                	"functions" : {
-                    	"variable" : [
-                        	{
-                            	"name" : "ticker",
-								"timefunction" : {
-                            		"count" : {
-										"interval" : "PT10S"
-									}
-								}
-                        	}
-						]
-					}
-				}
-			}
-        },
         {   
             "repeats" : 5000,
 			"interval" : "PT1S",
@@ -38,7 +20,8 @@
                             		"count" : {
 										"interval" : "PT1S",
 										"increment" : 1,
-										"stop_at" : 500
+										"stop_at" : 800,
+										"comment" : "We stop at 800, because we want to keep data flowing into the partition for at least 5 minutes (300 secs == 300 counts) after our trigger value of (count==400)"
 									}
 								}
                         	}

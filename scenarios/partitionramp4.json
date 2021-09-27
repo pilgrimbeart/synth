@@ -1,0 +1,36 @@
+{
+    "comment" : "Install a device per second, to test DP partition-growing and rules execution. Each has a <count> value which counts from 0 to 80 over 800 secs. So a rule of (count==40) should be false then true then false.",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "PT34M"
+    },
+    "events" : [
+        {   
+            "repeats" : 400,
+			"comment" : "16 partitions, 10 ids per means first splitting will happen at 160. Second splitting around 320.",
+			"interval" : "PT3S",
+            "action" : {
+				"create_device" : {
+                	"functions" : {
+                    	"variable" : [
+                        	{
+                            	"name" : "count",
+								"timefunction" : {
+                            		"count" : {
+										"interval" : "PT10S",
+										"increment" : 1,
+										"stop_at" : 120,
+										"comment" : "We stop at 120, because we want to keep data flowing into the partition for at least 5 minutes after our trigger value, and also the rule only triggers if there is data beyond the end of its window, so we need to keep going to avoid missing the last FALSEs"
+									}
+								}
+                        	}
+						]
+					}
+				}
+			}
+        }
+    ]
+}
+
