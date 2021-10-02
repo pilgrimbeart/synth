@@ -4,7 +4,7 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
-        "end_time" : "PT100M"
+        "end_time" : "when_done"
     },
     "events" : [
         {   
@@ -20,8 +20,8 @@
                             		"count" : {
 										"interval" : "PT1S",
 										"increment" : 1,
-										"stop_at" : 800,
-										"comment" : "We stop at 800, because we want to keep data flowing into the partition for at least 5 minutes (300 secs == 300 counts) after our trigger value of (count==400)"
+										"stop_at" : 1200,
+										"comment" : "We want to keep data flowing into the partition for at least 5 minutes, and then another 5 minutes (because rules only run if data has t>t2)"
 									}
 								}
                         	}

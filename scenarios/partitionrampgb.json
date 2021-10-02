@@ -1,5 +1,5 @@
 {
-    "comment" : "Install 500 devices per minute, to test DP partition-growing. Each has a <count> value which counts from 0 to 5 in the first 50 secs. So the sum of all counts should be the same",
+    "comment" : "Install a device per second, to test DP partition-growing and rules execution. Each has a <count> value which counts from 0 to 500 in the first 500 secs. So a rule of (count==400) should be false then true then false.",
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
@@ -9,7 +9,7 @@
     "events" : [
         {   
             "repeats" : 5000,
-			"interval" : "PT0.12S",
+			"interval" : "PT5S",
             "action" : {
 				"create_device" : {
                 	"functions" : {
@@ -18,8 +18,10 @@
                             	"name" : "count",
 								"timefunction" : {
                             		"count" : {
-										"interval" : "PT10S",
-										"stop_at" : 500
+										"interval" : "PT1S",
+										"increment" : 1,
+										"stop_at" : 1200,
+										"comment" : "We want to keep data flowing into the partition for at least 5 minutes, and then another 5 minutes (because rules only run if data has t>t2)"
 									}
 								}
                         	}

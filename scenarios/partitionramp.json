@@ -4,7 +4,7 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
-        "end_time" : "PT12M"
+        "end_time" : "when_done"
     },
     "events" : [
         {   
