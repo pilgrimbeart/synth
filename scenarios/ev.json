@@ -10,7 +10,9 @@
                         "firmware" : {
                         },
                         "latlong" : {
+							"init_order" : 1,
                             "generate_addresses" : true,
+							"mandatory_address_fields" : ["address_postal_code", "address_postal_town"],
                             "area_centre" : "Sheffield, UK",
                             "area_radius" : "Edinburgh, UK",
                             "devices_per_address" : [2,10]
@@ -53,12 +55,11 @@
             }
         },
 		{
-            "comment" : "Inject a problem 7 days before now",
+            "comment" : "Inject an RCD problem 7 days before now",
             "at" : "P25D",
             "action": {
                 "change_property" : {
-                    "identity_property"	 : "address_postal_code", "identity_value" : "CO2",
-					"identity_property2" : "max_kW",              "identity_value2" : 50,
+                    "identity_property"	 : "address_postal_town", "identity_value" : "Cambridge",
                     "property_name" : "pilot", "property_value" : "F"
                 }
             }
@@ -66,9 +67,28 @@
 		{
             "action": {
                 "change_property" : {
-                    "identity_property"	 : "address_postal_code", "identity_value" : "CO2",
-					"identity_property2" : "max_kW",              "identity_value2" : 50,
+                    "identity_property"	 : "address_postal_town", "identity_value" : "Cambridge",
                     "property_name" : "fault", "property_value" : 400
+                }
+            }
+        },
+		{
+            "comment" : "Inject a comms problem",
+            "at" : "P3D",
+            "action": {
+                "change_property" : {
+					"is_attribute" : true,
+                    "identity_property"	 : "address_postal_town", "identity_value" : "Halifax",
+ 					"property_name" : "chance_above_knee", "property_value" : 0.5
+                }
+            }
+        },
+		{
+            "action": {
+                "change_property" : {
+					"is_attribute" : true,
+                    "identity_property"	 : "address_postal_town", "identity_value" : "Halifax",
+ 					"property_name" : "chance_at_worst", "property_value" : 0.1
                 }
             }
         }

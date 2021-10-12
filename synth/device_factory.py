@@ -53,7 +53,7 @@ def compose_class(class_names):
         g_class_cache[s] = c
         return c
 
-def sort_by_suffix(dictionary):
+def sort_by_suffix_OLD(dictionary):
     # Given a dictionary whose keys may each have an optional ":N" at the end,
     # a) produce a list of keys sorted by that number
     # b) remove the number from the dictionary keys and the list
@@ -72,6 +72,22 @@ def sort_by_suffix(dictionary):
     pairs.sort()
     result = [x[1] for x in pairs]
     return result
+
+def sort_by_suffix(dictionary):
+    # Each element of dictionary may contain a property "init_order"
+    # a) produce a list of keys sorted by that property
+    # (any keys without such a property are sorted last)
+    pairs = []
+    for k in dictionary.keys():
+        if "init_order" in dictionary[k]:
+            num = dictionary[k]["init_order"]
+        else:
+            num = 99999999
+        pairs.append((num, k))
+    pairs.sort()
+    result = [x[1] for x in pairs]
+    return result
+
 
 def create_device(args):
     global g_devices

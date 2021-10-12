@@ -25,7 +25,7 @@ import logging
 import random
 import isodate
 from .helpers import opening_times as opening_times
-
+from common import utils
 from .device import Device
 
 MINS = 60
@@ -57,13 +57,13 @@ HEARTBEAT_PERIOD = 15 * MINS
 POWER_TO_MONTHLY_VALUE = 8 # Ratio to turn charger's max kW into currency
 
 FAULTS = [
-#       Fault               MTBF
-        ["Earth Relay",     100 * DAYS],
-        ["Mennekes Fault",  200 * DAYS],
-        ["Overcurrent",     40 * DAYS],
-        ["RCD trip",        30 * DAYS],
-        ["Relay Weld",      500 * DAYS],
-        ["Overtemperature", 300 * DAYS]
+#       Fault               MTBF        FRACTIONAL DECREASE BASED ON LOCATION
+        ["Earth Relay",     100 * DAYS, 0.50],
+        ["Mennekes Fault",  200 * DAYS, 0.30],
+        ["Overcurrent",     40 * DAYS,  0.00],
+        ["RCD trip",        30 * DAYS,  0.00],
+        ["Relay Weld",      500 * DAYS, 0.00],
+        ["Overtemperature", 300 * DAYS, 0.40]
         ]
 FAULT_RECTIFICATION_TIME_AV = 3 * DAYS
 
@@ -80,6 +80,7 @@ ALT_FAULT_CODES = { # Some chargers emit different fault codes
 class Charger(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Charger,self).__init__(instance_name, time, engine, update_callback, context, params)
+        self.loc_rand = utils.consistent_hash(self.get_property_or_None("address_postal_code")) # Allows us to vary behaviour based on our location
         self.set_property("device_type", "charger")
         max_rate = self.choose_percent(CHARGER_MAX_RATE_PERCENT)
         self.set_property("max_kW", max_rate)
@@ -110,7 +111,9 @@ class Charger(Device):
         super(Charger,self).close()
     
     def pick_a_fault(self, sampling_interval_s):
-        for (fault, mtbf) in FAULTS:
+        for (fault, mtbf, var) in FAULTS:
+            var *= self.loc_rand    # 0..1 based on location
+            mtbf = mtbf * (1-var)   # Decrease MTBF by var (i.e. make it less reliable)
             chance = sampling_interval_s / mtbf # 50% point
             if random.random() < chance * 0.5:
                 if self.get_property("max_kW") == 50:   # 50kW chargers report different error codes (example of a real-world bizarreness)

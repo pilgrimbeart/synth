@@ -32,9 +32,9 @@ def get_processes():
 
 def list_processes():
     processes = get_processes()
-    print("      PID JOB                                               OUTPUT")
+    print("      PID JOB                                                         OUTPUT")
     for job in processes:
-        print("    %5d" % job[0], "%-50s" % job[1], end="", flush=True)
+        print("    %5d" % job[0], "%-60s" % job[1], end="", flush=True)
         s = LOG_DIR + account_from_pid(job[0]) + ".out"
         subprocess.run(["tail", "-n", "1", s ]) 
 

@@ -13,7 +13,8 @@
             "action": {
                 "create_device" : {
                     "functions" : {
-                        "latlong:1" : {
+                        "latlong" : {
+							"init_order" : 1,
                             "generate_addresses" : true,
                             "area_centre" : "Wichita, Kansas, USA",
                             "area_radius" : "Miami, Florida, USA",

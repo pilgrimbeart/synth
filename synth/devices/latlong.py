@@ -17,7 +17,8 @@ Configurable parameters::
 
         "devices_per_address" : [2,5]           If specified, re-uses each address this many times. If this value is a 2-item list, it's used as the range of a random number.
         "map_file" : e.g. "devicepilot_logo" - optional
-        "google_maps_key" : "xyz" } Google Maps now requires this. Often defined in ../synth_accounts/default.json
+        "google_maps_key" : "xyz" }              Google Maps now requires this. Often defined in ../synth_accounts/default.json
+        "mandatory_address_fields" : ["address_postal_code"]    Insist that all locations have this field defined
     }
 
 Device properties created::
@@ -33,7 +34,7 @@ from common.geo import geo, google_maps
 import random
 import logging
 
-MANDATORY_ADDRESS_FIELDS = set(["address_administrative_area_level_1", "address_administrative_area_level_2"])  # Never pick points which don't have at least these fields
+DEFAULT_MANDATORY_ADDRESS_FIELDS = set(["address_administrative_area_level_1", "address_administrative_area_level_2"])  # Never pick points which don't have at least these fields
 
 class Latlong(Device):
     address_index = 0
@@ -59,13 +60,15 @@ class Latlong(Device):
                 while True: # Keep picking randomly until we find a point with an acceptable address
                     (lon, lat) = picker.pick()
                     addresses = picker.addresses()
-                    if len(set(addresses).intersection(MANDATORY_ADDRESS_FIELDS)) == len(MANDATORY_ADDRESS_FIELDS):
+                    if len(set(addresses).intersection(self.mandatory_address_fields)) == len(self.mandatory_address_fields):
                         props = { "latitude" : lat, "longitude" : lon }
                         props.update(addresses)
                         break
             return props
 
         super(Latlong,self).__init__(instance_name, time, engine, update_callback, context, params)
+
+        self.mandatory_address_fields = DEFAULT_MANDATORY_ADDRESS_FIELDS.union(set(params["latlong"].get("mandatory_address_fields",[])))
 
         dpa = params["latlong"].get("devices_per_address", 1)
         if dpa == 1:
