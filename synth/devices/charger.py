@@ -82,6 +82,9 @@ class Charger(Device):
         super(Charger,self).__init__(instance_name, time, engine, update_callback, context, params)
         self.loc_rand = utils.consistent_hash(self.get_property_or_None("address_postal_code")) # Allows us to vary behaviour based on our location
         self.set_property("device_type", "charger")
+        self.set_property("email", self.get_property("address_postal_code").replace(" ","") + "@example.com")
+        sevendigits = "%07d" % int(self.loc_rand * 1E7)
+        self.set_property("phone", "+1" + sevendigits[0:3] + "555" + sevendigits[3:7])
         max_rate = self.choose_percent(CHARGER_MAX_RATE_PERCENT)
         self.set_property("max_kW", max_rate)
         self.set_property("monthly_value", max_rate * POWER_TO_MONTHLY_VALUE)
