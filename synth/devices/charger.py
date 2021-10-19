@@ -81,6 +81,8 @@ class Charger(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Charger,self).__init__(instance_name, time, engine, update_callback, context, params)
         self.loc_rand = utils.consistent_hash(self.get_property_or_None("address_postal_code")) # Allows us to vary behaviour based on our location
+        self.opening_time_pattern = opening_times.pick_pattern(self.loc_rand)
+        logging.info("Charger at loc "+str(self.loc_rand)+" has opening time pattern "+str(self.opening_time_pattern))
         self.set_property("device_type", "charger")
         self.set_property("email", self.get_property("address_postal_code").replace(" ","") + "@example.com")
         sevendigits = "%07d" % int(self.loc_rand * 1E7)
@@ -101,7 +103,7 @@ class Charger(Device):
             })
 
         self.engine.register_event_in(HEARTBEAT_PERIOD, self.tick_heartbeat, self, self)
-        self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
+        self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
 
     def comms_ok(self):
         return super(Charger,self).comms_ok()
@@ -133,7 +135,7 @@ class Charger(Device):
     def tick_start_charge(self, _):
         # Faulty points can't charge
         if self.get_property("fault") != None:
-            self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
+            self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
             return
 
         self.uui = random.randrange(0,99999999)
@@ -157,7 +159,7 @@ class Charger(Device):
     def tick_check_charge(self, _):
         # (faults can be externally-injected)
         if self.get_property("fault") != None:
-            self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
+            self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
             return
 
         energy_transferred = (CHARGE_POLL_INTERVAL_S / (60*60)) * self.charging_rate_kW
@@ -194,7 +196,7 @@ class Charger(Device):
                 self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
 
     def tick_check_blocking(self, _):
-        if self.delay_to_next_charge() <= 0:
+        if self.should_charge_at(self.engine.get_now()):
             self.tick_start_charge(0)            # Start charging
         else:
             if self.engine.get_now() >= self.time_finished_charging + self.will_hog_for:
@@ -202,7 +204,7 @@ class Charger(Device):
                 self.set_properties({
                     "pilot" : "A",
                     "energy" : 0})  # Disconnect
-                self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
+                self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
             else:
                 # logging.info("Hogging for a further "+str(self.engine.get_now() - (self.time_finished_charging + self.will_hog_for)))
                 self.set_properties({
@@ -217,22 +219,46 @@ class Charger(Device):
             "pilot" : "A",
             "fault" : None
             })
-        self.engine.register_event_in(self.delay_to_next_charge(), self.tick_start_charge, self, self)
+        self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
 
-    def delay_to_next_charge(self):
-        last = self.last_charging_start_time
-        if last is None:
-            last = self.engine.get_now()
+#    def delay_to_next_charge(self):
+#        last = self.last_charging_start_time
+#        if last is None:
+#            last = self.engine.get_now()
+#
+#        nominal = DAYS/self.average_charges_per_day
+#        interval = random.expovariate(1.0/nominal)
+#        interval = min(interval, nominal * 10)
+#
+#        next = last + interval
+#        delay = next - self.engine.get_now()
+#        delay = max(60, delay)
+#
+#        return delay
 
-        nominal = DAYS/self.average_charges_per_day
-        interval = random.expovariate(1.0/nominal)
-        interval = min(interval, nominal * 10)
+    def should_charge_at(self, epoch):
+        # Given a time, should we charge at it?
+        chance = opening_times.chance_of_occupied(epoch, self.opening_time_pattern)
+        # logging.info("Chance of "+self.opening_time_pattern+" is "+str(chance))
+        return chance > random.random()
 
-        next = last + interval
-        delay = next - self.engine.get_now()
-        delay = max(60, delay)
+    def time_of_next_charge(self):
+        last = self.last_charging_start_time or self.engine.get_now()
 
-        return delay
+        # logging.info("time_of_next_charge at "+str(last)+" with opening_time_pattern "+str(self.opening_time_pattern))
+        while True: # Keep picking plausible charging times, and use opening_times to tell us how likely each is, until we get lucky
+            nominal = DAYS / self.average_charges_per_day
+            interval = random.expovariate(1.0/nominal)
+            interval = min(interval, nominal * 10)
+            interval *= opening_times.average_occupancy()   # Rescale interval to compensate for the average likelihood of opening_times() returning True (so on average we'll hit our target number of charges per day)
+            t0 = last + interval
+            # logging.info("Considering "+str(t0))
+            if self.should_charge_at(t0):
+                # logging.info("Choosing "+str(t0))
+                t0 = max(t0, self.engine.get_now()) # Never choose times in the past
+                return t0
+            last = t0
+
 
     def choose_percent(self, table):
         percent = random.randrange(0, 100)
