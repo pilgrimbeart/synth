@@ -5,6 +5,7 @@ Produce realistic patterns of occupancy
 """
 import logging
 import time
+from functools import lru_cache
 
 #               0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  <- HOURS OF DAY
 t86 =          [0,  0,  0,  0,  0,  0,  0,  1,  9,  9,  7,  7,  5,  7,  6,  5,  6,  7,  8,  1,  0,  0,  0,  0] 
@@ -25,8 +26,29 @@ patterns = {
         "domestic" :        [domestic, domestic, domestic, domestic, domestic, domestic_we, domestic_we]
 }
 
+def pick_pattern(randomfloat):
+    """randomfloat is between [0..1)"""
+    return list(patterns.keys())[int(randomfloat * len(patterns))]
+
+@lru_cache(maxsize=None)
+def average_occupancy():
+    """For all patterns chosen at random"""
+    n = 0
+    c = 0
+    for patt in patterns:
+        for day in patterns[patt]:
+            for chance in day:
+                c += chance
+                n += 1
+    c /= 9
+    c /= float(n)
+    return c
+
 def chance_of_occupied(epoch, pattern_name = "nine_to_five"):
     t = time.gmtime(epoch) # Should be localised using lat/lon if available
     weekday = t.tm_wday  # Monday is 0
     hour = t.tm_hour + t.tm_min/60.0
     return patterns[pattern_name][weekday][int(hour)] * (1.0/9.0)  # Renormalise to 0.0..1.0
+
+if __name__ == "__main__":
+    print(average_occupancy())
