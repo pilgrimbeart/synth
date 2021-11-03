@@ -1,33 +1,28 @@
-{
-    "restart_log" : true,
-    "engine" : {
-        "type" : "sim",
-        "start_time" : "2020-08-01T00:00:00Z",
-        "end_time" :   "2020-08-02T00:00:00Z"
-    },
-    "events" : [
-        {
-            "comment" : "EV charging",
-            "repeats" : 100000,
-            "action": {
+#define INSTALL_EV_POINT
                 "create_device" : {
                     "functions" : {
                         "bytes" : {
                         },
                         "charger" : {
+							"average_charges_per_day" : 0.2,
+							"average_hog_time" : "PT1H"
                         },
                         "firmware" : {
                         },
                         "latlong" : {
+							"init_order" : 1,
                             "generate_addresses" : true,
+							"mandatory_address_fields" : ["address_postal_code", "address_postal_town"],
                             "area_centre" : "Sheffield, UK",
                             "area_radius" : "Edinburgh, UK",
-                            "devices_per_address" : [30,100]
+                            "devices_per_address" : [10,100],
+                            "comment" : "make dpa nice and large to reduce Google Maps lookups"
                         },
                         "comms" : {
                             "reliability" : "rssi",
                             "reliability_above_rssi_knee" : 1.00,
-                            "period" : "PT1H",
+							"reliability_at_worst" : 0.66,
+                            "period" : "PT6H",
                             "suppress_messages" : true
                         },
                         "variable" : [
@@ -35,6 +30,21 @@
                         ]
                     }
                 }
+#enddef
+{
+    "comment" : "100k EV points for a day",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "2021-11-01T00:00:00Z",
+        "end_time" :   "2021-11-02T00:00:00Z"
+    },
+    "events" : [
+        {
+            "comment" : "Install points instantaneously",
+            "repeats" : 100000,
+            "action": {
+				INSTALL_EV_POINT
             }
         }
     ]
