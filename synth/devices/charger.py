@@ -172,7 +172,6 @@ class Charger(Device):
             "fault" : None,
             "occupied" : True
             })
-        # logging.info("Start charging at rate "+str(self.charging_rate_kW)+"kW (will transfer "+str(int(self.energy_to_transfer))+"kWh)")
         self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_charge, self, self)
 
     def tick_check_charge(self, _):
@@ -211,7 +210,6 @@ class Charger(Device):
                     "power" : 0})
                 self.time_finished_charging = self.engine.get_now()
                 self.will_hog_for = random.random() * self.average_hog_time_s
-                # logging.info("Will hog for "+str(int(self.will_hog_for))+"s or until next charge due")
                 self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
 
     def tick_check_blocking(self, _):
@@ -219,14 +217,12 @@ class Charger(Device):
             self.tick_start_charge(0)            # Start charging
         else:
             if self.engine.get_now() >= self.time_finished_charging + self.will_hog_for:
-                # logging.info("Disconnect")
                 self.set_properties({
                     "pilot" : "A",
                     "energy" : 0,
                     "occupied" : False})  # Disconnect
                 self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
             else:
-                # logging.info("Hogging for a further "+str(self.engine.get_now() - (self.time_finished_charging + self.will_hog_for)))
                 self.set_properties({
                     "pilot" : "B",
                     "energy" : int(self.energy_this_charge)
@@ -263,22 +259,18 @@ class Charger(Device):
     def should_charge_at(self, epoch):
         # Given a time, should we charge at it?
         chance = opening_times.chance_of_occupied(epoch, self.opening_time_pattern)
-        # logging.info("Chance of "+self.opening_time_pattern+" is "+str(chance))
         return chance > random.random()
 
     def time_of_next_charge(self):
         last = self.last_charging_start_time or self.engine.get_now()
 
-        # logging.info("time_of_next_charge at "+str(last)+" with opening_time_pattern "+str(self.opening_time_pattern))
         while True: # Keep picking plausible charging times, and use opening_times to tell us how likely each is, until we get lucky
             nominal = DAYS / self.average_charges_per_day
             interval = random.expovariate(1.0/nominal)
             interval = min(interval, nominal * 10)
             interval *= opening_times.average_occupancy()   # Rescale interval to compensate for the average likelihood of opening_times() returning True (so on average we'll hit our target number of charges per day)
             t0 = last + interval
-            # logging.info("Considering "+str(t0))
             if self.should_charge_at(t0):
-                # logging.info("Choosing "+str(t0))
                 t0 = max(t0, self.engine.get_now()) # Never choose times in the past
                 return t0
             last = t0
