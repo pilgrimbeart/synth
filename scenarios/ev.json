@@ -12,7 +12,7 @@
                         "latlong" : {
 							"init_order" : 1,
                             "generate_addresses" : true,
-							"mandatory_address_fields" : ["address_postal_code", "address_postal_town"],
+							"mandatory_address_fields" : ["address_postal_code", "address_postal_town", "address_route", "address_street_number"],
                             "area_centre" : "Sheffield, UK",
                             "area_radius" : "Edinburgh, UK",
                             "devices_per_address" : [2,10]
