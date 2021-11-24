@@ -18,6 +18,7 @@ Device properties created::
             uui :           # Charging session token: a random number for each charging session
             max_kW :        # Max charging power
             monthly_value:  # Approx monthly value of charger
+            occupied:       # True when there is a vehicle present (which may be ICE in which case no charge cycle will occur)
     }
 
 """
@@ -25,6 +26,7 @@ import logging
 import random
 import isodate
 from .helpers import opening_times as opening_times
+from .helpers import ev_mfrs as ev_mfrs
 from common import utils
 from .device import Device
 
@@ -33,7 +35,7 @@ HOURS = MINS * 60
 DAYS = HOURS * 24
 
 DEFAULT_AVERAGE_CHARGES_PER_DAY = 1.0
-DEFAULT_AVERAGE_HOG_TIME = "PT1H"
+DEFAULT_AVERAGE_HOG_TIME = "PT30M"
 
 CHARGE_POLL_INTERVAL_S = 5 * MINS
 
@@ -77,19 +79,29 @@ ALT_FAULT_CODES = { # Some chargers emit different fault codes
     "Overtemperature" : 600
 }
 
+CHANCE_OF_ICEING = 0.1  # For any intended charge cycle, what is the chance that instead someone blocks the charger with a fossil-fuel car (i.e. "occupied" but no charge)
+
 class Charger(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Charger,self).__init__(instance_name, time, engine, update_callback, context, params)
         self.loc_rand = utils.consistent_hash(self.get_property_or_None("address_postal_code")) # Allows us to vary behaviour based on our location
+
+        (mfr,model,max_rate,datasheet) = ev_mfrs.pick_mfr_model_kW_datasheet(self.loc_rand)
+        self.set_properties( {
+            "manufacturer" : mfr,
+            "model" : model,
+            "max_kW" : max_rate,
+            "datasheet" : datasheet,
+            "monthly_value" : max_rate * POWER_TO_MONTHLY_VALUE * random.random() * 2
+        } )
+
         self.opening_time_pattern = opening_times.pick_pattern(self.loc_rand)
-        logging.info("Charger at loc "+str(self.loc_rand)+" has opening time pattern "+str(self.opening_time_pattern))
+        self.set_property("opening_times", opening_times.specification(self.opening_time_pattern))
         self.set_property("device_type", "charger")
         self.set_property("email", self.get_property("address_postal_code").replace(" ","") + "@example.com")
         sevendigits = "%07d" % int(self.loc_rand * 1E7)
         self.set_property("phone", "+1" + sevendigits[0:3] + "555" + sevendigits[3:7])
-        max_rate = self.choose_percent(CHARGER_MAX_RATE_PERCENT)
-        self.set_property("max_kW", max_rate)
-        self.set_property("monthly_value", max_rate * POWER_TO_MONTHLY_VALUE)
+        self.set_property("occupied", False)
         self.average_charges_per_day = params["charger"].get("average_charges_per_day", DEFAULT_AVERAGE_CHARGES_PER_DAY)
         self.average_hog_time_s = isodate.parse_duration(params["charger"].get("average_hog_time", DEFAULT_AVERAGE_HOG_TIME)).total_seconds()
 
@@ -133,6 +145,12 @@ class Charger(Device):
         self.engine.register_event_in(HEARTBEAT_PERIOD, self.tick_heartbeat, self, self)
 
     def tick_start_charge(self, _):
+        # Maybe this is an ICEing, not a charge
+        if random.random() < CHANCE_OF_ICEING:
+            self.set_property("occupied", True)
+            self.engine.register_event_at(self.time_of_next_charge(), self.tick_end_iceing, self, self) # An iceing takes as long as a charge, let's say
+            return
+
         # Faulty points can't charge
         if self.get_property("fault") != None:
             self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
@@ -151,7 +169,8 @@ class Charger(Device):
             "energy" : 0,
             "energy_delta" : 0,
             "power" : self.charging_rate_kW,
-            "fault" : None
+            "fault" : None,
+            "occupied" : True
             })
         # logging.info("Start charging at rate "+str(self.charging_rate_kW)+"kW (will transfer "+str(int(self.energy_to_transfer))+"kWh)")
         self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_charge, self, self)
@@ -203,7 +222,8 @@ class Charger(Device):
                 # logging.info("Disconnect")
                 self.set_properties({
                     "pilot" : "A",
-                    "energy" : 0})  # Disconnect
+                    "energy" : 0,
+                    "occupied" : False})  # Disconnect
                 self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
             else:
                 # logging.info("Hogging for a further "+str(self.engine.get_now() - (self.time_finished_charging + self.will_hog_for)))
@@ -213,6 +233,10 @@ class Charger(Device):
                     })
                 self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
  
+    def tick_end_iceing(self, _):
+        self.set_property("occupied", False)
+        self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
+
     def tick_rectify_fault(self, _):
         logging.info(str(self.get_property("$id")) + " fault rectified")
         self.set_properties({
