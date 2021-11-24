@@ -7,7 +7,12 @@ The *events* section of a scenario file is a list of events to trigger during th
         "at" : "2017-01-01T00:00:00"	# The time at which the event happens (can be relative)
         "action" : {}	# The action to conduct. Generally this create_device, but can also be a client-specific method
 
-The "at" time can be absolute ("2017-01-01T00:00:00"), relative to the previous event ("PT3M") or "end" to schedule events at the end of the simulation.
+The "at" time can be:
+1) An absolute time ("2017-01-01T00:00:00")
+2) A time relative to the previous event ("PT3M" or even "-PT3D" to jump back in time)
+3) At the end of the simulation ("end")
+4) Relative to when the simulation is run ("now-P3D")
+
 A common pattern is to create a sequence of actions all happening at relative times using `at="PTxx"`.
 If the relative time is "PT0S" then the event will be scheduled for the same (*) time as the previous event.
 Relative times can even be negative to add an event *before* the previous event!
@@ -101,6 +106,7 @@ Install an anomaly-analyser::
 # 
 import os, errno
 import sys
+import time
 from datetime import datetime
 import logging
 import json
@@ -233,7 +239,11 @@ class Events():
         at_time = engine.get_now()
         for event in eventList:
             timespec = event.get("at", "PT0S")
-            if timespec == "end":
+            if timespec.startswith("now"):
+                realtime = time.time()
+                delta = isodate.parse_duration(timespec[3:]).total_seconds()
+                at_time = realtime + delta
+            elif timespec == "end":
                 end_time = engine.get_end_time()    # This may not be a time
                 assert type(end_time) in [int, float], "An event is defined at 'end', but simulation end time is not a definitive time"
                 at_time = engine.get_end_time() - 0.001 # Ensure they happen BEFORE the end, as sim end time is non-inclusive
