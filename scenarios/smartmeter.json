@@ -48,7 +48,7 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-P30D",
+        "start_time" : "-P6M",
         "end_time" : null
     },
     "events" : [
@@ -63,13 +63,13 @@
         {   
             "comment" : "Install more meters gradually thereafter (showing a CEO-pleasing installation curve)",
             "repeats" : 3000,
-            "interval" : "PT45M",   // takes three months to install the rest
+            "interval" : "PT115M",   // takes eight months to install the rest
             "time_advance" : false, // Don't advance the "at" time (so subsequent actions will occur relative to the START of this installation)
             INSTALL_METER
         },
         {
             "comment" : "Inject a comms failure in one region",
-            "at" : "P25D",
+            "at" : "now-P3D",
             "action": {
                 "change_property" : {
                     "is_attribute" : true,
