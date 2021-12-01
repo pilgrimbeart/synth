@@ -58,6 +58,7 @@ class Comms(Device):
         self.chance_above_knee = params["comms"].get("reliability_above_rssi_knee", DEFAULT_CHANCE_ABOVE_KNEE)
         self.chance_at_worst = params["comms"].get("reliability_at_worst", DEFAULT_CHANCE_AT_WORST)
         self.rssi_knee = params["comms"].get("rssi_knee", DEFAULT_RSSI_KNEE)
+        self.send_properties_on_reconnect = params["comms"].get("send_properties_on_reconnect", None)
         self.buffer = []
         self.messages_attempted = 0
         self.messages_sent = 0
@@ -133,6 +134,9 @@ class Comms(Device):
                 for e in self.buffer:   # Transmit everything stored while we were offline
                     self.transmit(e[0],e[1],e[2], True)
                 self.buffer = []
+            props = self.get_properties() 
+            props_to_resend = {k: props[k] for k in self.send_properties_on_reconnect}
+            self.set_properties(props_to_resend)
 
         if (not ok) and self.ok_comms:  # Comms going offline
             self.set_property("connected", False)   # Send this *before* stopping comms!

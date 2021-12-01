@@ -21,6 +21,11 @@ Device properties created::
             occupied:       # True when there is a vehicle present (which may be ICE in which case no charge cycle will occur)
     }
 
+There are three things that can get in the way of charging:
+    1) Hogging - a car finishes charging (Pilot goes C->B) and just stays there
+    2) Fault - a charger goes into a fault state
+    3) ICEing - a car arrives in the spot (occupied==True) but doesn't start charging.
+
 """
 import logging
 import random
@@ -38,6 +43,8 @@ DEFAULT_AVERAGE_CHARGES_PER_DAY = 1.0
 DEFAULT_AVERAGE_HOG_TIME = "PT30M"
 
 CHARGE_POLL_INTERVAL_S = 5 * MINS
+
+MIN_GAP_BETWEEN_CHARGES_S = 5 * MINS
 
 CHARGER_MAX_RATE_PERCENT = [ [7, 20],
                              [22, 40],
@@ -106,6 +113,7 @@ class Charger(Device):
         self.average_hog_time_s = isodate.parse_duration(params["charger"].get("average_hog_time", DEFAULT_AVERAGE_HOG_TIME)).total_seconds()
 
         self.last_charging_start_time = None
+        self.last_charging_end_time = None
         self.set_properties( {
             "pilot" : "A",
             "energy" : 0,
@@ -210,9 +218,9 @@ class Charger(Device):
                     "power" : 0})
                 self.time_finished_charging = self.engine.get_now()
                 self.will_hog_for = random.random() * self.average_hog_time_s
-                self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
+                self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_hogging, self, self)
 
-    def tick_check_blocking(self, _):
+    def tick_check_hogging(self, _):
         if self.should_charge_at(self.engine.get_now()):
             self.tick_start_charge(0)            # Start charging
         else:
@@ -227,7 +235,7 @@ class Charger(Device):
                     "pilot" : "B",
                     "energy" : int(self.energy_this_charge)
                     })
-                self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
+                self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_hogging, self, self)
  
     def tick_end_iceing(self, _):
         self.set_property("occupied", False)
@@ -262,18 +270,17 @@ class Charger(Device):
         return chance > random.random()
 
     def time_of_next_charge(self):
-        last = self.last_charging_start_time or self.engine.get_now()
+        # last = self.last_charging_start_time or self.engine.get_now() # Why from start? For statistical purity probably, but risks trying to start a charge in the past?
+        t0 = self.engine.get_now() + MIN_GAP_BETWEEN_CHARGES_S    # This ASSUMES that we're asking this question at the end of a charge (sometimes at least)
 
         while True: # Keep picking plausible charging times, and use opening_times to tell us how likely each is, until we get lucky
+            if self.should_charge_at(t0):
+                return t0
             nominal = DAYS / self.average_charges_per_day
             interval = random.expovariate(1.0/nominal)
             interval = min(interval, nominal * 10)
             interval *= opening_times.average_occupancy()   # Rescale interval to compensate for the average likelihood of opening_times() returning True (so on average we'll hit our target number of charges per day)
-            t0 = last + interval
-            if self.should_charge_at(t0):
-                t0 = max(t0, self.engine.get_now()) # Never choose times in the past
-                return t0
-            last = t0
+            t0 += interval
 
 
     def choose_percent(self, table):

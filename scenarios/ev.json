@@ -22,7 +22,8 @@
                             "reliability_above_rssi_knee" : 1.00,
 							"reliability_at_worst" : 0.66,
                             "period" : "PT6H",
-                            "suppress_messages" : true
+                            "suppress_messages" : true,
+                            "send_properties_on_reconnect" : ["pilot", "fault", "occupied"]
                         },
                         "variable" : [
                             {"name" : "icon", "value" : "charging-station"}
