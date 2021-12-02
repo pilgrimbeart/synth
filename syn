@@ -77,7 +77,7 @@ def run(account, scenario):
     delete_file(LOG_DIR + account + ".csv")
     delete_file(LOG_DIR + account + ".nohup")
 
-    filelist=glob.glob(LOG_DIR + account + "\0*.json")
+    filelist=glob.glob(LOG_DIR + account + "0*.json")
     for file in filelist:
         delete_file(file)
 
