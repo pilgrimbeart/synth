@@ -30,6 +30,7 @@ There are three things that can get in the way of charging:
 import logging
 import random
 import isodate
+import datetime
 from .helpers import opening_times as opening_times
 from .helpers import ev_mfrs as ev_mfrs
 from common import utils
@@ -39,8 +40,10 @@ MINS = 60
 HOURS = MINS * 60
 DAYS = HOURS * 24
 
-DEFAULT_AVERAGE_CHARGES_PER_DAY = 1.0
+INTERVAL_BETWEEN_POTENTIAL_CHARGES_S = 1.5 * HOURS  # This isn't precise, but it's fairly proportionate: The bigger it is, the less charging happens
+DEFAULT_AVERAGE_CHARGES_PER_DAY = 20.0   # This isn't really accurate any more, as the model changed. However it should still be proportionate.
 DEFAULT_AVERAGE_HOG_TIME = "PT30M"
+CHANCE_OF_HOGGING = 0.3     # If this is close to 1, implies that cars often charge to full.
 
 CHARGE_POLL_INTERVAL_S = 5 * MINS
 
@@ -109,7 +112,6 @@ class Charger(Device):
         sevendigits = "%07d" % int(self.loc_rand * 1E7)
         self.set_property("phone", "+1" + sevendigits[0:3] + "555" + sevendigits[3:7])
         self.set_property("occupied", False)
-        self.average_charges_per_day = params["charger"].get("average_charges_per_day", DEFAULT_AVERAGE_CHARGES_PER_DAY)
         self.average_hog_time_s = isodate.parse_duration(params["charger"].get("average_hog_time", DEFAULT_AVERAGE_HOG_TIME)).total_seconds()
 
         self.last_charging_start_time = None
@@ -192,7 +194,7 @@ class Charger(Device):
         self.energy_this_charge += energy_transferred
         self.energy_to_transfer -= energy_transferred
         fault = self.pick_a_fault(CHARGE_POLL_INTERVAL_S)    # Faults only occur while charging
-        if fault != None:
+        if fault != None:                                                           # FAULT
             logging.info(str(self.get_property("$id")) + " " + str(fault) + " fault while charging")
             self.set_properties({
                "pilot" : "F",
@@ -203,39 +205,46 @@ class Charger(Device):
                })
             self.engine.register_event_in(random.random() * FAULT_RECTIFICATION_TIME_AV * 2, self.tick_rectify_fault, self, self)
         else:
-            if self.energy_to_transfer > 0: # Still charging
+            if self.energy_to_transfer > 0:                                         # STILL CHARGING
                 self.set_properties({
-                    "pilot" : "C",
+                    # "pilot" : "C",
                     "energy" : int(self.energy_this_charge),
                     "energy_delta" : energy_transferred,
                     "power" : self.charging_rate_kW })
                 self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_charge, self, self)
-            else:   # Finished charging
-                self.set_properties({
-                    "pilot" : "B",
-                    "energy" : int(self.energy_this_charge),
-                    "energy_delta" : 0,
-                    "power" : 0})
+            else:                                                                   # FINISHED CHARGING
                 self.time_finished_charging = self.engine.get_now()
-                self.will_hog_for = random.random() * self.average_hog_time_s
-                self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_hogging, self, self)
+                if random.random() < CHANCE_OF_HOGGING:
+                    self.will_hog_for = random.random() * self.average_hog_time_s   # HOGGING
+                    self.set_properties({
+                        "pilot" : "B",
+                        "energy" : int(self.energy_this_charge),
+                        "energy_delta" : 0,
+                        "power" : 0})
+                    self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_hogging, self, self)
+                else:                                                               # FREE
+                    self.set_properties({
+                        "pilot" : "A",
+                        "occupied" : False,
+                        "energy" : 0,
+                        "energy_delta" : 0,
+                        "power" : 0})
+                    tonc = self.time_of_next_charge()
+                    self.engine.register_event_at(tonc, self.tick_start_charge, self, self)
 
     def tick_check_hogging(self, _):
-        if self.should_charge_at(self.engine.get_now()):
-            self.tick_start_charge(0)            # Start charging
+        if self.engine.get_now() >= self.time_finished_charging + self.will_hog_for:
+            self.set_properties({
+                "pilot" : "A",
+                "energy" : 0,
+                "occupied" : False})  # Disconnect
+            self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
         else:
-            if self.engine.get_now() >= self.time_finished_charging + self.will_hog_for:
-                self.set_properties({
-                    "pilot" : "A",
-                    "energy" : 0,
-                    "occupied" : False})  # Disconnect
-                self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
-            else:
-                self.set_properties({
-                    "pilot" : "B",
-                    "energy" : int(self.energy_this_charge)
-                    })
-                self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_hogging, self, self)
+            self.set_properties({
+                "pilot" : "B",
+                "energy" : int(self.energy_this_charge)
+                })
+            self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_hogging, self, self)
  
     def tick_end_iceing(self, _):
         self.set_property("occupied", False)
@@ -267,7 +276,8 @@ class Charger(Device):
     def should_charge_at(self, epoch):
         # Given a time, should we charge at it?
         chance = opening_times.chance_of_occupied(epoch, self.opening_time_pattern)
-        return chance > random.random()
+        yes = chance > random.random()
+        return yes
 
     def time_of_next_charge(self):
         # last = self.last_charging_start_time or self.engine.get_now() # Why from start? For statistical purity probably, but risks trying to start a charge in the past?
@@ -276,11 +286,12 @@ class Charger(Device):
         while True: # Keep picking plausible charging times, and use opening_times to tell us how likely each is, until we get lucky
             if self.should_charge_at(t0):
                 return t0
-            nominal = DAYS / self.average_charges_per_day
-            interval = random.expovariate(1.0/nominal)
-            interval = min(interval, nominal * 10)
-            interval *= opening_times.average_occupancy()   # Rescale interval to compensate for the average likelihood of opening_times() returning True (so on average we'll hit our target number of charges per day)
-            t0 += interval
+            # nominal = DAYS / self.average_charges_per_day
+            # interval = random.expovariate(1.0/nominal)
+            # interval = min(interval, nominal * 10)
+            # interval *= opening_times.average_occupancy()   # Rescale interval to compensate for the average likelihood of opening_times() returning True (so on average we'll hit our target number of charges per day)
+            # t0 += interval
+            t0 += random.random() * INTERVAL_BETWEEN_POTENTIAL_CHARGES_S 
 
 
     def choose_percent(self, table):
