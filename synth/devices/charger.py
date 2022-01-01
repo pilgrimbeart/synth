@@ -12,7 +12,7 @@ Configurable parameters::
 Device properties created::
 
     {
-            pilot : A|B|C|F # Pilot signal indicates charging state (A=Available, B=finished, C=Charging, F=fault)
+            pilot : A|B|C|F # Pilot signal indicates charging state (A=Available, B=Blocking, C=Charging, F=Fault)
             energy:         # kWh transferred so far this session (ramp which rises)
             power:          # instantaneous kW
             uui :           # Charging session token: a random number for each charging session
@@ -40,10 +40,11 @@ MINS = 60
 HOURS = MINS * 60
 DAYS = HOURS * 24
 
-INTERVAL_BETWEEN_POTENTIAL_CHARGES_S = 1.5 * HOURS  # This isn't precise, but it's fairly proportionate: The bigger it is, the less charging happens
-DEFAULT_AVERAGE_CHARGES_PER_DAY = 20.0   # This isn't really accurate any more, as the model changed. However it should still be proportionate.
-DEFAULT_AVERAGE_HOG_TIME = "PT30M"
-CHANCE_OF_HOGGING = 0.3     # If this is close to 1, implies that cars often charge to full.
+MAX_INTERVAL_BETWEEN_POTENTIAL_CHARGES_S = 10 * HOURS   # Not precise, but smaller means more charging
+DEFAULT_AVERAGE_BLOCKING_TIME = "PT60M"
+CHANCE_OF_BLOCKING = 0.2                                # If this is close to 1, implies that cars often charge to full.
+CHANCE_OF_ZERO_ENERGY_CHARGE = 0.01 
+CHANCE_OF_SILENT_FAULT = 0.005                          # A silent fault is one that isn't flagged with a fault code, but nevertheless prevents charging (e.g. external damage)
 
 CHARGE_POLL_INTERVAL_S = 5 * MINS
 
@@ -63,6 +64,13 @@ CHARGE_RATES_KW_PERCENT = [ [3,  10],
                             [150,5] ]
 
 MAX_KWH_PER_CHARGE = 70
+DWELL_TIME_MIN_S = 20 * MINS
+DWELL_TIME_MAX_S = 8 * HOURS
+DWELL_TIME_AV_S = 1 * HOURS
+KWH_PER_CHARGE_MIN = 4
+KWH_PER_CHARGE_MAX = 70
+KWH_PER_CHARGE_AV = 20
+
 
 HEARTBEAT_PERIOD = 15 * MINS
 
@@ -89,7 +97,13 @@ ALT_FAULT_CODES = { # Some chargers emit different fault codes
     "Overtemperature" : 600
 }
 
-CHANCE_OF_ICEING = 0.1  # For any intended charge cycle, what is the chance that instead someone blocks the charger with a fossil-fuel car (i.e. "occupied" but no charge)
+CHANCE_OF_ICEING = 0.02  # For any intended charge cycle, what is the chance that instead someone blocks the charger with a fossil-fuel car (i.e. "occupied" but no charge)
+
+def expo_random(min_val, max_val, av_val):
+    n = random.expovariate(1/av_val)
+    n = min(max_val, n)
+    n = max(min_val, n)
+    return n
 
 class Charger(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
@@ -112,7 +126,7 @@ class Charger(Device):
         sevendigits = "%07d" % int(self.loc_rand * 1E7)
         self.set_property("phone", "+1" + sevendigits[0:3] + "555" + sevendigits[3:7])
         self.set_property("occupied", False)
-        self.average_hog_time_s = isodate.parse_duration(params["charger"].get("average_hog_time", DEFAULT_AVERAGE_HOG_TIME)).total_seconds()
+        self.average_blocking_time_s = isodate.parse_duration(params["charger"].get("average_blocking_time", DEFAULT_AVERAGE_BLOCKING_TIME)).total_seconds()
 
         self.last_charging_start_time = None
         self.last_charging_end_time = None
@@ -123,6 +137,7 @@ class Charger(Device):
             "power" : 0,
             "fault" : None
             })
+        self.silent_fault = False
 
         self.engine.register_event_in(HEARTBEAT_PERIOD, self.tick_heartbeat, self, self)
         self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
@@ -166,11 +181,22 @@ class Charger(Device):
             self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
             return
 
+        if random.random() < CHANCE_OF_SILENT_FAULT:    # Start a silent fault
+            self.silent_fault = True
+
+        if self.silent_fault:   # For now, silent faults never end
+            self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
+            return
+
         self.uui = random.randrange(0,99999999)
         rate = self.choose_percent(CHARGE_RATES_KW_PERCENT) # What rate would car like to charge?
         rate = min(rate, self.get_property("max_kW"))       # Limit to charger capacity
         self.charging_rate_kW = rate
-        self.energy_to_transfer = random.random() * MAX_KWH_PER_CHARGE
+        if random.random() < CHANCE_OF_ZERO_ENERGY_CHARGE:
+            logging.info(self.get_property("$id")+": Starting zero energy charge")
+            self.charging_rate_kW = 0 
+        self.energy_to_transfer = expo_random(KWH_PER_CHARGE_MIN, KWH_PER_CHARGE_MAX, KWH_PER_CHARGE_AV)
+        self.max_charging_time_s = expo_random(DWELL_TIME_MIN_S, DWELL_TIME_MAX_S, DWELL_TIME_AV_S)
         self.energy_this_charge = 0
         self.last_charging_start_time = self.engine.get_now()
         self.set_properties({
@@ -205,7 +231,7 @@ class Charger(Device):
                })
             self.engine.register_event_in(random.random() * FAULT_RECTIFICATION_TIME_AV * 2, self.tick_rectify_fault, self, self)
         else:
-            if self.energy_to_transfer > 0:                                         # STILL CHARGING
+            if (self.energy_to_transfer > 0) and (self.engine.get_now() - self.last_charging_start_time < self.max_charging_time_s):    # STILL CHARGING
                 self.set_properties({
                     # "pilot" : "C",
                     "energy" : int(self.energy_this_charge),
@@ -214,15 +240,15 @@ class Charger(Device):
                 self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_charge, self, self)
             else:                                                                   # FINISHED CHARGING
                 self.time_finished_charging = self.engine.get_now()
-                if random.random() < CHANCE_OF_HOGGING:
-                    self.will_hog_for = random.random() * self.average_hog_time_s   # HOGGING
+                if random.random() < CHANCE_OF_BLOCKING:
+                    self.will_block_for = random.random() * self.average_blocking_time_s   # BLOCKING
                     self.set_properties({
                         "pilot" : "B",
                         "energy" : int(self.energy_this_charge),
                         "energy_delta" : 0,
                         "power" : 0})
-                    self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_hogging, self, self)
-                else:                                                               # FREE
+                    self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
+                else:                                                               # AVAILABLE
                     self.set_properties({
                         "pilot" : "A",
                         "occupied" : False,
@@ -232,8 +258,8 @@ class Charger(Device):
                     tonc = self.time_of_next_charge()
                     self.engine.register_event_at(tonc, self.tick_start_charge, self, self)
 
-    def tick_check_hogging(self, _):
-        if self.engine.get_now() >= self.time_finished_charging + self.will_hog_for:
+    def tick_check_blocking(self, _):
+        if self.engine.get_now() >= self.time_finished_charging + self.will_block_for:
             self.set_properties({
                 "pilot" : "A",
                 "energy" : 0,
@@ -244,14 +270,13 @@ class Charger(Device):
                 "pilot" : "B",
                 "energy" : int(self.energy_this_charge)
                 })
-            self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_hogging, self, self)
+            self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
  
     def tick_end_iceing(self, _):
         self.set_property("occupied", False)
         self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
 
     def tick_rectify_fault(self, _):
-        logging.info(str(self.get_property("$id")) + " fault rectified")
         self.set_properties({
             "pilot" : "A",
             "fault" : None
@@ -291,7 +316,7 @@ class Charger(Device):
             # interval = min(interval, nominal * 10)
             # interval *= opening_times.average_occupancy()   # Rescale interval to compensate for the average likelihood of opening_times() returning True (so on average we'll hit our target number of charges per day)
             # t0 += interval
-            t0 += random.random() * INTERVAL_BETWEEN_POTENTIAL_CHARGES_S 
+            t0 += random.random() * MAX_INTERVAL_BETWEEN_POTENTIAL_CHARGES_S 
 
 
     def choose_percent(self, table):
