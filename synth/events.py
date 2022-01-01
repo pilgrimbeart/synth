@@ -240,7 +240,9 @@ class Events():
         for event in eventList:
             timespec = event.get("at", "PT0S")
             if timespec.startswith("now"):
-                realtime = time.time()
+                dt = datetime.fromtimestamp(time.time()) # Take time in whole seconds (so if we ever want to repeat the run, we can start it at the exact same time)
+                dt.microsecond = 0
+                realtime = dt.timestamp()
                 delta = isodate.parse_duration(timespec[3:]).total_seconds()
                 at_time = realtime + delta
             elif timespec == "end":
