@@ -329,7 +329,7 @@ if __name__ == "__main__":
 
     check_install()
 
-    if True:    # Profile
+    if False:    # Profile
         import cProfile, pstats
         cProfile.run('main()', 'profiling')
         p = pstats.Stats('profiling')
