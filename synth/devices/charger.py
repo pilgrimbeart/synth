@@ -48,7 +48,7 @@ CHANCE_OF_SILENT_FAULT = 0.005                          # A silent fault is one 
 
 CHARGE_POLL_INTERVAL_S = 5 * MINS
 
-MIN_GAP_BETWEEN_CHARGES_S = 5 * MINS
+MIN_GAP_BETWEEN_CHARGES_S = 10 * MINS
 
 CHARGER_MAX_RATE_PERCENT = [ [7, 20],
                              [22, 40],
