@@ -3,6 +3,8 @@
                     "functions" : {
                         "bytes" : {
                         },
+						"carbon" : {
+						},
                         "charger" : {
 							"average_hog_time" : "PT1H"
                         },
