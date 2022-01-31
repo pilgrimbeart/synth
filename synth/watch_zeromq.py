@@ -25,10 +25,10 @@ from datetime import datetime
 import zeromq_rx
 
 def printIt(params):
-    print datetime.now(),str(params)
+    print(datetime.now(),str(params))
 
 if __name__ == "__main__":
     zeromq_rx.init(printIt)
-    print "Watching..."
+    print("Watching...")
     while True:
         time.sleep(1)    
