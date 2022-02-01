@@ -81,8 +81,8 @@ import multiprocessing, subprocess, threading
 import json, time, logging, sys, re, datetime
 import zeromq_tx
 
-WEB_PORT = 80 # HTTPS. If < 1000 then this process must be run with elevated privileges
-PING_TIMEOUT = 60*10 # We expect to get pinged every N seconds
+WEB_PORT = 80 # HTTP. If < 1000 then this process must be run with elevated privileges
+PING_TIMEOUT = 60 * 30 # We expect to get pinged every N seconds
 
 CERT_DIRECTORY = "../synth_accounts/"
 
