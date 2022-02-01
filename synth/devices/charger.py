@@ -156,6 +156,7 @@ class Charger(Device):
 
     def external_event(self, event_name, arg):
         super(Charger,self).external_event(event_name, arg)
+        logging.info("Handling external event for "+str(self.properties["$id"]))
         if event_name=="resetVoltageExcursion":
             logging.info("Resetting voltage excursion on device "+self.properties["$id"])
             self.set_properties({
@@ -163,6 +164,8 @@ class Charger(Device):
                     "fault" : None
                     })
             self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
+        else:
+            logging.error("Ignoring unrecognised external event "+str(event_name))
 
     def close(self):
         super(Charger,self).close()
