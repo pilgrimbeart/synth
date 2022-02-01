@@ -63,6 +63,7 @@ def socket_send(json_msg):
     try:
         if g_zeromq_socket == None:
             create_socket()
+            time.sleep(1)   # It seems that if you send a message immediately after creating socket, it gets lost
         g_zeromq_socket.send(json.dumps(json_msg).encode('ascii'))
     except:
         logging.error("ERROR in socket_send")
