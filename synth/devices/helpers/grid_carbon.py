@@ -77,15 +77,19 @@ def next_tick(epoch_s):
 
 def find_intensity(epoch_s, look_in_next_day=False):
     """epoch_s must be rounded to a half-hour"""
-    print("find_intensity",epoch_s, look_in_next_day)
     if look_in_next_day:
         adder = 60*60*24
     else:
         adder = 0
     iso_day = datetime.fromtimestamp(epoch_s + adder).isoformat()[0:10]
     iso_day_and_time = datetime.fromtimestamp(epoch_s).isoformat()[0:16]    # Just up to the minutes
+
     url = "https://" + API_DOMAIN + API_URL + iso_day  # API takes just the day
-    halfhours = json.loads(requests.get(url).text)["data"]
+    j = json.loads(requests.get(url).text)
+    if "data" not in j:
+        logging.error("Missing 'data' field from carbon api: " + str(j))
+        return (None, False)
+    halfhours = j["data"]
 
     for hh in halfhours:
         if(hh["from"].startswith(iso_day_and_time)):
@@ -95,39 +99,42 @@ def find_intensity(epoch_s, look_in_next_day=False):
                 return (hh["intensity"]["forecast"], True)      # then use the forecasted one (this can happen if you ask too close to "now")
     return (None, False)
 
-def get_intensity(epoch_s):
+def get_intensity(epoch_s, use_cache = True):
     """Given a time, find the reported grid carbon"""
     t = roundit(epoch_s, 0) # Round to actual half-hour, as that's what's reported
 
-    if is_in_cache(t):
-        intensity = read_cache(t)
-        return intensity
+    if use_cache:
+        if is_in_cache(t):
+            intensity = read_cache(t)
+            return intensity
 
     (intensity, forecasted) = find_intensity(t, look_in_next_day=False)   # Look in expected day
     if intensity is None:                                   # If can't find it, try day after (since some days seem to be stored as 11pm-11pm)
         (intensity, forecasted) = find_intensity(t, look_in_next_day=True)
 
     # if (intensity is not None) and not forecasted     # Don't thrash the API if we hit spots where data is missing
-    write_cache(t, intensity)
+    if use_cache:
+        write_cache(t, intensity)
 
     return intensity
 
 if __name__ == "__main__":
     def test(datestr):
-        print(datestr,":",get_intensity(ISO8601.to_epoch_seconds(datestr)))
+        print(datestr,":",get_intensity(ISO8601.to_epoch_seconds(datestr), False))
 
-    test("2018-01-01T00:00:00")
-    test("2018-01-01T00:00:01")
-    test("2018-01-01T00:01:00")
-    test("2018-01-01T00:29:00")
-    test("2018-01-01T00:30:00")
-    test("2018-01-01T00:31:00")
-    test("2018-01-01T00:59:00")
-    test("2018-01-01T01:00:00")
-    test("2018-01-01T01:01:00")
-    test("2018-01-01T01:30:00")
-    test("2021-01-02T03:04:05")
-    test("2021-01-01T23:59:00")
-    test("2022-01-25T00:00:00")
-    test("2022-01-25T17:00:00")
-    test("2021-12-26T15:00:00")
+    test("2022-02-13T10:45:00")
+    # test("2018-01-01T00:00:00")
+    # test("2018-01-01T00:00:01")
+    # test("2018-01-01T00:01:00")
+    # test("2018-01-01T00:29:00")
+    # test("2018-01-01T00:30:00")
+    # test("2018-01-01T00:31:00")
+    # test("2018-01-01T00:59:00")
+    # test("2018-01-01T01:00:00")
+    # test("2018-01-01T01:01:00")
+    # test("2018-01-01T01:30:00")
+    # test("2021-01-02T03:04:05")
+    # test("2021-01-01T23:59:00")
+    # test("2022-01-25T00:00:00")
+    # test("2022-01-25T17:00:00")
+    # test("2021-12-26T15:00:00")
