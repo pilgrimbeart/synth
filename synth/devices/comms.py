@@ -135,8 +135,9 @@ class Comms(Device):
                     self.transmit(e[0],e[1],e[2], True)
                 self.buffer = []
             props = self.get_properties() 
-            props_to_resend = {k: props[k] for k in self.send_properties_on_reconnect}
-            self.set_properties(props_to_resend)
+            if self.send_properties_on_reconnect is not None:
+                props_to_resend = {k: props[k] for k in self.send_properties_on_reconnect}
+                self.set_properties(props_to_resend)
 
         if (not ok) and self.ok_comms:  # Comms going offline
             self.set_property("connected", False)   # Send this *before* stopping comms!
