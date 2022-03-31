@@ -28,6 +28,7 @@ There are three things that can get in the way of charging:
 
 """
 import logging
+import time
 import random
 import isodate
 import datetime
@@ -213,7 +214,7 @@ class Charger(Device):
             self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
             return
 
-        self.uui = Charger.myRandom.randrange(0, 99999999)
+        self.uui = (hash(self.get_property("$id")) + hash(time.time())) % int(1E10)  # Needs to be unique even on re-runs of Synth. So we use real (clock) time, not event time (which normally we'd NEVER do in a device behaviour)
         rate = self.choose_percent(CHARGE_RATES_KW_PERCENT) # What rate would car like to charge?
         rate = min(rate, self.get_property("max_kW"))       # Limit to charger capacity
         self.charging_rate_kW = rate
