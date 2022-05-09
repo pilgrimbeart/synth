@@ -28,9 +28,13 @@ from .model import Model
 class Latlong(Model):
     def __init__(self, context, params, properties):
 
-        picker = geo.geo_pick(context, params)
-        (lon, lat) = picker.pick()
-        properties.update( { 'latitude' : lat, 'longitude' : lon } )
+        while True:
+            picker = geo.geo_pick(context, params)
+            (lon, lat) = picker.pick()
+            properties.update( { 'latitude' : lat, 'longitude' : lon } )
 
-        properties.update(picker.addresses())
+            properties.update(picker.addresses())
+            
+            if "address_postal_code" in properties: # Insist on postal code
+                break
 

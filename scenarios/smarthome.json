@@ -1,0 +1,25 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P7D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "comment" : "smart homes, via channel partners",
+            "action" : {
+                "use_model" : [
+                    {	"hierarchy" : "channel_partner/home" },
+					{	"model" : { "channel_partner" : "[('Ovo','BG','EDF')]", "home" : "Home_#10#" },
+						"properties" : { "latlong" : { "generate_addresses" : true, "area_centre" : "Birmingham, UK", "area_radius" : "Southampton, UK", "mandatory_address_fields" : ["address_postal_code"]} },
+						"devices" : [
+							{ "energy" : {} },
+							{ "hvac" : {}, "occupancy" : {}, "weather" : {}, "comms" : {}, "battery" : {} }
+						]
+					}
+                ]
+            }
+        }
+    ]
+}

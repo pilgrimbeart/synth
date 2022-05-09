@@ -165,7 +165,6 @@ class Model():
                 self.hierarchy = elem["hierarchy"].split("/")
             elif "model" in elem:
                 for e in enumerate_model_counters(elem):
-                    # logging.info("model element is "+str(e))
                     self.render_smart_properties(e)
                     self.models.append(e)
             else:
@@ -198,7 +197,6 @@ class Model():
         new_props = {}
         if "properties" in elem:
             for n,v in elem["properties"].copy().items():
-                # logging.info("Rendering model smart properties "+str((n,v)))
                 if type(v) == dict:
                     model = importer.get_class('model', n)
                     model(self.context, v, new_props)
