@@ -26,7 +26,19 @@
                             "send_properties_on_reconnect" : ["pilot", "fault", "occupied"]
                         },
                         "variable" : [
-                            {"name" : "icon", "value" : "charging-station"}
+                            {"name" : "icon", "value" : "charging-station"},
+                            {
+                                "name" : "voltage",
+                                "timefunction" : {
+                                    "sinewave" : {
+                                        "period" : ["PT7M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
+                                        "overall_amplitude" : 25.0,
+                                        "overall_offset" : 66,
+                                        "sample_period" : "PT3H",
+                                        "randomise_phase_by" : "$id",
+                                        "precision" : 1
+                                }
+                            }
                         ]
                     }
                 }
