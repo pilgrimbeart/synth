@@ -224,9 +224,11 @@ def main():
     global g_asked_to_pause
     
     def incomingAsyncEvent(packet):    # CAUTION: Called asynchronously from the ZeroMQ rx thread
+        logging.info("incoming async event "+str(packet))
         if "action" in packet:
             if packet["action"] == "event":
                 if packet["headers"]["Instancename"] == g_instance_name:
+                    logging.info("Matches this instance name, so dispatching")
                     engine.register_event_in(0, device_factory.external_event, packet, None)
             elif packet["action"] == "announce":
                 logging.log(packet["severity"], "[broadcast message] "+packet["message"])
@@ -329,7 +331,7 @@ if __name__ == "__main__":
 
     check_install()
 
-    if True:    # Profile
+    if False:    # Profile
         import cProfile, pstats
         cProfile.run('main()', 'profiling')
         p = pstats.Stats('profiling')

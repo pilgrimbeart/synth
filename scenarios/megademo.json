@@ -6,6 +6,14 @@
         "end_time" : null
     },
     "events" : [
+		{
+			"action" : {
+				"periodic_metadata" : {
+					"interval" : "PT10M",
+					"metadata" : ["address_administrative_area_level_2", "address_country", "address_locality", "address_postal_code", "address_postal_town", "address_route", "address_street_number", "customer", "icon", "owner_name", "period", "Region", "address_administrative_area_level_1", "store_manager_email", "building", "category", "device_type", "factoryFirmware", "firmware", "floor", "hardware_version", "hospital", "label", "latitude", "longitude", "meter_type", "model", "name", "positions_avaiable", "positions_total", "sensorType", "site", "site_type", "userId", "vendor", "zone"]
+				}
+			}
+		},
         {   "action" : { "create_device" : { "functions" : { "variable" : [ { "name" : "pulsewave", "timefunction" : { "pulsewave" : { "interval" : "PT1M", "delay" : "PT0M", "phase_absolute" : true } } },
                                                                             { "name" : "period", "value" : "PT1M" }, { "name" : "device_type", "value" : "test" } ] } } }
         },

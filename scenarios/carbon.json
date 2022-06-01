@@ -1,0 +1,21 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P2D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "repeats" : 3,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+						"carbon" : {}
+                    }
+                }
+            }
+        }
+    ]
+}
+

@@ -1,0 +1,87 @@
+{
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-P7D",
+        "end_time" : null
+    },
+    "events" : [
+        {
+            "comment" : "smart homes, via channel partners",
+            "action" : {
+                "use_model" : [
+                    {	"hierarchy" : "channel_partner/home" },
+					{	"model" : { "channel_partner" : "[('Ovo','BG','EDF')]", "home" : "Home_#30#" },
+						"properties" : { "latlong" : { "generate_addresses" : true, "area_centre" : "Birmingham, UK", "area_radius" : "Southampton, UK", "mandatory_address_fields" : ["address_postal_code"]} },
+						"interval" : "PT30S",
+						"devices" : [
+							{
+								"basic" : {
+									"clock_skew_max_advance" : "PT0M",
+									"clock_skew_max_retard" : "-PT0M",
+									"always_send_metadata" : [
+										"address_administrative_area_level_1",
+										"address_administrative_area_level_2",
+										"address_country",
+										"address_locality",
+										"address_postal_code",
+										"address_postal_town",
+										"address_street_number",
+										"channel_partner",
+										"device_type",
+										"home",
+										"icon",
+										"is_demo_device",
+										"label",
+										"latitude",
+										"longitude",
+										"meter_type"
+									]
+								},
+								"energy" : {},
+								"comms" : {
+									"reliability" : "rssi",
+                            		"reliability_above_rssi_knee" : 0.98,
+                            		"reliability_at_worst" : 0.60,
+                            		"period" : "PT24H"
+								}
+							},
+							{	
+								"basic" : {
+									"always_send_metadata" : [
+										"address_administrative_area_level_1",
+										"address_administrative_area_level_2",
+										"address_country",
+										"address_locality",
+										"address_postal_code",
+										"address_postal_town",
+										"address_street_number",
+										"channel_partner",
+										"device_type",
+										"home",
+										"icon",
+										"is_demo_device",
+										"label",
+										"latitude",
+										"longitude",
+										"meter_type"
+									]
+								},
+								"hvac" : {},
+								"occupancy" : {},
+								"weather" : {},
+								"comms" : {
+									"reliability" : "rssi",
+                            		"reliability_above_rssi_knee" : 1.00,
+                            		"reliability_at_worst" : 0.66,
+                            		"period" : "PT6H"
+								},
+								 "battery" : {}
+							}
+						]
+					}
+                ]
+            }
+        }
+    ]
+}

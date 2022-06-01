@@ -122,6 +122,8 @@ import functools
 
 LOG_DIRECTORY = "../synth_logs/"
 
+METADATA_DIRECTORY = "/tmp/synth_metadata/"
+
 def mkdir_p(path):
     try:
         os.makedirs(path)
@@ -180,6 +182,25 @@ class Events():
             logging.info("change_property "+str(params))
             for the_d in d:
                 set_it(the_d)
+
+        def dump_periodic_metadata(params):
+            interval = isodate.parse_duration(params["interval"]).total_seconds()
+            metadata_list = set(params["metadata"])
+            metadata = []
+            for d in device_factory.get_devices():
+                p = {}
+                for k,v in d.get_properties().items():
+                    if k in metadata_list:
+                        p[k] = v
+                if len(p) > 0: 
+                    # logging.info("For device " + d.get_property("$id") + " setting properties "+str(p))
+                    # d.set_properties(p)
+                    p["$id"] = d.get_property("$id")
+                    metadata.append(p)
+            fname_stem = METADATA_DIRECTORY + instance_name
+            open(fname_stem + ".tmp","wt").write(json.dumps(metadata))
+            os.rename(fname_stem + ".tmp", fname_stem + ".json")    # So change is atomic (don't want ^C to leave partially-written file)
+            engine.register_event_at(engine.get_now() + interval, dump_periodic_metadata, params, None)
 
         def client_action(args):
             (name, params) = args
@@ -240,7 +261,9 @@ class Events():
         for event in eventList:
             timespec = event.get("at", "PT0S")
             if timespec.startswith("now"):
-                realtime = time.time()
+                dt = datetime.fromtimestamp(time.time()) # Take time in whole seconds (so if we ever want to repeat the run, we can start it at the exact same time)
+                dt.microsecond = 0
+                realtime = dt.timestamp()
                 delta = isodate.parse_duration(timespec[3:]).total_seconds()
                 at_time = realtime + delta
             elif timespec == "end":
@@ -302,6 +325,8 @@ class Events():
                     logging.info("Installing analyser")
                     self.analyser = analyse.Analyser()
                     self.update_callbacks.append(self.analyser.process)
+                elif "periodic_metadata" in action:
+                    engine.register_event_at(insert_time, dump_periodic_metadata, action["periodic_metadata"], None)
                 else:   # Plug-in actions
                     name = action.keys()[0]
                     if not name.startswith("client."):

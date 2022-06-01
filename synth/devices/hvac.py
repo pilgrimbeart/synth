@@ -94,16 +94,23 @@ class Hvac(Device):
         return solar.sun_bright(self.engine.get_now(), lon, lat)
 
     def external_temp_and_insolation(self):
+        """Get these from this device, if the behaviours exist on this device, else from another device at the same level of the model"""
         external_temperature = 12
         cloud_cover = 0.5
         found_weather = False
-        for peer in self.model.get_peers_and_below(self):
-            if peer.get_property_or_None("device_type") == "weather":
-                found_weather = True
-                external_temperature = peer.get_property("external_temperature")
-                cloud_cover = peer.get_property("cloud_cover")
+        if self.property_exists("external_temperature"):        # Weather sensors exists on this device
+            external_temperature = self.get_property("external_temperature")
+            cloud_cover = self.get_property("cloud_cover")
+            found_weather = True
+        else:
+            for peer in self.model.get_peers_and_below(self):   # Look for weather sensor at same level in hierarchy
+                if peer.get_property_or_None("device_type") == "weather":
+                    found_weather = True
+                    external_temperature = peer.get_property("external_temperature")
+                    cloud_cover = peer.get_property("cloud_cover")
+
         if not found_weather:
-            logging.warning("No weather sensor found in same model as HVAC device "+str(self.get_property("$id")))
+            logging.warning("No weather sensor found in same device or same level of model as HVAC device "+str(self.get_property("$id")))
 
         sun = self.get_sun()
         insolation = sun * cloud_cover

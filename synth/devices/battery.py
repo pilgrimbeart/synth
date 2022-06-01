@@ -33,8 +33,8 @@ class Battery(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         """Set battery life with a normal distribution which won't exceed 2 standard deviations."""
         super(Battery,self).__init__(instance_name, time, engine, update_callback, context, params)
-        mu = isodate.parse_duration(params["battery"].get("life_mu", "P1M")).total_seconds()
-        sigma = isodate.parse_duration(params["battery"].get("life_sigma", "PT0S")).total_seconds()
+        mu = isodate.parse_duration(params["battery"].get("life_mu", "P365D")).total_seconds()
+        sigma = isodate.parse_duration(params["battery"].get("life_sigma", "P90D")).total_seconds()
         life = random.normalvariate(mu, sigma)
         life = min(life, mu+2*sigma)
         life = max(life, mu-2*sigma)

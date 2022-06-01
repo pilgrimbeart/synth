@@ -66,6 +66,7 @@ import json
 import copy
 import device_factory
 import random
+import isodate
 from os import path
 from common import importer
 from common import randstruct
@@ -155,23 +156,28 @@ class Model():
         self.cache_gpab = {}    # If we anticipate changing the model after loading, we should invalidate this cache then
 
         self.load_file(specification)
-        self.enact_models(self.models)
+        self.enact_models(self.models, specification, engine)
 
     def load_file(self, specification):
         self.hierarchy = None
         self.models = []
+        self.model_interval = None
         for elem in specification:
             if "hierarchy" in elem:
                 self.hierarchy = elem["hierarchy"].split("/")
             elif "model" in elem:
                 for e in enumerate_model_counters(elem):
-                    # logging.info("model element is "+str(e))
                     self.render_smart_properties(e)
                     self.models.append(e)
+                if "interval" in elem:
+                    self.model_interval = isodate.parse_duration(elem["interval"]).total_seconds()
+                    logging.info("Spacing-out models by time interval "+str(self.model_interval))
             else:
                 assert "Element of model file contains neither hierarchy or model: "+repr(elem)
 
-    def enact_models(self, models):
+    def enact_models(self, models, specification, engine):
+        now = engine.get_now()
+        original_now = now
         for m in models:
             if "devices" in m:
                 properties = self.collect_properties(self.find_matching_models(m))
@@ -186,6 +192,12 @@ class Model():
                         device.set_properties(properties) 
                         if MODEL_FIELDS_BECOME_PROPERTIES:
                             device.set_properties(m["model"])
+                if self.model_interval is not None:
+                    now += self.model_interval
+                    engine.set_now(now)
+
+        if now != original_now:
+            engine.set_now(original_now)    # Slightly nasty hack as it requires us to move time backwards here to set it to where it was - is this a problem?
 
     def collect_properties(self, models):
         props = {}
@@ -198,7 +210,6 @@ class Model():
         new_props = {}
         if "properties" in elem:
             for n,v in elem["properties"].copy().items():
-                # logging.info("Rendering model smart properties "+str((n,v)))
                 if type(v) == dict:
                     model = importer.get_class('model', n)
                     model(self.context, v, new_props)

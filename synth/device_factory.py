@@ -141,6 +141,9 @@ def get_devices_by_property(prop, value):
                 devs.append(d)
     return devs
 
+def get_devices():
+    return g_devices
+
 ##def logString(s, time=None):
 ##    logging.info(s)
 ##    if time:

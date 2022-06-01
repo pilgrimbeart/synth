@@ -38,6 +38,13 @@ def list_processes():
         s = LOG_DIR + account_from_pid(job[0]) + ".out"
         subprocess.run(["tail", "-n", "1", s ]) 
 
+def list_processes_interactive():
+    while True:
+        print("\033[2J")    # ANSI clear screen
+        print("\033[;H")    # Home cursor
+        list_processes()
+        time.sleep(5)
+
 def command_from_pid(pid):
     for p in get_processes():
         if p[0] == pid:
@@ -77,7 +84,7 @@ def run(account, scenario):
     delete_file(LOG_DIR + account + ".csv")
     delete_file(LOG_DIR + account + ".nohup")
 
-    filelist=glob.glob(LOG_DIR + account + "\0*.json")
+    filelist=glob.glob(LOG_DIR + account + "0*.json")
     for file in filelist:
         delete_file(file)
 
@@ -151,7 +158,7 @@ if __name__ == "__main__":
         print("\nFor available commands type '"+sys.argv[0]+" help'")
     else:
         if sys.argv[1] == "list":
-            list_processes()
+            list_processes_interactive()
         elif sys.argv[1] == "watch":
             watch(int(sys.argv[2]))
         elif sys.argv[1] == "run":

@@ -3,8 +3,9 @@
                     "functions" : {
                         "bytes" : {
                         },
+						"carbon" : {
+						},
                         "charger" : {
-							"average_charges_per_day" : 0.2,
 							"average_hog_time" : "PT1H"
                         },
                         "firmware" : {
@@ -37,6 +38,7 @@
                                         "sample_period" : "PT3H",
                                         "randomise_phase_by" : "$id",
                                         "precision" : 1
+									}
                                 }
                             }
                         ]
