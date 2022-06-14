@@ -11,7 +11,7 @@
             "action" : {
                 "use_model" : [
                     {	"hierarchy" : "channel_partner/home" },
-					{	"model" : { "channel_partner" : "[('Ovo','BG','EDF')]", "home" : "Home_#30#" },
+					{	"model" : { "channel_partner" : "[('Ovo','BG','EDF')]", "home" : "Home_#1000#" },
 						"properties" : { "latlong" : { "generate_addresses" : true, "area_centre" : "Birmingham, UK", "area_radius" : "Southampton, UK", "mandatory_address_fields" : ["address_postal_code"]} },
 						"interval" : "PT30S",
 						"devices" : [
