@@ -33,6 +33,9 @@ API_DOMAIN = "api.darksky.net"
 HOUR = 60 * 60
 DAY = HOUR * 24
 
+last_cache_write_time = None
+MIN_CACHE_WRITE_PERIOD = 60
+
 if __name__ == "__main__":
     CACHE_FILE = "../../../" + CACHE_FILE
     KEY_FILE = "../../../" + KEY_FILE
@@ -75,11 +78,17 @@ def add_to_cache(cache, key, contents):
     caches[cache][key] = contents
 
 def write_cache():
+    global last_cache_write_time
     if CACHE_FILE:
+        if last_cache_write_time is not None:
+            if time.time() - last_cache_write_time < MIN_CACHE_WRITE_PERIOD:
+                return
+        logging.info("Writing Dark Sky cache")
         s = json.dumps(caches)
         if len(s) > 1e7:
             logging.warning("Dark Sky cache file size is getting large: "+str(len(s))+" bytes")
         open(CACHE_FILE, "wt").write(s)
+        last_cache_write_time = time.time()
     else:
         logging.info("Not writing Dark Sky back to cache")
 
