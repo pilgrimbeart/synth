@@ -9,6 +9,7 @@ Configurable parameters::
         "label_root" : (optional) the root name of the label property
         "use_label_as_$id" : (optional) - if true then instead of creating a "label" property, the $id property is given the label name  (i.e. human-named $id)
         "always_send_metadata" : ["list", "of", "metadata"] - if defined, then all transmissions will be enriched with these metadata properties
+        "no_metadata" : If true then doesn't send metadata
     }
 
 Device properties created::
@@ -37,11 +38,11 @@ class Basic(Device):
         self.update_callback = update_callback
         if not hasattr(self, "properties"):
             self.properties = {}
-        self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
         self.model = None   # May get set later if we're in a model
         label_root = "Device "
         use_label_as_id = False
         self.always_send_metadata = None
+        self.no_metadata = False
         self.clock_skew = 0 # Clock skew is the amount ADDED to our timestamp when we send, i.e. a positive clock skew means that our clock is fast
         if "basic" in params:   # Will only be there if the basic class has been explictly declared (because user wants to override its behaviour)
             label_root = params["basic"].get("label_root", "Device ")
@@ -52,15 +53,20 @@ class Basic(Device):
                 skew = Basic.myRandom.random() * (max_advance - max_retard)
                 self.clock_skew = max_retard + skew
             self.always_send_metadata = params["basic"].get("always_send_metadata", None)
+            self.no_metadata = params["basic"].get("no_metadata", False)
+        if not self.no_metadata:
+            self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
         label = label_root + str(Basic.device_number)
         if use_label_as_id:
             self.properties["$id"] = label.replace(" ","_") # Should really replace ALL illegal characters
         else:
             if not "$id" in self.properties:
                 self.properties["$id"] = "-".join([format(Basic.myRandom.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab
-            self.properties["label"] = label
+            if not self.no_metadata:
+                self.properties["label"] = label
 
-        self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down).
+        if not self.no_metadata:    # What no_metadata really means is "don't spew stuff out at boot"
+            self.do_comms(self.properties, force_comms=True) # Communicate ALL properties on boot (else device and its properties might not be created if comms is down).
         logging.info("Created device " + str(Basic.device_number+1) + " : " + self.properties["$id"])
         Basic.device_number = Basic.device_number + 1
         self.in_property_group = False

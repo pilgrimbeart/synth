@@ -11,6 +11,7 @@ Configurable parameters::
         "max_power" : (optional) maximum power level
         "baseload_power" : (optional) baseload power level (e.g. night-time)
         "power_variation" : (optional) how much "noise" on the reading
+        "no_metadata" : (optional) don't send metadata
     }
 
 Device properties created::
@@ -43,18 +44,19 @@ class Energy(Device):
         self.max_power_kW = params["energy"].get("max_power", DEFAULT_MAX_POWER_KW)
         self.baseload_power_kW = params["energy"].get("baseload_power", DEFAULT_BASELOAD_POWER_KW)
         self.power_variation_kW = params["energy"].get("power_variation", DEFAULT_POWER_VARIATION_KW)
+        self.no_metadata = params["energy"].get("no_metadata", False)
         if not self.property_exists("device_type"):
-            self.set_property("device_type", "energy")
+            if not self.no_metadata:
+                self.set_property("device_type", "energy")
         self.set_property("kWh", int(random.random() * 100000))
         self.occupied_bodge = params["energy"].get("occupied_bodge", False)
         if self.occupied_bodge:
             self.set_property("occupied", False)    # !!!!!!!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
-        if random.random() > 0.5:
-            self.set_property("meter_type", "electricity")
-            self.set_property("icon", "bolt")
-        else:
-            self.set_property("meter_type", "gas")
-            self.set_property("icon", "flame")
+        if not self.no_metadata:
+            if random.random() > 0.5:
+                self.set_properties({"meter_type" : "electricity", "icon" : "bolt"})
+            else:
+                self.set_properties({"meter_type" : "gas",  "icon" : "flame"})
         self.energy_reading_interval_s = isodate.parse_duration(params["energy"].get("reading_interval", DEFAULT_ENERGY_READING_INTERVAL)).total_seconds()
         self.engine.register_event_in(self.energy_reading_interval_s, self.tick_reading, self, self)
 

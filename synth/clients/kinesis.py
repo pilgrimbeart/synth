@@ -36,14 +36,18 @@ To create the credentials go to https://console.aws.amazon.com/iam/home and sele
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# 
 import logging, time
 import json
 import boto3 # AWS library
 from .client import Client
-import os
+import os, sys
+import queue
 
-MAX_PAYLOAD_BYTES = 1024*1024   # Kinesis max payload size is 1MB
-# Kinesis input limitations: 1 MB/s or 1000 messages/sec, per shard
+MAX_PAYLOAD_BYTES = 1024*1024   # Kinesis max payload size is 1MB. Kinesis input limitations: 1 MB/s or 1000 messages/sec, per shard
+MAX_MESSAGES_PER_POST = 500
+REPORT_EVERY_S = 60
+BACKOFF_S = 0  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
 
 class Kinesis(Client):
     def __init__(self, instance_name, context, params):
@@ -56,11 +60,36 @@ class Kinesis(Client):
                 logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
 
+        self.start_time = time.time()
+        self.last_report_time = 0
+        self.num_blocks_sent_ever = 0
+        self.num_blocks_sent_recently = 0
+        self.queue = queue.Queue()
+        self.max_shards_seen = 0
+        self.max_shards_seen_recently = 0
+
+        self.profile_name = params.get("profile_name", None)
+        self.stream_name = params["stream_name"]
+        logging.info("Sending to Kinesis profile_name " + str(self.profile_name) + ", stream_name " + str(self.stream_name))
+        if self.profile_name is None:
+            session = boto3.Session()
+        else:
+            session = boto3.Session(self.profile_name)
+        if session.get_credentials().secret_key is None:
+            logging.error("AWS secret key == None, so this isn't going to work")
+        self.kinesis_client = session.client("kinesis")
+
     def add_device(self, device_id, time, properties):
+        # logging.info("Kinesis: Add device " + str(properties))
         pass
     
     def update_device(self, device_id, time, properties):
-        pass
+        self.queue.put(
+            {
+                'Data' : json.dumps(properties),                    # This is format in which Kinesis expects every item
+                'PartitionKey' : str(properties['$id'])
+            }
+        )
 
     def get_device(self, device_id):
         pass
@@ -74,8 +103,74 @@ class Kinesis(Client):
     def enter_interactive(self):
         pass
 
+    def count_shards(self, result):
+        max_shard_seen = 0
+        ids = []
+        for r in result["Records"]:
+            if "ShardId" in r:  # Only successful records have a shard id
+                id = int(r["ShardId"][-12:])    # Last 12 digits is shard id
+                if id not in ids:
+                    ids.append(id)
+                max_shard_seen = max(max_shard_seen, id)
+        shards = max_shard_seen + 1
+        self.max_shards_seen = max(self.max_shards_seen, shards)
+        self.max_shards_seen_recently = max(self.max_shards_seen_recently, shards)
+        # logging.info(str(max_shard_seen+1) + " shards " + str(ids))
+
+    def send_to_kinesis(self, records, retries=0):
+        if retries==0:
+            s = "Sending"
+        else:
+            s = "Re-sending"
+        # logging.info(s + " " + str(len(records)) + " messages")
+        result = self.kinesis_client.put_records(Records=records, StreamName=self.stream_name)
+        self.count_shards(result)
+        fails = result["FailedRecordCount"]
+        if fails != 0:
+            # Result["Records"] is all of the records. The failed ones (only) have an ErrorCode field.
+            errors = result["Records"]
+            new_records = []
+            errors_seen = []
+            for i in range(len(records)):
+                if "ErrorCode" in errors[i]:
+                    new_records.append(records[i])
+                    ec = errors[i]["ErrorCode"]
+                    if ec not in errors_seen:
+                        errors_seen.append(ec)
+            logging.error("Kinesis: Failed to post " + str(fails) + " of " + str(len(records)) + " records (retries so far " + str(retries)+") " + str(errors_seen))
+            time.sleep(BACKOFF_S)
+            self.send_to_kinesis(new_records, retries+1)
+            # "Records": [ 
+            #    { 
+            #        "ErrorCode": "string",
+            #        "ErrorMessage": "string",
+            #        "SequenceNumber": "string",
+            #        "ShardId": "string"
+            #    }
+
     def tick(self):
-        pass
+        while not self.queue.empty():
+            self.num_blocks_sent_ever += 1
+            self.num_blocks_sent_recently += 1
+            block = []
+            while not self.queue.empty() and len(block) < MAX_MESSAGES_PER_POST:
+                block.append(self.queue.get())
+            self.send_to_kinesis(block)
+
+        t =  time.time()
+        if t > self.last_report_time + REPORT_EVERY_S :
+            elap = t - self.start_time
+            logging.info("Kinesis: {:,} blocks sent ever in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. Over last {:}s, rate was {:0.1f} blocks/s and max shards {:}".format(
+                self.num_blocks_sent_ever,
+                elap,
+                self.num_blocks_sent_ever / elap,
+                self.max_shards_seen,
+                REPORT_EVERY_S,
+                self.num_blocks_sent_recently / float(REPORT_EVERY_S),
+                self.max_shards_seen_recently))
+            self.num_blocks_sent_recently = 0
+            self.max_shards_seen_recently = 0
+            self.last_report_time = t
 
     def async_command(self, argv):
         pass
@@ -83,8 +178,9 @@ class Kinesis(Client):
     def close(self):
         pass
 
+    # ----
+    def flush_queue():
+        props = self.queue.get()    # ???
+        
 
-session = boto3.Session(profile_name="playground")
-kinesis = session.client("kinesis")
-data = [{ "$ts" : 123, "$id" : "1", "a" : 1 }]
-kinesis.put_record(StreamName="Flight-Simulator", Data=json.dumps(data), PartitionKey = "1")
+
