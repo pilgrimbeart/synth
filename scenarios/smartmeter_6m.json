@@ -1,0 +1,26 @@
+{
+    "restart_log" : true,
+    "write_log" : true,
+    "explode_factor" : 1000,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "PT1H"
+    },
+    "events" : [
+        {
+            "comment" : "Smart Meter",
+            "repeats" : 6000,
+            "interval" : "PT0.15S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+						"basic" : { "no_metadata" : true },
+						"energy" : { "no_metadata" : true, "reading_interval" : "PT15M" }
+                    }
+                }
+            }
+        }
+    ]
+}
+
