@@ -48,6 +48,7 @@ MAX_PAYLOAD_BYTES = 1024*1024   # Kinesis max payload size is 1MB. Kinesis input
 MAX_MESSAGES_PER_POST = 500
 REPORT_EVERY_S = 60
 BACKOFF_S = 0  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
+MAX_EXPLODE = 1_000_000
 
 class Kinesis(Client):
     def __init__(self, instance_name, context, params):
@@ -59,6 +60,10 @@ class Kinesis(Client):
             for (key, value) in params["setenv"].items():
                 logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
+
+        self.explode_factor = params.get("explode_factor", 1)
+        if self.explode_factor != 1:
+            logging.info("Kinesis explode factor set to "+str(self.explode_factor))
 
         self.start_time = time.time()
         self.last_report_time = 0
@@ -84,12 +89,32 @@ class Kinesis(Client):
         pass
     
     def update_device(self, device_id, time, properties):
-        self.queue.put(
-            {
-                'Data' : json.dumps(properties),                    # This is format in which Kinesis expects every item
-                'PartitionKey' : str(properties['$id'])
-            }
-        )
+        if self.explode_factor == 1:
+            self.queue.put({
+                    'Data' : json.dumps(properties),                    # This is format in which Kinesis expects every item
+                    'PartitionKey' : str(properties['$id'])
+                })
+        else:
+            LEN = len(str(MAX_EXPLODE))
+            LENFORMAT = "%0" + str(LEN) + "d"
+            LOCATOR = "X" * LEN
+            base_id = properties["$id"]
+            new_props = properties.copy()
+            new_props["$id"] = new_props["$id"] + "_" + LOCATOR
+            data_str = json.dumps(new_props)        # json.dumps() is SLOW, so only use it once
+            start = data_str.find(LOCATOR)
+            end = start + len(LOCATOR)
+            pre_str = data_str[:start]
+            post_str = data_str[end:]
+            id_str = properties["$id"] + "_"
+
+            for e in range(self.explode_factor):
+                e_str = LENFORMAT % e   # 00001 or whatever
+                d = {
+                        'Data' : pre_str + e_str + post_str,
+                        'PartitionKey' : id_str + e_str
+                    }
+                self.queue.put(d)
 
     def get_device(self, device_id):
         pass
