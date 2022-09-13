@@ -143,6 +143,8 @@ class Events():
                 properties.update(c(properties))  # We MERGE the results of the callback with the original message
 
             if self.explode_factor is None:
+                if self.do_write_log:
+                    write_event_log(properties)
                 client.update_device(device_id, time, properties)
             else:
                 new_props = properties.copy()
