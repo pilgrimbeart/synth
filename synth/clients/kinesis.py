@@ -15,7 +15,7 @@ The client accepts the following parameters (usually found in the "On*.json" fil
 To make this work, you must run "aws configure" on your command line and create a profile in ~/.aws/config
 To create the credentials go to https://console.aws.amazon.com/iam/home and select Users, then yourself.
 
-Because the post rate into AWS seems (as of 2022) to be limited to around 14 posts/sec, we use the multiprocessing module to give us more oomph
+Because the post rate into AWS seems (as of 2022) to be limited to around 14 posts/sec, we use the multiprocessing module to give us more "oomph".
 """
 #
 # Copyright (c) 2022 DevicePilot Ltd.
@@ -104,21 +104,6 @@ class Kinesis(Client):
     def enter_interactive(self):
         pass
 
-    def count_shards(self, result):
-        max_shard_seen = 0
-        ids = []
-        for r in result["Records"]:
-            if "ShardId" in r:  # Only successful records have a shard id
-                id = int(r["ShardId"][-12:])    # Last 12 digits is shard id
-                if id not in ids:
-                    ids.append(id)
-                max_shard_seen = max(max_shard_seen, id)
-        shards = max_shard_seen + 1
-        self.max_shards_seen = max(self.max_shards_seen, shards)
-        self.max_shards_seen_recently = max(self.max_shards_seen_recently, shards)
-        # logging.info(str(max_shard_seen+1) + " shards " + str(ids))
-
-
     def tick(self):
         return
 
@@ -145,30 +130,21 @@ class WorkerParent():   # Create a worker, and communicate with it
     def send(self, data):
         self.q.put(data)
 
-if __name__ == '__main__':
-    w1 = SynthWorker()
-    w2 = SynthWorker()
-    w1.send("Hello")
-    w2.send("There")
-    time.sleep(3)
-    w1.send("Wonder")
-    w2.send("Bubs")
-    time.sleep(3)
-    w1.send(None)
-    w2.send(None)
 
+### Everything below here is executed in the target processes
 
-def child_func(q):  # Executed in the target processes
+def child_func(q):
     (profile_name, stream_name, explode_factor) = q.get()    # First item sent is our parameters, matching *** above
     worker = Worker(profile_name, stream_name, explode_factor)
     while True:
         try:
             v = q.get(timeout=POLL_PERIOD_S)
-            logging.info("Worker "+str(os.getpid())+" got from queue "+str(v)+". Queue size now "+str(q.qsize()))
+            # logging.info("Worker "+str(os.getpid())+" got from queue "+str(v)+". Queue size now "+str(q.qsize()))
             if v is None:
                 logging.warning("Worker ",os.getpid(),"exiting")
                 return
             worker.enqueue(v)
+            worker.note_input_queuesize(q.qsize())
         except queue.Empty:
             pass
 
@@ -198,7 +174,11 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
         self.num_blocks_sent_recently = 0
         self.max_shards_seen = 0
         self.max_shards_seen_recently = 0
+        self.max_queue_size_recently = 0
 
+
+    def note_input_queuesize(self, n):
+        self.max_queue_size_recently = max(self.max_queue_size_recently, n)
 
     def enqueue(self, properties):
         if self.explode_factor == 1:
@@ -239,16 +219,18 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
         t =  time.time()
         if t > self.last_report_time + REPORT_EVERY_S :
             elap = t - self.start_time
-            logging.info("Kinesis worker " + str(os.getpid()) + ": {:,} blocks sent ever in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. Over last {:}s, rate was {:0.1f} blocks/s and max shards {:}".format(
+            logging.info("Kinesis worker " + str(os.getpid()) + ": {:,} blocks sent total in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. In last {:}s sent {:0.1f} blocks/s and max shards {:}. Max Q size {:}".format(
                 self.num_blocks_sent_ever,
                 elap,
                 self.num_blocks_sent_ever / elap,
                 self.max_shards_seen,
                 REPORT_EVERY_S,
                 self.num_blocks_sent_recently / float(REPORT_EVERY_S),
-                self.max_shards_seen_recently))
+                self.max_shards_seen_recently,
+                self.max_queue_size_recently))
             self.num_blocks_sent_recently = 0
             self.max_shards_seen_recently = 0
+            self.max_queue_size_recently = 0
             self.last_report_time = t
 
     def send_to_kinesis(self, records, retries=0):
@@ -259,7 +241,7 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
             s = "Re-sending"
         # logging.info(s + " " + str(len(records)) + " messages")
         result = self.kinesis_client.put_records(Records=records, StreamName=self.stream_name)
-        # self.count_shards(result)
+        self.count_shards(result)
         fails = result["FailedRecordCount"]
         if fails != 0:
             # Result["Records"] is all of the records. The failed ones (only) have an ErrorCode field.
@@ -283,3 +265,18 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
             #        "ShardId": "string"
             #    }
     
+    def count_shards(self, result):
+        max_shard_seen = 0
+        ids = []
+        for r in result["Records"]:
+            if "ShardId" in r:  # Only successful records have a shard id
+                id = int(r["ShardId"][-12:])    # Last 12 digits is shard id
+                if id not in ids:
+                    ids.append(id)
+                max_shard_seen = max(max_shard_seen, id)
+        shards = max_shard_seen + 1
+        self.max_shards_seen = max(self.max_shards_seen, shards)
+        self.max_shards_seen_recently = max(self.max_shards_seen_recently, shards)
+        # logging.info(str(max_shard_seen+1) + " shards " + str(ids))
+
+
