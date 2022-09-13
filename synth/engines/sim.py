@@ -32,6 +32,8 @@ from common.conftime import richTime
 
 from engines.engine import Engine
 
+WARN_IF_BEHIND_REALTIME_BY_MORE_THAN_S = 10
+
 class Sim(Engine):
     """Capable of both historical and real-time simulation,
        and of moving smoothly between the two"""
@@ -48,6 +50,8 @@ class Sim(Engine):
         self.events = queue.PriorityQueue()
         self.sort_key_count = 0 # A secondary key which ensures that events with identical event times are sorted in order of their insertion
         self.next_event_time = None
+        self.in_nku_warning_condition = False
+        self.last_nku_warning = 0
 
     def set_now(self, epochSecs):
         self.sim_lock.acquire()
@@ -135,6 +139,17 @@ class Sim(Engine):
             if self.sim_time >= self.end_time:
                 logging.info("Reached simulation end time with "+str(self.events.qsize())+" events still in future")
                 return False
+
+            if self.caught_up:
+                if self.sim_time < time.time() - WARN_IF_BEHIND_REALTIME_BY_MORE_THAN_S:    # We are supposed to be keeping-up with real-time, but are not for some reason
+                    self.in_nku_warning_condition = True
+                    self.warn_not_keeping_up()
+                else: 
+                    if self.in_nku_warning_condition:
+                        self.in_nku_warning_condition = False
+                        logging.info("Now caught up to within "+str(WARN_IF_BEHIND_REALTIME_BY_MORE_THAN_S)+"s of realtime")
+
+
             return True
         finally:
             self.sim_lock.release()   # -->
@@ -208,4 +223,12 @@ class Sim(Engine):
     def register_event_in(self, deltaTime, func, arg, device):
         assert deltaTime >= 0
         self._add_event(self.get_now() + deltaTime, func, arg, device)
+
+    def warn_not_keeping_up(self):
+        if self.last_nku_warning < time.time() - 60:    # Warn every minute if we're not keeping up
+            behind = int(time.time() - self.sim_time)
+            behind_m = int(behind / 60)
+            behind_s = behind % 60
+            logging.warning("At real time " + ISO8601.epoch_seconds_to_ISO8601(time.time()) + " simulation has fallen behind real-time by " + str(behind_m) + "m" + str(behind_s) + "s")
+            self.last_nku_warning = time.time()
 

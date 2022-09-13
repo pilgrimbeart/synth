@@ -1,22 +1,26 @@
 {
     "restart_log" : true,
     "write_log" : true,
-    "explode_factor" : 1000,
+	"comment" : "we did have explode_factor here, so was enacted in the top-level events module. But that was too inefficient, so now moved into kinesis module so enacted on output",
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
         "end_time" : "PT1H"
     },
+    "client" : {
+        "comment" : "Ask Kinesis client to explode output for us",
+        "explode_factor" : 6000
+    },
     "events" : [
         {
-            "comment" : "Smart Meter",
-            "repeats" : 6000,
-            "interval" : "PT0.15S",
+            "comment" : "Create 6m Smart Meters over 5m, each talking every 5m",
+            "repeats" : 1000,
+            "interval" : "PT0.3S",
             "action": {
                 "create_device" : {
                     "functions" : {
 						"basic" : { "no_metadata" : true },
-						"energy" : { "no_metadata" : true, "reading_interval" : "PT15M" }
+						"energy" : { "no_metadata" : true, "reading_interval" : "PT5M" }
                     }
                 }
             }
