@@ -2,14 +2,14 @@
     "restart_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-PT1H",
+        "start_time" : "-P3D",
         "end_time" : "now"
     },
     "events" : [
         {
             "at" : "PT0S",
-            "repeats" : 1,
-            "interval" : "PT1S",
+            "repeats" : 100,
+            "interval" : "PT0S",
             "action": {
                 "create_device" : {
                     "functions" : {
