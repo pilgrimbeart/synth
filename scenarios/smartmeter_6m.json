@@ -5,7 +5,7 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
-        "end_time" : "PT1H"
+        "end_time" : "PT15M"
     },
     "client" : {
         "comment" : "Ask Kinesis client to explode output for us",

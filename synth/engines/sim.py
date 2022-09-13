@@ -229,6 +229,6 @@ class Sim(Engine):
             behind = int(time.time() - self.sim_time)
             behind_m = int(behind / 60)
             behind_s = behind % 60
-            logging.warning("At real time " + ISO8601.epoch_seconds_to_ISO8601(time.time()) + " simulation has fallen behind real-time by " + str(behind_m) + "m" + str(behind_s) + "s")
+            logging.warning("At real time " + ISO8601.epoch_seconds_to_ISO8601(time.time()) + " simulation is running behind real-time by " + str(behind_m) + "m" + str(behind_s) + "s")
             self.last_nku_warning = time.time()
 
