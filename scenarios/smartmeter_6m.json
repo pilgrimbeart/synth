@@ -9,7 +9,8 @@
     },
     "client" : {
         "comment" : "Ask Kinesis client to explode output for us",
-        "explode_factor" : 6000
+        "explode_factor" : 6000,
+		"num_workers" : 5
     },
     "events" : [
         {

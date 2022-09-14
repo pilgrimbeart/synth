@@ -56,7 +56,7 @@ REPORT_EVERY_S = 60
 BACKOFF_S = 0  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
 MAX_EXPLODE = 1_000_000
 
-NUM_WORKERS = 4
+DEFAULT_NUM_WORKERS = 4
 POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 
 class Kinesis(Client):
@@ -70,6 +70,7 @@ class Kinesis(Client):
                 logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
 
+        self.num_workers = params.get("num_workers", DEFAULT_NUM_WORKERS)
         explode_factor = params.get("explode_factor", 1)
         if explode_factor != 1:
             logging.info("Kinesis explode factor set to "+str(explode_factor))
@@ -78,19 +79,18 @@ class Kinesis(Client):
         stream_name = params["stream_name"]
         logging.info("Sending to Kinesis profile_name " + str(profile_name) + ", stream_name " + str(stream_name))
 
-        logging.info("Kinesis module using "+str(NUM_WORKERS)+" worker sub-processes to provide enough write bandwidth")
+        logging.info("Kinesis module using "+str(self.num_workers)+" worker sub-processes to provide write bandwidth")
         self.workers = []
-        for w in range(NUM_WORKERS):
+        for w in range(self.num_workers):
             self.workers.append(WorkerParent(profile_name, stream_name, explode_factor))
-        self.next_worker_to_use = 0
 
     def add_device(self, device_id, time, properties):
         # logging.info("Kinesis: Add device " + str(properties))
         pass
     
     def update_device(self, device_id, time, properties):
-        self.workers[self.next_worker_to_use].send(properties)
-        self.next_worker_to_use = (self.next_worker_to_use + 1) % NUM_WORKERS
+        w = hash(properties["$id"]) % self.num_workers   # Shard onto workers by ID (so data from each device stays in sequence). Python hash is stable per run, not across runs.
+        self.workers[w].send(properties)
 
     def get_device(self, device_id):
         pass
@@ -219,7 +219,7 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
         t =  time.time()
         if t > self.last_report_time + REPORT_EVERY_S :
             elap = t - self.start_time
-            logging.info("Kinesis worker " + str(os.getpid()) + ": {:,} blocks sent total in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. In last {:}s sent {:0.1f} blocks/s and max shards {:}. Max Q size {:}".format(
+            logging.info("Kinesis worker " + str(os.getpid()) + ": {:,} blocks sent total in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. In last {:}s sent {:0.1f} blocks/s, max shards {:}, max Q size {:}".format(
                 self.num_blocks_sent_ever,
                 elap,
                 self.num_blocks_sent_ever / elap,
