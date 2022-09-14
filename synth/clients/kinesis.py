@@ -111,7 +111,9 @@ class Kinesis(Client):
         pass
 
     def close(self):
-        pass
+        for w in self.workers:
+            w.send(None)  # Signal to shut down
+            w.wait_until_stopped()
 
     # ----
     def flush_queue():
@@ -129,6 +131,14 @@ class WorkerParent():   # Create a worker, and communicate with it
 
     def send(self, data):
         self.q.put(data)
+        if not self.p.is_alive():
+            logging.error("Worker " + str(self.p.pid) + " has died - so terminating")
+            assert(False)
+
+    def wait_until_stopped(self):
+        logging.info("Waiting for worker " + str(self.p.pid) + " to stop")
+        self.p.join()
+        logging.info("Worker " + str(self.p.pid) + " has stopped")
 
 
 ### Everything below here is executed in the target processes
@@ -141,7 +151,7 @@ def child_func(q):
             v = q.get(timeout=POLL_PERIOD_S)
             # logging.info("Worker "+str(os.getpid())+" got from queue "+str(v)+". Queue size now "+str(q.qsize()))
             if v is None:
-                logging.warning("Worker ",os.getpid(),"exiting")
+                logging.info("Worker "+str(os.getpid()) + " requested to exit")
                 return
             worker.enqueue(v)
             worker.note_input_queuesize(q.qsize())
