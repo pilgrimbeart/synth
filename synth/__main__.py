@@ -109,15 +109,18 @@ def merge(a, b, path=None): # From https://stackoverflow.com/questions/7204805/d
 
 def readParamfile(filename, fail_silently=False):
     s = "{}"
+    place = None
     try:
         s = open(SCENARIO_DIR+filename+".json","rt").read()
+        place = SCENARIO_DIR
     except:
         try:
             s = open(ACCOUNTS_DIR+filename+".json","rt").read()
+            place = ACCOUNTS_DIR
         except:
             if not fail_silently:
                 raise
-    return s
+    return s, place
 
 def remove_C_comments(string):
     """Remove C and C++ comments (therefore also Javascript comments)"""
@@ -172,14 +175,14 @@ def get_params():
         global g_instance_name
 
         logging.info("Loading parameter file "+file)
-        s = readParamfile(file, fail_silently)
+        (s,place) = readParamfile(file, fail_silently)
         s = preprocess(s)
         s = remove_C_comments(s) # Remove Javascript-style comments
         # We no-longer support Python-style comments, because interferes with auto-numbering in models s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
         s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
         open("../synth_logs/latest.json", "wt").write(s+"\n (from "+file+")\n")  # If we get a parsing error, output the processed file so we can find the line & column easily
         j = json.loads(s)
-        if "client" in j:   # We inherit the instance name from whichever file specifies the client
+        if place == ACCOUNTS_DIR:   # We inherit the instance name from the file in the account directory (on the assumption we can only run one simulation at once per account, so that's what we want logfiles to be unique by)
             g_instance_name = file
             logging.info("Naming this instance '" + str(g_instance_name) + "'")
         params = merge(params, j)
