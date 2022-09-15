@@ -60,8 +60,10 @@ class Latlong(Device):
                 while True: # Keep picking randomly until we find a point with an acceptable address
                     (lon, lat) = picker.pick()
                     addresses = picker.addresses()
+                    props = { "latitude" : lat, "longitude" : lon }
+                    if not picker.generate_addresses:   # Haven't been asked to generate addresses, so don't check them
+                        break
                     if len(set(addresses).intersection(self.mandatory_address_fields)) == len(self.mandatory_address_fields):
-                        props = { "latitude" : lat, "longitude" : lon }
                         props.update(addresses)
                         break
             return props
