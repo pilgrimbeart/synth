@@ -32,6 +32,7 @@ from devices.basic import Basic
 
 g_devices = []
 g_devices_dict = {}   # For quickly checking if a device already exists (g_devices[] above is probably redundant)
+g_stopped_devices = []
 
 g_class_cache = {}  # Creating composite classes in Python seems to get exponentially slower, so we cache
 
@@ -111,12 +112,22 @@ def create_device(args):
 
     return d
 
-def stop_device(args):
-    # We stop a device by removing all its pending events
-    (engine,device) = args
-    logging.info("stopping device "+str(device)+" "+str(device.properties["$id"]))
+def stop_device(params):
+    # Stop a device by removing all its pending events
+    global g_devices, g_stopped_devices
+
+    (engine, args) = params
+
+    # Find a device to stop
+    for device in g_devices:
+        if device not in g_stopped_devices:
+            break
+    else:
+        assert False, "stop_device called but no matching devices to stop"
+    logging.info("Stopping device "+str(device.properties["$id"]))
     engine.remove_all_events_for_device(device)
-    # devices.remove(d) # we no longer delete it
+    g_stopped_devices.append(device)
+    # devices.remove(d) # we no longer delete it (because other devices might have a reference to it, in models etc.). So it is "dead in the water" but not forgotten.
     
 def num_devices():
     global g_devices

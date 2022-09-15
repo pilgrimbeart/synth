@@ -309,6 +309,8 @@ class Events():
                                              None)
 
                     device_count += 1
+                elif "stop_device" in action:
+                    engine.register_event_at(insert_time, device_factory.stop_device, (engine, action["stop_device"]), None)
                 elif "use_model" in action:
                     engine.register_event_at(insert_time,
                             model.use_model,
@@ -330,9 +332,10 @@ class Events():
                 elif "periodic_metadata" in action:
                     engine.register_event_at(insert_time, dump_periodic_metadata, action["periodic_metadata"], None)
                 else:   # Plug-in actions
-                    name = action.keys()[0]
+                    name = list(action.keys())[0]
                     if not name.startswith("client."):
-                        logging.error("Ignoring unrecognised action "+name)
+                        logging.error("Unrecognised action " + name)
+                        assert(False)
                     else:
                         engine.register_event_at(insert_time,
                                                  client_action,

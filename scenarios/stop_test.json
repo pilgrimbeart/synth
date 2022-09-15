@@ -1,0 +1,39 @@
+{
+	"comment" : "Create 5 devices gradually, then stop them gradually. Each will count up to 10 before it is stopped",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "PT20S"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "repeats" : 5,
+            "interval" : "PT1S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "names" : {},
+                        "latlong" : {
+                            "area_centre" : "London, UK",
+                            "area_radius" : "Berlin, Germany"
+                        },
+                        "variable" : [
+                            {   "name" : "count", "timefunction" : { "count" : { "interval" : "PT1S" } } }
+                        ]
+
+                    }
+                }
+            }
+        },
+		{
+			"at" : "PT5S",
+			"repeats" : 5,
+			"interval" : "PT1S",
+			"action" : {
+				"stop_device" : {}
+			}
+		}
+    ]
+}

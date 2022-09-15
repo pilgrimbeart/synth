@@ -209,13 +209,17 @@ class Sim(Engine):
 ##            self.sim_Lock.release()   # --->
 
     def remove_all_events_for_device(self, dev):
-        assert(False)   ## TODO: Implement!
         self.sim_lock.acquire()
-        old_len = len(self.events)
-        self.events = [e for e in self.events if e[4] != dev] # Remove any events with device=dev
-        new_len = len(self.events)
+        old_len = self.events.qsize()
+        newQ = queue.PriorityQueue()
+        while not self.events.empty():
+            e = self.events.get()
+            if e[4] != dev:
+                newQ.put(e)
+        self.events = newQ
+        new_len = self.events.qsize()
         self.sim_lock.release()
-        logging.info("Removed all events for device "+str(dev)+ " (" + str(old_len-new_len)+" events removed)")
+        logging.info("Removed all events for device "+str(dev.properties["$id"])+ " (" + str(old_len-new_len)+" events removed)")
           
     def register_event_at(self, time, func, arg, device):
         self._add_event(time, func, arg, device)
