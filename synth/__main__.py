@@ -309,9 +309,9 @@ def main():
 
     if err_str=="":
         post_to_slack("Finished OK")
-        exit(0)
+        sys.exit(0)
     post_to_slack(err_str)
-    exit(-1)
+    sys.exit(1)
 
 def check_install():
     if os.path.exists("../synth_logs") and os.path.exists("../synth_accounts"):
@@ -334,10 +334,11 @@ if __name__ == "__main__":
 
     check_install()
 
-    if True:    # Profile
+    if False:    # Profile
         import cProfile, pstats
         cProfile.run('main()', 'profiling')
         p = pstats.Stats('profiling')
         p.sort_stats('cumulative').print_stats(30)
+        sys.exit(-1)    # ALways return an error exit code when profiling, because profiling removes any exit code, so any self tests will pass incorrectly
     else:
         main()

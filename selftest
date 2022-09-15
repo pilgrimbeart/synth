@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e # Abort on error
+set -o errexit # Abort on error
 python3 synth OnFStest full_fat_device
 python3 synth OnFStest 10secs_prev
 python3 synth OnFStest 90000_events

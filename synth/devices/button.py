@@ -26,7 +26,7 @@ class Button(Device):
         """A button which gets pressed according to some time function"""
         super(Button, self).__init__(instance_name, time, engine, update_callback, context, params)
         tf = params["button"]["timefunction"]
-        self.button_timefunction = importer.get_class("timefunction", tf.keys()[0])(engine, self, tf[tf.keys()[0]])
+        self.button_timefunction = importer.get_class("timefunction", list(tf.keys())[0])(engine, self, tf[list(tf.keys())[0]])
         engine.register_event_at(self.button_timefunction.next_change(), self.tick_button, self, self)
 
     def comms_ok(self):

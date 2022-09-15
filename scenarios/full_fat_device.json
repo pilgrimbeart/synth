@@ -42,18 +42,6 @@
                             "values" : ["alarm", "battery low", "cover removed"],
                             "periods" : ["P30D", "P100D", "P360D"]
                         },
-                        "expect" : {
-                            "event_name" : "notifyTimeout",
-                            "timefunction" : {
-                                "pulsewave" : {
-                                    "interval" : "PT20M",
-                                    "transition" : "PT15M",
-                                    "delay" : "-PT5M",
-                                    "comment" : "5 min window immediately after timeout"
-                                }
-                            },
-                            "required_score_percent" : 0
-                        },
                         "firmware" : {
                         },
                         "heartbeat" : {

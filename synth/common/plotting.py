@@ -122,4 +122,4 @@ if __name__ == "__main__":
     BINS = 10
     y_values = [random.random()*10 for x in range(BINS)]
     ref_values = [random.random()*10 for x in range(BINS)]
-    print "URL is", plot_histo(1.0, XRANGE, ref_values, y_values, y_values, y_values, y_values)
+    print("URL is", plot_histo(1.0, XRANGE, ref_values, y_values, y_values, y_values, y_values))
