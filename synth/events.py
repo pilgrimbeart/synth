@@ -134,11 +134,13 @@ def mkdir_p(path):
         else:
             raise
 
-
 class Events():
     def __init__(self, client, engine, instance_name, context, eventList):
         """<params> is a list of events. Note that our .event_count property is read from outside."""
         def update_callback(device_id, time, properties):
+            if self.mute_until > time:
+                return
+
             for c in self.update_callbacks:
                 properties.update(c(properties))  # We MERGE the results of the callback with the original message
 
@@ -234,6 +236,12 @@ class Events():
 
             self.event_count += 1
 
+        def mute_for(params):
+            assert "delta" in params, "Need to specify mute_for 'delta'"
+            dt = isodate.parse_duration(params["delta"]).total_seconds()
+            logging.info("Muting output for " + str(params["delta"]))
+            self.mute_until = engine.get_now() + dt
+ 
         restart_log = context.get("restart_log", True)
         self.do_write_log = context.get("write_log", True)
         shard_size = context.get("shard_size", None)
@@ -245,6 +253,8 @@ class Events():
         self.event_count = 0
         self.update_callbacks = []
         device_count = 0   # Used to shard device creation
+
+        self.mute_until = 0
 
         if self.do_write_log:
             mkdir_p(LOG_DIRECTORY)
@@ -311,6 +321,8 @@ class Events():
                     device_count += 1
                 elif "stop_device" in action:
                     engine.register_event_at(insert_time, device_factory.stop_device, (engine, action["stop_device"]), None)
+                elif "mute_for" in action:
+                    engine.register_event_at(insert_time, mute_for, action["mute_for"], None)
                 elif "use_model" in action:
                     engine.register_event_at(insert_time,
                             model.use_model,

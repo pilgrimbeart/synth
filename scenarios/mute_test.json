@@ -1,0 +1,31 @@
+{
+	"comment" : "Test muting output for a chunk of time",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-PT24H1M",
+        "end_time" : "PT1M"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "interval" : "PT1S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : [
+                            {   "name" : "count", "timefunction" : { "count" : { "interval" : "PT1S" } } }
+                        ]
+                    }
+                }
+            }
+        },
+		{
+			"at" : "PT5S",
+			"action" : {
+				"mute_for" : { "delta" : "PT24H" }
+			}
+		}
+		
+    ]
+}
