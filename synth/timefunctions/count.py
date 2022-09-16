@@ -35,7 +35,7 @@ class Count(Timefunction):
         if t is None:
             t = self.engine.get_now()
 
-        v = int((t-self.init_time) / self.interval) * self.increment
+        v = round((t-self.init_time) / self.interval) * self.increment
         if self.modulo is not None:
             v = v % self.modulo
         return v
@@ -45,10 +45,10 @@ class Count(Timefunction):
         if t is None:
             t = self.engine.get_now()
 
-        tOUT = int(t / self.interval) * self.interval + self.interval   # If called at intervals of (self.interval), will count 0,1,2...
+        tOUT = self.init_time + int((t-self.init_time) / self.interval) * self.interval + self.interval   # If called at intervals of (self.interval), will count 0,1,2...
         
         if self.stop_at:
-            v = self.state()
+            v = self.state(t)
             if v >= self.stop_at:
                 return None
 
