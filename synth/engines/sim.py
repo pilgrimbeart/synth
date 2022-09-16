@@ -220,6 +220,19 @@ class Sim(Engine):
         new_len = self.events.qsize()
         self.sim_lock.release()
         logging.info("Removed all events for device "+str(dev.properties["$id"])+ " (" + str(old_len-new_len)+" events removed)")
+
+    def remove_all_events_before(self, epoch):
+        self.sim_lock.acquire()
+        old_len = self.events.qsize()
+        newQ = queue.PriorityQueue()
+        while not self.events.empty():
+            e = self.events.get()
+            if e[0] >= epoch:
+                newQ.put(e)
+        self.events = newQ
+        new_len = self.events.qsize()
+        self.sim_lock.release()
+        logging.info("Removed all pending events before " + str(epoch) + " (" + str(old_len-new_len)+" events removed)")
           
     def register_event_at(self, time, func, arg, device):
         self._add_event(time, func, arg, device)
