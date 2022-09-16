@@ -43,7 +43,7 @@ import logging, time
 import json
 import os, sys
 from .client import Client
-from common import ISO8601
+from common import ISO8601, merge_test
 from multiprocessing import Process as MP_Process
 from multiprocessing import Queue as MP_Queue
 import queue    # Multiprocessing uses this internally, and returns queue.Empty exception
@@ -70,6 +70,9 @@ class Kinesis(Client):
                 logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
 
+        self.merge_buffer = {}  # Messages, keyed by ID
+        self.time_at_last_tick = 0
+
         self.num_workers = params.get("num_workers", DEFAULT_NUM_WORKERS)
         explode_factor = params.get("explode_factor", 1)
         if explode_factor != 1:
@@ -89,8 +92,11 @@ class Kinesis(Client):
         pass
     
     def update_device(self, device_id, time, properties):
-        w = hash(properties["$id"]) % self.num_workers   # Shard onto workers by ID (so data from each device stays in sequence). Python hash is stable per run, not across runs.
-        self.workers[w].send(properties)
+        if device_id in self.merge_buffer:
+            if merge_test.ok(self.merge_buffer[device_id], properties):
+                self.merge_buffer[device_id].update(properties)
+        else:   
+            self.merge_buffer[device_id] = properties
 
     def get_device(self, device_id):
         pass
@@ -104,7 +110,12 @@ class Kinesis(Client):
     def enter_interactive(self):
         pass
 
-    def tick(self):
+    def tick(self, t):
+        if t != self.time_at_last_tick:
+            for (device, properties) in self.merge_buffer.items():
+                w = hash(properties["$id"]) % self.num_workers   # Shard onto workers by ID (so data from each device stays in sequence). Python hash is stable per run, not across runs.
+                self.workers[w].send(properties)
+            self.merge_buffer = {}
         return
 
     def async_command(self, argv):

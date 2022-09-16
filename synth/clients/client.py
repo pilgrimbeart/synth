@@ -44,7 +44,7 @@ class Client:
         pass
 
     @abstractmethod
-    def tick(self):
+    def tick(self, t):
         """Called periodically for housekeeping."""
         pass
 

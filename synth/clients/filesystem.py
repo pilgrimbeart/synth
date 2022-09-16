@@ -98,7 +98,7 @@ class Filesystem(Client):
         logging.warning("Bulk upload action ignored by filesystem client")
         pass
 
-    def tick(self):
+    def tick(self, t):
         pass
     
     def async_command(self, argv):

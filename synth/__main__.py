@@ -287,7 +287,7 @@ def main():
     try:
         while engine.events_to_come():
             engine.next_event()
-            client.tick()
+            client.tick(engine.get_now())
             if g_asked_to_pause:
                 g_asked_to_pause = False
                 logging.info("Paused")
@@ -339,6 +339,6 @@ if __name__ == "__main__":
         cProfile.run('main()', 'profiling')
         p = pstats.Stats('profiling')
         p.sort_stats('cumulative').print_stats(30)
-        sys.exit(-1)    # ALways return an error exit code when profiling, because profiling removes any exit code, so any self tests will pass incorrectly
+        sys.exit(1)    # ALways return an error exit code when profiling, because profiling removes any exit code, so any self tests will pass incorrectly
     else:
         main()

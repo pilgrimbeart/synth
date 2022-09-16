@@ -362,7 +362,7 @@ class Devicepilot(Client):
         props["$hidden"] = True
         self.update_device(props["$id"], props["$ts"], props)
 
-    def tick(self):
+    def tick(self, t):
         self.flush_post_queue_if_ready()
 
     def async_command(self, argv):

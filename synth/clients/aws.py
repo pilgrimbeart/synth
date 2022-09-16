@@ -101,7 +101,7 @@ class Aws(Client):
     def enter_interactive(self):
         pass
 
-    def tick(self):
+    def tick(self, t):
         pass
     
     def close(self):

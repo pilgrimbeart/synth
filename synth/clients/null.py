@@ -56,7 +56,7 @@ class Null(Client):
     def bulk_upload(self, file_list):
         pass
 
-    def tick(self):
+    def tick(self, t):
         pass
     
     def close(self):
