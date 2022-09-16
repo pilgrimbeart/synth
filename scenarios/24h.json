@@ -1,0 +1,31 @@
+{
+	"comment" : "Output a rising power value and then skip 24h ahead, so that 'today vs. yesterday' analysis can be demonstrated without waiting a day for the simulation to complete",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-PT24H15M",
+        "end_time" : "PT15M"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "interval" : "PT1S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : [
+                            {   "name" : "kW", "timefunction" : { "count" : { "interval" : "PT5M", "increment" : 0.00347222222222} }, "comment" : "increment by 1kWh every 24h" }
+                        ]
+                    }
+                }
+            }
+        },
+		{
+			"at" : "PT15M",
+			"action" : {
+				"mute_for" : { "delta" : "PT24H" }
+			}
+		}
+		
+    ]
+}
