@@ -6,10 +6,16 @@
         "start_time" : "-PT24H15M",
         "end_time" : "PT15M"
     },
+    "client" : {
+        "comment" : "Ask Kinesis client to explode output for us",
+        "explode_factor" : 6000,
+        "num_workers" : 5
+    },
     "events" : [
         {
             "at" : "PT0S",
-            "interval" : "PT1S",
+            "interval" : "PT0S",
+			"repeats" : 1000,
             "action": {
                 "create_device" : {
                     "functions" : {

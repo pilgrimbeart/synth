@@ -39,29 +39,21 @@ Because the post rate into AWS seems (as of 2022) to be limited to around 14 pos
 # SOFTWARE.
 
 # 
-import logging, time
-import json
-import os, sys
+import logging
+import os
 from .client import Client
-from common import ISO8601, merge_test
-from multiprocessing import Process as MP_Process
-from multiprocessing import Queue as MP_Queue
-import queue    # Multiprocessing uses this internally, and returns queue.Empty exception
+from .client_helpers import client_workers
 
-import boto3 # AWS library
-
-MAX_PAYLOAD_BYTES = 1024*1024   # Kinesis max payload size is 1MB. Kinesis input limitations: 1 MB/s or 1000 messages/sec, per shard
 MAX_MESSAGES_PER_POST = 500     # Kinesis requirement
 REPORT_EVERY_S = 60
 BACKOFF_S = 0  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
-MAX_EXPLODE = 1_000_000
 
 DEFAULT_NUM_WORKERS = 4
 POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 
 class Kinesis(Client):
     def __init__(self, instance_name, context, params):
-        logging.info("Initialising Kinesis client")
+        logging.info("Initialising Kinesis client with " + str(params))
         self.instance_name = instance_name
         self.context = context
         self.params = params
@@ -70,33 +62,23 @@ class Kinesis(Client):
                 logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
 
-        self.merge_buffer = {}  # Messages, keyed by ID
-        self.time_at_last_tick = 0
-
         self.num_workers = params.get("num_workers", DEFAULT_NUM_WORKERS)
+        logging.info("Kinesis module using "+str(self.num_workers)+" worker sub-processes to provide write bandwidth")
+
         explode_factor = params.get("explode_factor", 1)
         if explode_factor != 1:
             logging.info("Kinesis explode factor set to "+str(explode_factor))
 
-        profile_name = params.get("profile_name", None)
-        stream_name = params["stream_name"]
-        logging.info("Sending to Kinesis profile_name " + str(profile_name) + ", stream_name " + str(stream_name))
-
-        logging.info("Kinesis module using "+str(self.num_workers)+" worker sub-processes to provide write bandwidth")
         self.workers = []
         for w in range(self.num_workers):
-            self.workers.append(WorkerParent(profile_name, stream_name, explode_factor))
+            self.workers.append(client_workers.WorkerParent(params))
 
     def add_device(self, device_id, time, properties):
-        # logging.info("Kinesis: Add device " + str(properties))
         pass
     
     def update_device(self, device_id, time, properties):
-        if device_id in self.merge_buffer:
-            if merge_test.ok(self.merge_buffer[device_id], properties):
-                self.merge_buffer[device_id].update(properties)
-        else:   
-            self.merge_buffer[device_id] = properties
+        w = hash(properties["$id"]) % self.num_workers   # Shard onto workers by ID (so data from each device stays in sequence). Python hash is stable per run, not across runs.
+        self.workers[w].enqueue(properties)
 
     def get_device(self, device_id):
         pass
@@ -111,193 +93,18 @@ class Kinesis(Client):
         pass
 
     def tick(self, t):
-        if t != self.time_at_last_tick:
-            for (device, properties) in self.merge_buffer.items():
-                w = hash(properties["$id"]) % self.num_workers   # Shard onto workers by ID (so data from each device stays in sequence). Python hash is stable per run, not across runs.
-                self.workers[w].send(properties)
-            self.merge_buffer = {}
-        return
+        for w in self.workers:
+            w.tick(t)
 
     def async_command(self, argv):
         pass
 
     def close(self):
         for w in self.workers:
-            w.send(None)  # Signal to shut down
             w.wait_until_stopped()
 
     # ----
     def flush_queue():
        pass 
-
-
-## Multiprocessing
-
-class WorkerParent():   # Create a worker, and communicate with it
-    def __init__(self, profile_name, stream_name, explode_factor):
-        self.q = MP_Queue()
-        self.p = MP_Process(target=child_func, args=(self.q,), name="synth_worker")
-        self.p.start()
-        self.q.put((profile_name, stream_name, explode_factor)) # First item on queue is parameters, matching *** below
-
-    def send(self, data):
-        self.q.put(data)
-        if not self.p.is_alive():
-            logging.error("Worker " + str(self.p.pid) + " has died - so terminating")
-            assert(False)
-
-    def wait_until_stopped(self):
-        logging.info("Waiting for worker " + str(self.p.pid) + " to stop")
-        self.p.join()
-        logging.info("Worker " + str(self.p.pid) + " has stopped")
-
-
-### Everything below here is executed in the target processes
-
-def child_func(q):
-    (profile_name, stream_name, explode_factor) = q.get()    # First item sent is our parameters, matching *** above
-    worker = Worker(profile_name, stream_name, explode_factor)
-    while True:
-        try:
-            v = q.get(timeout=POLL_PERIOD_S)
-            # logging.info("Worker "+str(os.getpid())+" got from queue "+str(v)+". Queue size now "+str(q.qsize()))
-            if v is None:
-                logging.info("Worker "+str(os.getpid()) + " requested to exit")
-                return
-            worker.enqueue(v)
-            worker.note_input_queuesize(q.qsize())
-        except queue.Empty:
-            pass
-
-        worker.tick()
-
-
-class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
-    def __init__(self, profile_name, stream_name, explode_factor):
-        logging.info("Kinesis worker "+str(os.getpid())+" initialising for profile "+str(profile_name)+" and stream "+str(stream_name))
-        self.profile_name = profile_name
-        self.stream_name = stream_name
-        self.explode_factor = explode_factor
-
-        if self.profile_name is None:
-            session = boto3.Session()
-        else:
-            session = boto3.Session(self.profile_name)
-        if session.get_credentials().secret_key is None:
-            logging.error("AWS secret key is None, so this isn't going to work")
-        self.kinesis_client = session.client("kinesis")
-
-        self.queue = []
-
-        self.start_time = time.time()
-        self.last_report_time = 0
-        self.num_blocks_sent_ever = 0
-        self.num_blocks_sent_recently = 0
-        self.max_shards_seen = 0
-        self.max_shards_seen_recently = 0
-        self.max_queue_size_recently = 0
-
-
-    def note_input_queuesize(self, n):
-        self.max_queue_size_recently = max(self.max_queue_size_recently, n)
-
-    def enqueue(self, properties):
-        if self.explode_factor == 1:
-            self.queue.append({
-                    'Data' : json.dumps(properties),                    # This is format in which Kinesis expects every item
-                    'PartitionKey' : str(properties['$id'])
-                })
-        else:
-            LEN = len(str(MAX_EXPLODE))
-            LENFORMAT = "%0" + str(LEN) + "d"
-            LOCATOR = "X" * LEN
-            base_id = properties["$id"]
-            new_props = properties.copy()
-            new_props["$id"] = new_props["$id"] + "_" + LOCATOR
-            data_str = json.dumps(new_props)        # json.dumps() is SLOW, so only use it once
-            start = data_str.find(LOCATOR)
-            end = start + len(LOCATOR)
-            pre_str = data_str[:start]
-            post_str = data_str[end:]
-            id_str = properties["$id"] + "_"
-
-            for e in range(self.explode_factor):
-                e_str = LENFORMAT % e   # 00001 or whatever
-                d = {
-                        'Data' : pre_str + e_str + post_str,
-                        'PartitionKey' : id_str + e_str
-                    }
-                self.queue.append(d)
-
-    def tick(self):
-        while len(self.queue) > 0:  # Will result in last send being a partial block - not best efficiency, but alternative is to leave a partial block unsent (perhaps forever)
-            num = min(MAX_MESSAGES_PER_POST, len(self.queue))
-            self.send_to_kinesis(self.queue[0:num])
-            self.num_blocks_sent_ever += 1
-            self.num_blocks_sent_recently += 1
-            self.queue = self.queue[num:]
-
-        t =  time.time()
-        if t > self.last_report_time + REPORT_EVERY_S :
-            elap = t - self.start_time
-            logging.info("Kinesis worker " + str(os.getpid()) + ": {:,} blocks sent total in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. In last {:}s sent {:0.1f} blocks/s, max shards {:}, max Q size {:}".format(
-                self.num_blocks_sent_ever,
-                elap,
-                self.num_blocks_sent_ever / elap,
-                self.max_shards_seen,
-                REPORT_EVERY_S,
-                self.num_blocks_sent_recently / float(REPORT_EVERY_S),
-                self.max_shards_seen_recently,
-                self.max_queue_size_recently))
-            self.num_blocks_sent_recently = 0
-            self.max_shards_seen_recently = 0
-            self.max_queue_size_recently = 0
-            self.last_report_time = t
-
-    def send_to_kinesis(self, records, retries=0):
-        # logging.info("Worker sending "+str(len(records))+" records to Kinesis and queue length now "+str(len(self.queue)))
-        if retries==0:
-            s = "Sending"
-        else:
-            s = "Re-sending"
-        # logging.info(s + " " + str(len(records)) + " messages")
-        result = self.kinesis_client.put_records(Records=records, StreamName=self.stream_name)
-        self.count_shards(result)
-        fails = result["FailedRecordCount"]
-        if fails != 0:
-            # Result["Records"] is all of the records. The failed ones (only) have an ErrorCode field.
-            errors = result["Records"]
-            new_records = []
-            errors_seen = []
-            for i in range(len(records)):
-                if "ErrorCode" in errors[i]:
-                    new_records.append(records[i])
-                    ec = errors[i]["ErrorCode"]
-                    if ec not in errors_seen:
-                        errors_seen.append(ec)
-            logging.error("Kinesis: Failed to post " + str(fails) + " of " + str(len(records)) + " records (retries so far " + str(retries)+") " + str(errors_seen))
-            time.sleep(BACKOFF_S)
-            self.send_to_kinesis(new_records, retries+1)
-            # "Records": [ 
-            #    { 
-            #        "ErrorCode": "string",
-            #        "ErrorMessage": "string",
-            #        "SequenceNumber": "string",
-            #        "ShardId": "string"
-            #    }
-    
-    def count_shards(self, result):
-        max_shard_seen = 0
-        ids = []
-        for r in result["Records"]:
-            if "ShardId" in r:  # Only successful records have a shard id
-                id = int(r["ShardId"][-12:])    # Last 12 digits is shard id
-                if id not in ids:
-                    ids.append(id)
-                max_shard_seen = max(max_shard_seen, id)
-        shards = max_shard_seen + 1
-        self.max_shards_seen = max(self.max_shards_seen, shards)
-        self.max_shards_seen_recently = max(self.max_shards_seen_recently, shards)
-        # logging.info(str(max_shard_seen+1) + " shards " + str(ids))
 
 
