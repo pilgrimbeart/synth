@@ -5,18 +5,18 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
-        "end_time" : "PT15M"
+        "end_time" : "PT1M"
     },
     "client" : {
         "comment" : "Ask client to explode output for us",
         "explode_factor" : 6000,
-		"num_workers" : 5
+		"num_workers" : 1
     },
     "events" : [
         {
             "comment" : "Create 6m Smart Meters over 5m, each talking every 5m",
             "repeats" : 1000,
-            "interval" : "PT0.3S",
+            "intervalNOT" : "PT0.3S",
             "action": {
                 "create_device" : {
                     "functions" : {

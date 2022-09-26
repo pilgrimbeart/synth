@@ -35,6 +35,8 @@ import queue    # Multiprocessing uses this internally, and returns queue.Empty 
 import boto3 # AWS library
 from botocore.config import Config
 
+HTTP_OK = 200
+
 TIMESTREAM_MAX_MESSAGES_PER_POST = 100     # Timestream requirement
 REPORT_EVERY_S = 60
 BACKOFF_S = 0  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
@@ -53,13 +55,15 @@ def child_func(q):
             if v is None:
                 logging.info("Worker "+str(os.getpid()) + " requested to exit")
                 return
+            t1 = time.time()
             worker.enqueue(v)
             worker.note_input_queuesize(q.qsize())
+            t2 = time.time()
+            # logging.info("Enqueing took "+str(t2-t1)+"s")
         except queue.Empty:
             pass
 
         worker.tick()
-
 
 class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
     def __init__(self, params):
@@ -100,10 +104,12 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
     def _enqueue(self, properties):
         dimensions = [{ "Name" : "$id", "Value" : properties["$id"], "DimensionValueType" : "VARCHAR" }]    # TODO: Add any other metadata here
         t = str(int(properties["$ts"] * 1000))
+        measures = []
         for (k,v) in properties.items():
             if k not in ["$id", "$ts"]:
-                record = { "Dimensions" : dimensions, "MeasureName" : k, "MeasureValue" : str(v), "MeasureValueType" : 'DOUBLE', "Time" : t }  # TODO: Other types
-                self.queue.append(record)
+                measures.append( { "Name" : k, "Value" : str(v), "Type" : 'DOUBLE' } )  # TODO: Other types
+        record = { "Dimensions" : dimensions, "MeasureName" : "multimeasure", "MeasureValues" : measures, "MeasureValueType" : "MULTI", "Time" : t } 
+        self.queue.append(record)
 
     def enqueue(self, properties):
         if self.params["explode_factor"] == 1:
@@ -119,7 +125,11 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
         t =  time.time()
         if t > self.last_report_time + REPORT_EVERY_S :
             elap = t - self.start_time
-            logging.info("Worker " + str(os.getpid()) + ": {:,} blocks sent total in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. In last {:}s sent {:0.1f} blocks/s, max shards {:}, max Q size {:}".format(
+            tDelta = 0
+            if len(self.queue) > 0:
+                tDelta = int(time.time() - int(self.queue[0]["Time"])/1000.0)   # Sample the timestamp in next message (which will be first to send, so reasonable)
+
+            logging.info("Worker " + str(os.getpid()) + ": {:,} blocks sent total in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. In last {:}s sent {:0.1f} blocks/s, max shards {:}, max Q size {:}. {:}s behind.".format(
                 self.num_blocks_sent_ever,
                 elap,
                 self.num_blocks_sent_ever / elap,
@@ -127,30 +137,33 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
                 REPORT_EVERY_S,
                 self.num_blocks_sent_recently / float(REPORT_EVERY_S),
                 self.max_shards_seen_recently,
-                self.max_queue_size_recently))
-
-            if len(self.queue) > 0:
-                t = int(self.queue[0]["Time"])/1000.0   # Sample the timestamp in next message (which will be first to send, so reasonable)
-                logging.info("Worker posting is running " + str(time.time() - t) + "s behind real-time")
+                self.max_queue_size_recently,
+                tDelta))
 
             self.num_blocks_sent_recently = 0
             self.max_shards_seen_recently = 0
             self.max_queue_size_recently = 0
             self.last_report_time = t
 
+        # logging.info(str(len(self.queue))+" records to send")
         while len(self.queue) > 0:  # Will result in last send being a partial block - not best efficiency, but alternative is to leave a partial block unsent (perhaps forever)
+            tA = time.time()
             num = min(TIMESTREAM_MAX_MESSAGES_PER_POST, len(self.queue))
             self.send_to_timestream(self.queue[0:num])
             self.num_blocks_sent_ever += 1
             self.num_blocks_sent_recently += 1
             self.queue = self.queue[num:]
+            tB = time.time()
+            # logging.info("Sending "+str(num)+" records took "+str(tB-tA))
 
     def send_to_timestream(self, records, retries=0):
         # logging.info("Send to timestream " + str(len(records)) + "\n" + str(records))
         try:
             result = self.write_client.write_records(DatabaseName=self.params["database_name"], TableName=self.params["table_name"],
                                             Records=records, CommonAttributes={})
-            logging.info("WriteRecords Status: [%s]" % result['ResponseMetadata']['HTTPStatusCode'])
+            status = result['ResponseMetadata']['HTTPStatusCode']
+            if status != HTTP_OK:
+                logging.info("WriteRecords Status: " + status)
         except self.write_client.exceptions.RejectedRecordsException as err:
             logging.info("Some records were rejected")
             logging.info(str(result))
