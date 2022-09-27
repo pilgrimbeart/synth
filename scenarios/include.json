@@ -1,0 +1,20 @@
+{
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "now",
+        "end_time" : "PT10S"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include include2,
+                        "names" : {}
+                    }
+                }
+            }
+        }
+    ]
+}

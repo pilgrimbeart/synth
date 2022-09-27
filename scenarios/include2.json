@@ -1,0 +1,6 @@
+                        "battery" : {
+                            "life_mu" : "PT1M",
+                            "life_sigma" : "PT0M",
+                            "autoreplace" : false
+                        }
+

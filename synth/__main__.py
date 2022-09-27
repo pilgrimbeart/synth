@@ -140,6 +140,11 @@ def remove_C_comments(string):
 
 def preprocess(s):
     """deal with #define statements"""
+    result = preprocess_includes(s)
+    result = preprocess_defines(result)
+    return result
+    
+def preprocess_defines(s):  # Just like C #defines
     output = []
     macros = {}
     lines = s.split("\n")
@@ -162,6 +167,17 @@ def preprocess(s):
 
     result = "\n".join(output)
     return result
+
+def preprocess_includes(s): # Unlike C #includes, these can occur anywhere in a line
+    # Format: <optionalstrings>#include filename <optionalstrings>
+    def do_include(match_obj):
+        s = match_obj.group(0)
+        filename = s[len("#include "):-1]
+        sep = s[-1]
+        logging.info("do_include: '" + str(filename) + "'")
+        return open(SCENARIO_DIR+filename+".json","rt").read() + sep
+
+    return re.sub(r"#include\ \S+", do_include, s)    # The filename ends with any whitespace character
 
 def get_params():
     """Read command-line to ingest parameters and parameter files"""
