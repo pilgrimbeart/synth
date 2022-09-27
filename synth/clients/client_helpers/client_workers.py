@@ -40,7 +40,7 @@ from botocore.config import Config
 from . import kinesis_worker, timestream_worker
 
 KINESIS_MAX_MESSAGES_PER_POST = 500     # Kinesis requirement
-REPORT_EVERY_S = 60
+REPORT_EVERY_S = 10
 BACKOFF_S = 0  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
 MAX_EXPLODE = 1_000_000
 
@@ -51,7 +51,8 @@ class WorkerParent():   # Create a worker, and communicate with it
         self.merge_buffer = {}  # Messages, keyed by ID
         self.time_at_last_tick = 0
 
-        self.q = MP_Queue()
+        self.qtx = MP_Queue()
+        self.qrx = MP_Queue()
         assert "type" in params, "Client params must specify a type=kinesis/timestream"
         if params["type"] == "kinesis":
             child_func = kinesis_worker.child_func
@@ -59,9 +60,12 @@ class WorkerParent():   # Create a worker, and communicate with it
             child_func = timestream_worker.child_func
         else:
             assert False, "Invalid option for type param in client params"
-        self.p = MP_Process(target=child_func, args=(self.q,), name="synth_worker")
+        self.p = MP_Process(target=child_func, args=(self.qtx, self.qrx,), name="synth_worker")
         self.p.start()
-        self.q.put(params) # First item on queue is parameters
+        self.qtx.put(params) # First item on queue is parameters
+
+        self.stats = None   # Updated periodically by child processes
+        self.old_stats = None  # Updated periodically by parent
 
     def enqueue(self, properties):
         device_id = properties["$id"]
@@ -78,8 +82,14 @@ class WorkerParent():   # Create a worker, and communicate with it
             self.merge_buffer = {}
             self.time_at_last_tick = t
 
+        try:
+            stats = self.qrx.get(timeout=0)
+            self.stats = stats
+        except queue.Empty:
+            pass
+
     def _send(self, data):  # Don't use this directly if you want message merging
-        self.q.put(data)
+        self.qtx.put(data)
         if not self.p.is_alive():
             logging.error("Worker " + str(self.p.pid) + " has died - so terminating")
             assert(False)
@@ -91,3 +101,33 @@ class WorkerParent():   # Create a worker, and communicate with it
         self.p.join()
         logging.info("Worker " + str(self.p.pid) + " has stopped")
 
+
+start_time = 0
+last_report = 0
+
+def output_stats(workers):
+    global start_time, last_report
+    if start_time == 0:
+        start_time = time.time()
+
+    if time.time() < last_report + REPORT_EVERY_S:
+        return
+    last_report = time.time()
+
+    tot_blocks = 0
+    new_blocks = 0
+    num_workers = 0
+    max_queue_size = 0
+    max_t_delta = 0
+    for w in workers:
+        if w.stats:
+            num_workers += 1
+            tot_blocks += w.stats["num_blocks_sent_ever"]
+            new_blocks += w.stats["num_blocks_sent_ever"]
+            max_queue_size = max(max_queue_size, w.stats["max_queue_size_recently"])
+            max_t_delta = max(max_t_delta, w.stats["t_delta"])
+        if w.old_stats:
+            new_blocks -= w.old_stats["num_blocks_sent_ever"]
+        w.old_stats = w.stats
+     
+    logging.info("T+ "+str(int(time.time()-start_time))+" "+str(num_workers)+" workers. Tot blocks " + str(tot_blocks) + " Blocks/s "+str(new_blocks/REPORT_EVERY_S) + " Max Q " + str(max_queue_size) + " max_t_delta "+str(max_t_delta))

@@ -83,6 +83,8 @@ class Timestream(Client):
         for w in self.workers:
             w.tick(t)
 
+        client_workers.output_stats(self.workers)
+
     def async_command(self, argv):
         pass
 

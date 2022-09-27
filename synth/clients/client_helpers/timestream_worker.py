@@ -38,7 +38,7 @@ from botocore.config import Config
 HTTP_OK = 200
 
 TIMESTREAM_MAX_MESSAGES_PER_POST = 100     # Timestream requirement
-REPORT_EVERY_S = 60
+REPORT_EVERY_S = 1
 BACKOFF_S = 0  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
 MAX_EXPLODE = 1_000_000
 
@@ -46,26 +46,25 @@ POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 
 ### This code is executed in the target process(es), so must not refer to Synth environment
 
-def child_func(q):
-    params = q.get()    # First item sent is a dict of params
+def child_func(qtx, qrx):   # qtx is messages to send, qrx is feedback to Synth
+    params = qtx.get()    # First item sent is a dict of params
     worker = Worker(params)
     while True:
         try:
-            v = q.get(timeout=POLL_PERIOD_S)
+            v = qtx.get(timeout=POLL_PERIOD_S)
             if v is None:
                 logging.info("Worker "+str(os.getpid()) + " requested to exit")
                 return
-            t1 = time.time()
             worker.enqueue(v)
-            worker.note_input_queuesize(q.qsize())
-            t2 = time.time()
-            # logging.info("Enqueing took "+str(t2-t1)+"s")
+            worker.note_input_queuesize(qtx.qsize())
         except queue.Empty:
             pass
 
-        worker.tick()
+        result = worker.tick()
+        if result:
+            qrx.put(result)
 
-class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
+class Worker(): 
     def __init__(self, params):
         logging.info("Timestream Worker "+str(os.getpid())+" initialising with params "+str(params))
         self.params = params
@@ -80,12 +79,17 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
         else:
             session = boto3.Session()
 
-        if session.get_credentials().secret_key:
-            logging.info("Timestream worker sees AWS secret key is set")
-        else:
-            logging.error("Timestream worker sees no AWS secret key, so this isn't going to work")
+        # if not session.get_credentials().secret_key:  # With very high parallelism this occasionally fails
+        #    logging.error("Timestream worker sees no AWS secret key, so this isn't going to work")
 
-        self.write_client = session.client('timestream-write', config=Config(read_timeout=20, max_pool_connections = 5000, retries={'max_attempts': 10}))
+        attempts = 0
+        while True:
+            try:
+                self.write_client = session.client('timestream-write', config=Config(read_timeout=20, max_pool_connections = 5000, retries={'max_attempts': 100}))
+                break
+            except:
+                logging.warning("Failed to create write client, attempt "+str(attempts))
+            attempts += 1
 
         self.queue = []
 
@@ -122,6 +126,9 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
                 self._enqueue(prop_copy)
 
     def tick(self):
+        # Returns stats occasionally
+        result = None
+
         t =  time.time()
         if t > self.last_report_time + REPORT_EVERY_S :
             elap = t - self.start_time
@@ -129,16 +136,22 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
             if len(self.queue) > 0:
                 tDelta = int(time.time() - int(self.queue[0]["Time"])/1000.0)   # Sample the timestamp in next message (which will be first to send, so reasonable)
 
-            logging.info("Worker " + str(os.getpid()) + ": {:,} blocks sent total in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. In last {:}s sent {:0.1f} blocks/s, max shards {:}, max Q size {:}. {:}s behind.".format(
-                self.num_blocks_sent_ever,
-                elap,
-                self.num_blocks_sent_ever / elap,
-                self.max_shards_seen,
-                REPORT_EVERY_S,
-                self.num_blocks_sent_recently / float(REPORT_EVERY_S),
-                self.max_shards_seen_recently,
-                self.max_queue_size_recently,
-                tDelta))
+            #logging.info("Worker " + str(os.getpid()) + ": {:,} blocks sent total in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. In last {:}s sent {:0.1f} blocks/s, max shards {:}, max Q size {:}. {:}s behind.".format(
+            #    self.num_blocks_sent_ever,
+            #    elap,
+            #    self.num_blocks_sent_ever / elap,
+            #    self.max_shards_seen,
+            #    REPORT_EVERY_S,
+            #    self.num_blocks_sent_recently / float(REPORT_EVERY_S),
+            #    self.max_shards_seen_recently,
+            #    self.max_queue_size_recently,
+            #    tDelta))
+
+            result = {
+                        "num_blocks_sent_ever" : self.num_blocks_sent_ever,
+                        "max_queue_size_recently" : self.max_queue_size_recently,
+                        "t_delta" : tDelta
+                    }
 
             self.num_blocks_sent_recently = 0
             self.max_shards_seen_recently = 0
@@ -155,6 +168,8 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
             self.queue = self.queue[num:]
             tB = time.time()
             # logging.info("Sending "+str(num)+" records took "+str(tB-tA))
+
+        return result
 
     def send_to_timestream(self, records, retries=0):
         # logging.info("Send to timestream " + str(len(records)) + "\n" + str(records))
