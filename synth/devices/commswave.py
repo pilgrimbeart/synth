@@ -15,6 +15,7 @@ Configurable parameters::
 Device properties created::
 
     {
+        "connected" : A flag which shows if we are currently connected (TCP- and therefore MQTT-like)
     }
 
 """
@@ -22,17 +23,20 @@ Device properties created::
 from .device import Device
 from common import importer
 import logging
+import inspect
 
 class Commswave(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         """Take Comms up and down according to some time function"""
+        super(Commswave,self).__init__(instance_name, time, engine, update_callback, context, params)
         tf = params["commswave"]["timefunction"]
         self.comms_timefunction = importer.get_class("timefunction", list(tf.keys())[0])(engine, self, tf[list(tf.keys())[0]])
         self.comms_tf_threshold = params["commswave"].get("threshold", None)
         self.comms_gate_properties = params["commswave"].get("gate_properties", None)
         self.messages_sent = 0
         self.messages_attempted = 0
-        super(Commswave,self).__init__(instance_name, time, engine, update_callback, context, params)
+        self.set_property("connected", self.timefunction_says_communicate())
+        self.engine.register_event_at(self.comms_timefunction.next_change(), self.tick_commswave, self, self) # Tick the "connected" flag 
 
     def timefunction_says_communicate(self):
         thresh = 0.0
@@ -57,6 +61,7 @@ class Commswave(Device):
                 for p in self.comms_gate_properties:
                     properties.pop(p, None) # Remove the property, if it's there
 
+        # logging.info("commswave.transmit("+str(properties)+") called from "+str(inspect.stack()[1]))
         super(Commswave, self).transmit(the_id, ts, properties, force_comms)
 
     def external_event(self, event_name, arg):
@@ -71,7 +76,8 @@ class Commswave(Device):
 
     # Private methods
 
-##    (we don't actually need to tick, as we can instantaneously look up timefunction state whenever we need to)
-##    def tick_commswave(self, _):
-##        self.ok_commswave = self.comms_timefunction.state()
-##        self.engine.register_event_at(self.comms_timefunction.next_change(), self.tick_commswave, self, self)
+    def tick_commswave(self, _):
+        state = self.timefunction_says_communicate()
+        logging.info("commswave: comms going " + ["offline","online"][state] + " for device " + str(self.properties["$id"]))
+        self.set_property("connected", state, force_send=True)  # We have to force send, because otherwise the fact that we've just set connected to false will cause our own comms_ok() function to prevent this transmission!
+        self.engine.register_event_at(self.comms_timefunction.next_change(), self.tick_commswave, self, self)
