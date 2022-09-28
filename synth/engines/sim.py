@@ -239,6 +239,8 @@ class Sim(Engine):
         
     def register_event_in(self, deltaTime, func, arg, device):
         assert deltaTime >= 0
+        if deltaTime > 60 * 60 * 24 * 365 * 10:
+            logging.warning("Delay of more than 10y passed to register_event_in() - you probably meant to use register_event_at()")
         self._add_event(self.get_now() + deltaTime, func, arg, device)
 
     def warn_not_keeping_up(self):
