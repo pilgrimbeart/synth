@@ -174,7 +174,9 @@ def preprocess_includes(s): # Unlike C #includes, these can occur anywhere in a 
         s = match_obj.group(0)
         filename = s[len("#include "):-1]
         sep = s[-1]
-        logging.info("do_include: '" + str(filename) + "'")
+        if sep.isalnum() or sep in "_-.":
+            filename += sep
+            sep = ""
         return open(SCENARIO_DIR+filename+".json","rt").read() + sep
 
     return re.sub(r"#include\ \S+", do_include, s)    # The filename ends with any whitespace character
