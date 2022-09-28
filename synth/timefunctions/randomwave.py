@@ -18,12 +18,17 @@ import isodate
 import math
 import random
 import logging
+from zlib import crc32
 
 # Because any time-function has to be able to generate the value of its waveform instantaneously for any moment
 # in time, we cannot iterate to produce randomness (e.g. LFSR).
 # And also, we have to base the random number off of time (so that if we want a period of e.g. 1D then it only changes every 1D)
  
+def str_to_float(s):    # In range [0..1)
+    return crc32(s.encode("utf-8")) / 2**32
+
 class Randomwave(Timefunction):
+    instance_counter = 0
     """Generates random waves of defined period"""
     def __init__(self, engine, device, params):
         self.engine = engine
@@ -33,6 +38,9 @@ class Randomwave(Timefunction):
         self.upper = params.get("upper", 1.0)
         self.precision = params.get("precision", None)
         self.initTime = engine.get_now()
+        self.instance_number = Randomwave.instance_counter
+        Randomwave.instance_counter += 1
+        self.id_hashfloat = str_to_float(str(self.device.get_property("$id")) + str(self.instance_number)) 
 
     def state(self, t=None, t_relative=False):
         """Return a random wave"""
@@ -41,13 +49,14 @@ class Randomwave(Timefunction):
         if (not t_relative):
             t -= self.initTime
 
-        r = random.Random() # Our own private random number generator
         quantised_time = int(t / self.period)
-        r.seed(quantised_time + hash(self.device.get_property("$id")))    # Unique per device
-        r.random()
-        r.random()
-        r.random()
-        v = self.lower + r.random() * (self.upper-self.lower)
+        #r = random.Random() # Our own private random number generator
+        #r.seed(quantised_time + hash(self.device.get_property("$id")))    # Unique per device
+        #r.random()
+        #r.random()
+        #r.random()
+        r = (quantised_time * 12345.6789 + self.id_hashfloat) % 1.0
+        v = self.lower + r * (self.upper-self.lower)
         if self.precision is not None:
             v = int(v * self.precision) / float(self.precision)
 
