@@ -23,16 +23,16 @@
 						"basic" : { "no_metadata" : true },
 						"energy" : { "no_metadata" : true, "reading_interval" : "PT5M" },
 						"variable" : [
-							{ "name" : "a", "timefunction" : { "randomwave" : { "interval" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "b", "timefunction" : { "randomwave" : { "interval" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "c", "timefunction" : { "randomwave" : { "interval" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "d", "timefunction" : { "randomwave" : { "interval" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "e", "timefunction" : { "randomwave" : { "interval" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "f", "timefunction" : { "randomwave" : { "interval" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "g", "timefunction" : { "randomwave" : { "interval" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "h", "timefunction" : { "randomwave" : { "interval" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "i", "timefunction" : { "randomwave" : { "interval" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "j", "timefunction" : { "randomwave" : { "interval" : "PT5M", "precision" : 1000 } } }
+							{ "name" : "a", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
+							{ "name" : "b", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
+							{ "name" : "c", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
+							{ "name" : "d", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
+							{ "name" : "e", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
+							{ "name" : "f", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
+							{ "name" : "g", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
+							{ "name" : "h", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
+							{ "name" : "i", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
+							{ "name" : "j", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } }
 						]
                     }
                 }
