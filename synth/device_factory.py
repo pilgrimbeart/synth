@@ -94,7 +94,9 @@ def create_device(args):
     global g_devices
     (instance_name, client, engine, update_callback, context, params) = args
     
-    sorted_class_names = sort_by_suffix(params["functions"])
+    funcs = params["functions"]
+    funcs.pop("comment", None)  # Ignore any comments
+    sorted_class_names = sort_by_suffix(funcs)
     C = compose_class(sorted_class_names)        # Create a composite device class from all the given class names
     d = C(instance_name, engine.get_now(), engine, update_callback, context, params["functions"])   # Instantiate it
     client.add_device(d.properties["$id"], engine.get_now(), d.properties)

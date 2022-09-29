@@ -14,6 +14,7 @@ Arguments::
 from .timefunction import Timefunction
 from common import importer
 from common.ordinal import LCMM
+import logging
 
 class Mix(Timefunction):
     """Combine timefunctions according to a given operator"""
@@ -22,8 +23,11 @@ class Mix(Timefunction):
         self.device = device
         self.mix_operator = params["operator"]
         self.mix_timefunctions = []
+        logging.info("Mix timefunction initialising for "+str(params["timefunctions"]))
         for f in params["timefunctions"]:
-            tf = importer.get_class("timefunction", f.keys()[0])(engine, device, f[f.keys()[0]])
+            logging.info(str(f))
+            name = list(f.keys())[0]
+            tf = importer.get_class("timefunction", name)(engine, device, f[name])
             self.mix_timefunctions.append(tf)
 
         self.operators = {

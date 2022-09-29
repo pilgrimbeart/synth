@@ -15,7 +15,7 @@
     "comment" : "Create 6m Smart Meters, each talking every 5m, 10% of which go offline after 5m",
     "events" : [
         {
-            "repeats" : 1,
+            "repeats" : 9,
             "action": {
                 "create_device" : {
                     "functions" : {
@@ -26,7 +26,7 @@
                                     "interval" : "P1D",
                                     "transition" : "P1D",
                                     "invert" : true,
-                                    "comment" : "Always communicating"
+                                    "comment" : "Always communicating - we add commswave even in devices we don't want to take offline so they emit a 'connected' flag"
                                 }
                             }
                         }
@@ -46,7 +46,7 @@
                                     "interval" : "P1D",
                                     "transition" : "PT5M",
                                     "invert" : true,
-                                    "comment" : "Communicate for 5 minutes"
+                                    "comment" : "Communicate for 5 minutes then go offline"
                                 }
                             }
 						}

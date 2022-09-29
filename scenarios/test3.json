@@ -1,0 +1,41 @@
+{
+    "restart_log" : true,
+    "write_log" : true,
+    "comment" : "we did have explode_factor here, so was enacted in the top-level events module. But that was too inefficient, so now moved into client module so enacted on output",
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-PT1H",
+        "end_time" : "now"
+    },
+   "client" : {
+        "comment" : "Ask client to explode output for us",
+        "explode_factor" : 6000,
+        "num_workers" : 200
+    },
+    "comment" : "Create 6m Smart Meters, each talking every 5m, 5% of which also have an EV charger in the same property whose value gradually increases",
+    "events" : [
+        {
+            "repeats" : 19,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include test_functions,
+						"variable" : { "name" : "DNO", "series" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid", "Electricity North West Limited"] }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 1,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include test_functions,
+                        "variable" : { "name" : "kWhEV", "timefunction" : { "timeout" : { "max_time" : "PT30M", "on_value" : 7 } } }
+                    }
+                }
+            }
+        }
+    ]
+}
+

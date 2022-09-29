@@ -1,0 +1,33 @@
+{
+    "comment" : "Switch on a value for each device, after a random interval",
+    "restart_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-PT1H",
+        "end_time" : "now"
+    },
+    "events" : [
+        {
+            "at" : "PT0S",    // Each device emits a value after a defined time
+            "repeats" : 10,
+            "interval" : "PT0S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        "variable" : {
+                            "name" : "kWEV",
+                            "timefunction" : {
+                                "timeout" : {
+                                    "min_time" : "PT0M",
+                                    "max_time" : "PT1H",
+                                    "off_value" : 0.0,
+                                    "on_value" : 7.0
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

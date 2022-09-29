@@ -1,0 +1,42 @@
+{
+    "restart_log" : true,
+    "write_log" : true,
+    "comment" : "we did have explode_factor here, so was enacted in the top-level events module. But that was too inefficient, so now moved into client module so enacted on output",
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "-PT20M",
+        "end_time" : "now"
+    },
+   "client" : {
+        "comment" : "Ask client to explode output for us",
+        "explode_factor" : 6000,
+        "num_workers" : 200
+    },
+    "comment" : "Create 6m Smart Meters, each talking every 5m, 5% of which have shiftable load of 7kWh",
+    "events" : [
+        {
+            "repeats" : 19,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include test_functions,
+						"comment" : "We use a timefunction to cause variable to be emitted periodically, even though in this case its value doesn't change",
+                        "variable" : { "name" : "shiftablekWh", "timefunction" : { "randomwave" : { "period" : "PT5M", "lower" : 0, "upper" : 0 } } }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 1,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include test_functions,
+                        "variable" : { "name" : "shiftablekWh", "timefunction" : { "randomwave" : { "period" : "PT5M", "lower" : 7, "upper" : 7 } } }
+                    }
+                }
+            }
+        }
+    ]
+}
+
