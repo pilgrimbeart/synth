@@ -220,7 +220,7 @@ def set_headers(token):
     return headers
 
 class Devicepilot(Client):
-    def __init__(self, instance_name, context, params):
+    def __init__(self, instance_name, context, params, logfile_abspath):
         """There are two types of queue-throttling:
             1) flush_criterion says "don't post until you have X messages (or X secs have passed)"
             2) throttle_seconds_per_post says "ensure X seconds between any post"

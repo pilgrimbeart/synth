@@ -55,6 +55,11 @@ def in_simulated_time(self,secs=None):
         t = 0
     return ISO8601.epoch_seconds_to_datetime(t).timetuple()  # Logging might be emitted within sections where simLock is acquired, so we accept a small chance of duff time values in log messages, in order to allow diagnostics without deadlock
 
+def logfile_abspath():
+    rel_path = LOG_DIR + g_instance_name + ".out"
+    abs_path = os.path.abspath(rel_path)
+    return abs_path
+
 def init_logging(params):
     global g_slack_webhook
     
@@ -71,7 +76,7 @@ def init_logging(params):
         os.mkdir(LOG_DIR)	# Ensure directory exists, first time through
     except:
         pass
-    file_handler = logging.FileHandler(filename=LOG_DIR + g_instance_name + ".out", mode="w")
+    file_handler = logging.FileHandler(filename=logfile_abspath(), mode="w")
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
     h2 = logging.getLogger().addHandler(file_handler)
 
@@ -283,7 +288,7 @@ def main():
     if not "client" in params:
         logging.error("No client defined to receive simulation results")
         return
-    client = importer.get_class('client', params['client']['type'])(g_instance_name, params, params['client'])
+    client = importer.get_class('client', params['client']['type'])(g_instance_name, params, params['client'], logfile_abspath())
 
     if not "engine" in params:
         logging.error("No simulation engine defined")

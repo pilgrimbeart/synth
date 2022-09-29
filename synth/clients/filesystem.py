@@ -57,7 +57,7 @@ class Filesystem(Client):
         to write a CSV file which includes a column header for each property.
         So we use evt2csv to accumulate and write at the end.
     """
-    def __init__(self, instance_name, context, params):
+    def __init__(self, instance_name, context, params, logfile_abspath):
         self.params = params
         self.events = {} # A dict of events in a format handled by evt2csv
         ts_prefix = params.get("timestamp_prefix", False)

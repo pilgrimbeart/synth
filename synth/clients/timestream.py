@@ -14,18 +14,16 @@ else:
 DEFAULT_NUM_WORKERS = 1
 
 class Timestream(Client):
-    def __init__(self, instance_name, context, params):
+    def __init__(self, instance_name, context, params, logfile_abspath):
         logging.info("Initialising Timestream client with "+str(params))
         self.instance_name = instance_name
         self.context = context
         self.params = params
+        logging.info(str(self.context)+"\n"+str(self.params))
         if "setenv" in params:
             for (key, value) in params["setenv"].items():
-                logging.info("SETENV "+key+" "+value)
+                # logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
-
-        if "profile_name" not in params:
-            logging.warning("No profile specified for Timestream")
 
         session = boto3.Session(profile_name = params.get("profile_name", None))
         if session.get_credentials().secret_key:
@@ -58,7 +56,7 @@ class Timestream(Client):
 
         self.workers = []
         for w in range(self.num_workers):
-            self.workers.append(client_workers.WorkerParent(params))
+            self.workers.append(client_workers.WorkerParent(params, logfile_abspath))
 
     def add_device(self, device_id, time, properties):
         pass

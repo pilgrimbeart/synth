@@ -5,7 +5,7 @@ class Client:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, instance_name, context, params):
+    def __init__(self, instance_name, context, params, logfile_abspath):
         pass
 
     @abstractmethod

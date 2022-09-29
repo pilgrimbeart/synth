@@ -29,8 +29,9 @@ Runs in separate process to send data to Kinesis
 # 
 import logging, time
 import json
-import os
+import os, sys
 import queue    # Multiprocessing uses this internally, and returns queue.Empty exception
+import traceback
 
 import boto3 # AWS library
 from botocore.config import Config
@@ -47,7 +48,9 @@ POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 ### This code is executed in the target process(es), so must not refer to Synth environment
 
 def child_func(qtx, qrx):   # qtx is messages to send, qrx is feedback to Synth
-    params = qtx.get()    # First item sent is a dict of params
+    # sys.stderr = sys.stdout # Ensure our errors go to same place as our normal output, so get captured in logfiles (doesn't seem to work for e.g. stack trace on crash -  need lower-level?)
+    # os.dup2(sys.stderr.fileno(), sys.stdout.fileno()) # Doesn't seem to work either!
+    (params, logfile_abspath) = qtx.get()    # First item sent is a dict of params
     worker = Worker(params)
     while True:
         try:
@@ -59,6 +62,10 @@ def child_func(qtx, qrx):   # qtx is messages to send, qrx is feedback to Synth
             worker.note_input_queuesize(qtx.qsize())
         except queue.Empty:
             pass
+        except Exception as e:
+            logging.error("Error in worker "+str(os.getpid())+": "+str(e))  # Force errors into logging subsystem
+            logging.error(traceback.format_exc())
+            raise
 
         result = worker.tick()
         if result:
@@ -181,7 +188,7 @@ class Worker():
                 logging.info("WriteRecords Status: " + status)
         except self.write_client.exceptions.RejectedRecordsException as err:
             logging.info("Some records were rejected")
-            logging.info(str(result))
+            logging.info(str(err))
             assert(False)   # Need to handle this
 
     def count_shards(self, result):

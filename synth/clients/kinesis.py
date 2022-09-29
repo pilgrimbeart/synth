@@ -52,7 +52,7 @@ DEFAULT_NUM_WORKERS = 4
 POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 
 class Kinesis(Client):
-    def __init__(self, instance_name, context, params):
+    def __init__(self, instance_name, context, params, logfile_abspath):
         logging.info("Initialising Kinesis client with " + str(params))
         self.instance_name = instance_name
         self.context = context

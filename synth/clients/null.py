@@ -32,7 +32,7 @@ from common import json_writer
 
 class Null(Client):
     """Null client for Synth"""
-    def __init__(self, instance_name, context, params):
+    def __init__(self, instance_name, context, params, logfile_abspath):
         self.params = params
 
     def add_device(self, device_id, time, properties):

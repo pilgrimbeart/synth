@@ -44,7 +44,7 @@ POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 ### This code is executed in the target process(es), so must not refer to Synth environment
 
 def child_func(q):
-    params = q.get()    # First item sent is a dict of params
+    (params, logfile_abspath) = q.get()    # First item sent is a dict of params
     worker = Worker(params)
     while True:
         try:

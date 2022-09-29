@@ -47,7 +47,7 @@ MAX_EXPLODE = 1_000_000
 POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 
 class WorkerParent():   # Create a worker, and communicate with it
-    def __init__(self, params):
+    def __init__(self, params, logfile_abspath):
         self.merge_buffer = {}  # Messages, keyed by ID
         self.time_at_last_tick = 0
 
@@ -60,9 +60,9 @@ class WorkerParent():   # Create a worker, and communicate with it
             child_func = timestream_worker.child_func
         else:
             assert False, "Invalid option for type param in client params"
-        self.p = MP_Process(target=child_func, args=(self.qtx, self.qrx,), name="synth_worker")
+        self.p = MP_Process(target=child_func, args=(self.qtx, self.qrx), name="synth_worker")
         self.p.start()
-        self.qtx.put(params) # First item on queue is parameters
+        self.qtx.put( (params, logfile_abspath) ) # First item on queue is parameters
 
         self.stats = None   # Updated periodically by child processes
         self.old_stats = None  # Updated periodically by parent
