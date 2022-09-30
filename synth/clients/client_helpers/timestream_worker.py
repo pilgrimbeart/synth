@@ -45,6 +45,8 @@ MAX_EXPLODE = 1_000_000
 
 POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 
+g_id_time = {}    # Unique combinations of ID and timestamp (to check if we ever repeat)
+
 ### This code is executed in the target process(es), so must not refer to Synth environment
 
 def child_func(qtx, qrx):   # qtx is messages to send, qrx is feedback to Synth
@@ -73,12 +75,12 @@ def child_func(qtx, qrx):   # qtx is messages to send, qrx is feedback to Synth
 
 class Worker(): 
     def __init__(self, params):
-        logging.info("Timestream Worker "+str(os.getpid())+" initialising with params "+str(params))
+        # logging.info("Timestream Worker "+str(os.getpid())+" initialising with params "+str(params))
         self.params = params
 
         if "setenv" in params:
             for (key, value) in params["setenv"].items():
-                logging.info("SETENV "+key+" "+value)
+                # logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
 
         if "profile_name" in self.params:   # For some reason I don't understand, if you specify the profile_name here then auth fails (even if you've specified it as an environment variable). So only specify as an environment variable.
@@ -95,7 +97,8 @@ class Worker():
                 self.write_client = session.client('timestream-write', config=Config(read_timeout=20, max_pool_connections = 5000, retries={'max_attempts': 100}))
                 break
             except:
-                logging.warning("Failed to create write client, attempt "+str(attempts))
+                if attempts > 1:
+                    logging.warning("Failed to create write client, this sometimes happens under heavy load, attempt "+str(attempts))
             attempts += 1
 
         self.queue = []
@@ -113,8 +116,20 @@ class Worker():
         self.max_queue_size_recently = max(self.max_queue_size_recently, n)
 
     def _enqueue(self, properties):
+        global g_id_time
+
         dimensions = [{ "Name" : "$id", "Value" : properties["$id"], "DimensionValueType" : "VARCHAR" }]    # TODO: Add any other metadata here
         t = str(int(properties["$ts"] * 1000))
+
+        id_time = properties["$id"] + "-" + str(t)
+        if id_time in g_id_time:
+            logging.error("Already seen this ID & time combination " + str(id_time))
+            logging.error("Original " + str(g_id_time[id_time]))
+            logging.error("New  "+str(properties))
+            assert(False)
+        else:
+            g_id_time[id_time] = properties.copy()
+
         measures = []
         for (k,v) in properties.items():
             if k not in ["$id", "$ts"]:
@@ -180,16 +195,24 @@ class Worker():
 
     def send_to_timestream(self, records, retries=0):
         # logging.info("Send to timestream " + str(len(records)) + "\n" + str(records))
-        try:
-            result = self.write_client.write_records(DatabaseName=self.params["database_name"], TableName=self.params["table_name"],
-                                            Records=records, CommonAttributes={})
-            status = result['ResponseMetadata']['HTTPStatusCode']
-            if status != HTTP_OK:
-                logging.info("WriteRecords Status: " + status)
-        except self.write_client.exceptions.RejectedRecordsException as err:
-            logging.info("Some records were rejected")
-            logging.info(str(err))
-            assert(False)   # Need to handle this
+        success = False
+        while not success:
+            try:
+                result = self.write_client.write_records(DatabaseName=self.params["database_name"], TableName=self.params["table_name"],
+                                                Records=records, CommonAttributes={})
+                status = result['ResponseMetadata']['HTTPStatusCode']
+                if status == HTTP_OK:
+                    success = True
+                else:
+                    logging.warning("WriteRecords Status: " + status)
+            except self.write_client.exceptions.RejectedRecordsException as err:
+                logging.warning("Worker "+str(os.getpid())+": Some records were rejected")
+                logging.warning(str(err))
+                for rr in err.response["RejectedRecords"]:
+                    idx = rr["RecordIndex"]
+                    reason = rr["Reason"]
+                    logging.error("Rejected Index " + str(idx) + ": " + str(reason) + ". Record: "+str(records[idx]))
+                raise
 
     def count_shards(self, result):
         max_shard_seen = 0
