@@ -39,17 +39,11 @@ from botocore.config import Config
 
 from . import kinesis_worker, timestream_worker
 
-KINESIS_MAX_MESSAGES_PER_POST = 500     # Kinesis requirement
 REPORT_EVERY_S = 10
-BACKOFF_S = 0  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
-MAX_EXPLODE = 1_000_000
-
-POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 
 class WorkerParent():   # Create a worker, and communicate with it
     def __init__(self, params, logfile_abspath):
         self.merge_buffer = {}  # Messages, keyed by ID
-        self.time_at_last_tick = 0
 
         self.qtx = MP_Queue()
         self.qrx = MP_Queue()
@@ -67,8 +61,26 @@ class WorkerParent():   # Create a worker, and communicate with it
         self.stats = None   # Updated periodically by child processes
         self.old_stats = None  # Updated periodically by parent
 
+        self.merge_buffer_timestamp = 0
+
+    def purge_merge_buffer(self, t):
+        # logging.info("Sending merge buffer which is " + str(len(self.merge_buffer)) + " items")
+        for (dev, props) in self.merge_buffer.items():
+            # logging.info("    " + str(props))
+            self._send(props)
+        self.merge_buffer = {}
+        self.merge_buffer_timestamp = t
+    
     def enqueue(self, properties):
         device_id = properties["$id"]
+        t = properties["$ts"]
+ 
+        # If time has advanced, emit merge buffer
+        if t != self.merge_buffer_timestamp:
+            # logging.info("client_workers: time has advanced, so sending merge buffer")
+            self.purge_merge_buffer(t)
+            
+        # Add to merge buffer
         if device_id in self.merge_buffer:
             if merge_test.ok(self.merge_buffer[device_id], properties):
                 self.merge_buffer[device_id].update(properties)
@@ -76,11 +88,9 @@ class WorkerParent():   # Create a worker, and communicate with it
             self.merge_buffer[device_id] = properties
 
     def tick(self, t):
-        if t != self.time_at_last_tick:
-            for (device, properties) in self.merge_buffer.items():
-                self._send(properties)
-            self.merge_buffer = {}
-            self.time_at_last_tick = t
+        if t > self.merge_buffer_timestamp:
+            # logging.info("client_workers:tick() time has advanced, so sending merge buffer")
+            self.purge_merge_buffer(t)
 
         try:
             stats = self.qrx.get(timeout=0)
@@ -88,15 +98,21 @@ class WorkerParent():   # Create a worker, and communicate with it
         except queue.Empty:
             pass
 
-    def _send(self, data):  # Don't use this directly if you want message merging
+    def _send(self, data, check_alive=True):  # Don't use this directly if you want message merging
         self.qtx.put(data)
-        if not self.p.is_alive():
-            logging.error("Worker " + str(self.p.pid) + " has died - so terminating")
-            assert(False)
+        if check_alive:
+            if not self.p.is_alive():
+                logging.error("Worker " + str(self.p.pid) + " has died - so terminating")
+                assert(False)
 
     def wait_until_stopped(self):
         logging.info("Telling worker " + str(self.p.pid) + " to stop")
-        self._send(None)    # Signal to stop
+        try:
+            while True: # Flush the queue (so our stop signal gets there ASAP)
+                self.qtx.get(timeout=0) #
+        except:
+            pass
+        self._send(None, check_alive=False)    # Signal to stop (OK if already dead!)
         logging.info("Waiting for worker " + str(self.p.pid) + " to stop")
         self.p.join()
         logging.info("Worker " + str(self.p.pid) + " has stopped")
@@ -130,4 +146,4 @@ def output_stats(workers):
             new_blocks -= w.old_stats["num_blocks_sent_ever"]
         w.old_stats = w.stats
      
-    logging.info("T+ "+str(int(time.time()-start_time))+" "+str(num_workers)+" workers. Tot blocks " + str(tot_blocks) + " Blocks/s "+str(new_blocks/REPORT_EVERY_S) + " Max Q " + str(max_queue_size) + " max_t_delta "+str(max_t_delta))
+    logging.info("T+ "+str(int(time.time()-start_time))+" "+str(num_workers)+" workers, " + str(tot_blocks) + " blocks, "+str(new_blocks/REPORT_EVERY_S) + " blocks/s, " + str(max_queue_size) + " max_q, "+str(max_t_delta)+" max_t_delta")
