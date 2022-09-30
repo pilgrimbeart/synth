@@ -40,6 +40,7 @@ class Sim(Engine):
 
     def __init__(self, params, cb = None, event_count_callback = None):
         self.sim_lock = threading.Lock() # Protects sim_time to make sim thread-safe, as event-injection can happen asynchronously
+        self.sim_time = 0   # Has to have some value initially, as whenever we set it we test that it hasn't gone backwards
         self.set_start_time_str(params.get("start_time", "now"))
         self.set_end_time_str(params.get("end_time", None))
         self.end_after_events = params.get("end_after_events", None)
@@ -55,11 +56,37 @@ class Sim(Engine):
 
     def set_now(self, epochSecs):
         self.sim_lock.acquire()
+        # logging.info("sim:set_now() setting sim_time to " + str(epochSecs))
+        if epochSecs < self.sim_time:
+            logging.error("Attempt to make time go backwards. sim_time is "+str(self.sim_time)+" and asked to set to " + str(epochSecs))
+            assert False
         self.sim_time = epochSecs
         self.sim_lock.release()
 
     def set_now_str(self,timeString):
+        assert(False)
         self.set_time(richTime(timeString)) # ??? doesn't seem to exist, is this function ever called?
+
+    def get_now(self):
+        self.sim_lock.acquire()
+        t = self.sim_time
+        self.sim_lock.release()
+        # logging.info("sim:get_now() returning t="+str(t))
+        return t
+
+    def get_now_no_lock(self):  # Unreliable, for logging
+        return self.sim_time
+
+    def get_now_1000(self):
+        return int(self.get_now() * 1000)
+
+    def get_now_str(self):
+        return str(ISO8601.epoch_seconds_to_ISO8601(self.get_now()))
+
+    def advance_now(self, dt):
+        self.sim_lock.acquire()
+        self.sim_time += dt
+        self.sim_lock.release()
 
     def set_start_time_str(self, timeString):
         t = richTime(timeString)
@@ -85,21 +112,6 @@ class Sim(Engine):
     def get_end_time(self):
         return self.end_time
     
-    def get_now(self):
-        self.sim_lock.acquire()
-        t = self.sim_time
-        self.sim_lock.release()
-        return t
-
-    def get_now_no_lock(self):
-        return self.sim_time
-
-    def get_now_1000(self):
-        return int(self.get_now() * 1000)
-
-    def get_now_str(self):
-        return str(ISO8601.epoch_seconds_to_ISO8601(self.get_now()))
-
     def events_to_come(self):
         """Return False if simulation has definitely ended"""
         def caught_up():
@@ -167,21 +179,24 @@ class Sim(Engine):
             t = None
         else:
             (t,skc,fn,arg,dev) = self.events.get_nowait()   # Get earliest event. Raises exception if queue empty.
+            # logging.info("next_event got from queue "+str(t))
             wait = t - time.time()
             if wait <= 0:
                 self.sim_lock.release()   # --->
                 self.set_now(t)
-                logging.debug(str(fn.__name__)+"("+str(arg)+")")
+                # logging.debug(str(fn.__name__)+"("+str(arg)+")")
                 fn(arg)             # Note that this is likely to itself inject more events, so we must have released lock
                 return
+            # logging.info("next_event putting back in queue "+str(t))
             self.events.put_nowait((t,skc,fn,arg,dev))  # Push unused event back on the queue
         self.sim_lock.release()           # --->
         if t != self.next_event_time:
             if wait >= 1.0:
                 logging.info("Waiting {:.2f}s for real time".format(wait))
             self.next_event_time = t
-        time.sleep(min(1.0, wait))
-        self.set_now(time.time())    # So that any events injected asynchronously will correctly get stamped with current time
+        advance = min(1.0, wait)
+        time.sleep(advance)
+        self.advance_now(advance)    # So that any events injected asynchronously will correctly get stamped with current time
 
     def _add_event(self, time, func, arg, dev):
         """If multiple events are inserted at the same time, we guarantee they'll get executed in insertion order.
@@ -189,14 +204,17 @@ class Sim(Engine):
         if time == None:
             return  # It's legal to request an event at time "None" - the event is just thrown away. This is how e.g. timefunctions indicate that there are no more events
         if time == 0:
-            logging.info("Advisory: Setting event at epoch=0 (not illegal, but often a sign of a mistake)")
+            logging.warning("Setting event at epoch=0 (not illegal, but often a sign of a mistake)")
         elif time < self.get_now():
-            logging.info("Advisory: Setting event in the past (not illegal, but often a sign of a mistake)")
+            logging.warning("Setting event in the past (not illegal, but often a sign of a mistake)")
 
         self.sim_lock.acquire() # Not strictly needed, as our priority queue has its own thread lock
+        # logging.info("add_event putting into queue "+str(time))
         self.events.put_nowait((time, self.sort_key_count, func, arg, dev))
         self.sort_key_count += 1
         self.sim_lock.release()
+
+        # self.dump_queue()
 
 ##        try:
 ##            self.sim_lock.acquire()   # <---
@@ -207,6 +225,16 @@ class Sim(Engine):
 ##            self.events = sorted(self.events + L)   # TODO: Might be more efficient to append and then sort in place?
 ##        finally:
 ##            self.sim_Lock.release()   # --->
+
+    def dump_queue(self):
+        logging.info("Event queue contains "+str(self.events.qsize())+" items")
+        q = []
+        while not self.events.qsize() < 1:
+            e = self.events.get_nowait()
+            logging.info("    " + str(e))
+            q.append(e)
+        for e in q:
+            self.events.put_nowait(e)
 
     def remove_all_events_for_device(self, dev):
         self.sim_lock.acquire()
