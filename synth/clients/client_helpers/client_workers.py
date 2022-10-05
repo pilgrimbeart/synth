@@ -139,6 +139,8 @@ def output_stats(workers):
     max_t_delta = 0
     empty_workers = 0
     slowest_post = 0
+    post_stats = [0,0,0,0,0]
+    total_post_latency = 0
     for w in workers:
         if w.stats:
             num_workers += 1
@@ -150,6 +152,9 @@ def output_stats(workers):
             if w.stats["max_queue_size_recently"] == 0:
                 empty_workers += 1
             max_t_delta = max(max_t_delta, w.stats["t_delta"])
+            for i in range(len(post_stats)):
+                post_stats[i] += w.stats["post_stats"][i]
+            total_post_latency += w.stats["total_post_latency"]
         if w.old_stats:
             new_blocks -= w.old_stats["num_blocks_sent_ever"]
         w.old_stats = w.stats
@@ -159,6 +164,8 @@ def output_stats(workers):
                 str(tot_blocks) + " blocks, " +
                 str(new_blocks/REPORT_EVERY_S) + " blocks/s over " + str(REPORT_EVERY_S) + "s, " +
                 "%1.1f" % (slowest_post) + "s slowest post" +
+                str(post_stats) + " " +
+                str(int(total_post_latency)) + "tpl " +
                 str((min_queue_size,max_queue_size)) + " Qmin,max, " +
                 str(empty_workers)+" empty workers, " +
                 str(max_t_delta)+" max_t_delta"
