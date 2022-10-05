@@ -5,34 +5,34 @@
     "engine" : {
         "type" : "sim",
         "start_time" : "now",
-        "end_time" : "PT30M"
+        "end_time" : "PT5M"
     },
     "client" : {
         "comment" : "Ask client to explode output for us",
-        "explode_factor" : 6000,
-        "num_workers" : 200
+        "explode_factor" : 6000,    // was 6000
+        "num_workers" : 40       // was 200
     },
     "events" : [
         {
             "comment" : "Create 6m Smart Meters over 5m, each talking every 5m",
-            "repeats" : 1000,
+            "repeats" : 1000,      // was 1000
             "intervalNOT" : "PT0.3S",
             "action": {
                 "create_device" : {
                     "functions" : {
 						"basic" : { "no_metadata" : true },
-						"energy" : { "no_metadata" : true, "reading_interval" : "PT5M" },
+						"energy" : { "no_metadata" : true, "reading_interval" : "PT30S" },
 						"variable" : [
-							{ "name" : "a", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "b", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "c", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "d", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "e", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "f", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "g", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "h", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "i", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "j", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } }
+							{ "name" : "a", "timefunction" : { "randomwave" : { "period" : "PT30S", "precision" : 1000 } } },
+							{ "name" : "b", "timefunction" : { "randomwave" : { "period" : "PT30S", "precision" : 1000 } } },
+							{ "name" : "c", "timefunction" : { "randomwave" : { "period" : "PT30S", "precision" : 1000 } } },
+							{ "name" : "d", "timefunction" : { "randomwave" : { "period" : "PT30S", "precision" : 1000 } } },
+							{ "name" : "e", "timefunction" : { "randomwave" : { "period" : "PT30S", "precision" : 1000 } } },
+							{ "name" : "f", "timefunction" : { "randomwave" : { "period" : "PT30S", "precision" : 1000 } } },
+							{ "name" : "g", "timefunction" : { "randomwave" : { "period" : "PT30S", "precision" : 1000 } } },
+							{ "name" : "h", "timefunction" : { "randomwave" : { "period" : "PT30S", "precision" : 1000 } } },
+							{ "name" : "i", "timefunction" : { "randomwave" : { "period" : "PT30S", "precision" : 1000 } } },
+							{ "name" : "j", "timefunction" : { "randomwave" : { "period" : "PT30S", "precision" : 1000 } } }
 						]
                     }
                 }
