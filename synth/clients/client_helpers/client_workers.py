@@ -136,6 +136,7 @@ def output_stats(workers):
     min_queue_size = 1e30
     max_queue_size = 0
     max_t_delta = 0
+    empty_workers = 0
     for w in workers:
         if w.stats:
             num_workers += 1
@@ -143,9 +144,11 @@ def output_stats(workers):
             new_blocks += w.stats["num_blocks_sent_ever"]
             max_queue_size = max(max_queue_size, w.stats["max_queue_size_recently"])
             min_queue_size = min(min_queue_size, w.stats["max_queue_size_recently"])
+            if w.stats["max_queue_size_recently"] == 0:
+                empty_workers += 1
             max_t_delta = max(max_t_delta, w.stats["t_delta"])
         if w.old_stats:
             new_blocks -= w.old_stats["num_blocks_sent_ever"]
         w.old_stats = w.stats
      
-    logging.info("T+ "+str(int(time.time()-start_time))+" "+str(num_workers)+" workers, " + str(tot_blocks) + " blocks, "+str(new_blocks/REPORT_EVERY_S) + " blocks/s over " + str(REPORT_EVERY_S) + "s, (" + str((min_queue_size,max_queue_size)) + " Qmin,max, "+str(max_t_delta)+" max_t_delta")
+    logging.info("T+ "+str(int(time.time()-start_time))+" "+str(num_workers)+" workers, " + str(tot_blocks) + " blocks, "+str(new_blocks/REPORT_EVERY_S) + " blocks/s over " + str(REPORT_EVERY_S) + "s, " + str((min_queue_size,max_queue_size)) + " Qmin,max, "+str(empty_workers)+" empty workers, "+str(max_t_delta)+" max_t_delta")

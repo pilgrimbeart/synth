@@ -3,6 +3,7 @@ import botocore
 from botocore.config import Config
 import os, sys
 import time
+import random
 import logging
 if __name__ == "__main__":
     from client import Client
@@ -24,6 +25,9 @@ class Timestream(Client):
             for (key, value) in params["setenv"].items():
                 # logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
+
+        self.map_id_to_worker = {}  # Create a stable, but evenly-distributed, map between IDs and workers
+        self.next_worker_to_map = 0
 
         session = boto3.Session(profile_name = params.get("profile_name", None))
         if session.get_credentials().secret_key:
@@ -62,7 +66,14 @@ class Timestream(Client):
         pass
 
     def update_device(self, device_id, time, properties):
-        w = hash(properties["$id"]) % self.num_workers   # Shard onto workers by ID (so data from each device stays in sequence). Python hash is stable per run, not across runs.
+        I = properties["$id"]
+        # w = hash(I) % self.num_workers   # Shard onto workers by ID (so data from each device stays in sequence). Python hash is stable per run, not across runs.
+                                                         # For high numbers of workers (relative to actual number of Synth devices) it becomes more and more likely that some workers run empty
+        if I not in self.map_id_to_worker:
+            self.map_id_to_worker[I] = self.next_worker_to_map
+            self.next_worker_to_map = (self.next_worker_to_map + 1) % self.num_workers
+
+        w = self.map_id_to_worker[I]
         self.workers[w].enqueue(properties)
 
     def get_device(self, device_id):
