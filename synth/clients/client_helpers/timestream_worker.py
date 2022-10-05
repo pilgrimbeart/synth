@@ -110,6 +110,7 @@ class Worker():
         self.max_shards_seen = 0
         self.max_shards_seen_recently = 0
         self.max_queue_size_recently = 0
+        self.slowest_post_recently = 0
 
 
     def note_input_queuesize(self, n):
@@ -172,10 +173,12 @@ class Worker():
             result = {
                         "num_blocks_sent_ever" : self.num_blocks_sent_ever,
                         "max_queue_size_recently" : self.max_queue_size_recently,
+                        "slowest_post_recently" : self.slowest_post_recently,
                         "t_delta" : tDelta
                     }
 
             self.num_blocks_sent_recently = 0
+            self.slowest_post_recently = 0
             self.max_shards_seen_recently = 0
             self.max_queue_size_recently = 0
             self.last_report_time = t
@@ -190,6 +193,9 @@ class Worker():
             self.queue = self.queue[num:]
             tB = time.time()
             # logging.info("Sending "+str(num)+" records took "+str(tB-tA))
+            tTot = tB-tA
+            if tTot > self.slowest_post_recently:
+                self.slowest_post_recently = tTot
 
         return result
 

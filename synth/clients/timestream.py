@@ -13,6 +13,7 @@ else:
 
 
 DEFAULT_NUM_WORKERS = 1
+TICK_EVERY_S = 1
 
 class Timestream(Client):
     def __init__(self, instance_name, context, params, logfile_abspath):
@@ -20,6 +21,7 @@ class Timestream(Client):
         self.instance_name = instance_name
         self.context = context
         self.params = params
+        self.last_tick = 0
         logging.info(str(self.context)+"\n"+str(self.params))
         if "setenv" in params:
             for (key, value) in params["setenv"].items():
@@ -89,10 +91,12 @@ class Timestream(Client):
         pass
 
     def tick(self, t):
-        for w in self.workers:
-            w.tick(t)
+        if time.time() - self.last_tick  > TICK_EVERY_S:
+            for w in self.workers:
+                w.tick(t)   # This uses a lot of IPC so with a lot of workers is expensive, so don't do it too often
 
-        client_workers.output_stats(self.workers)
+            client_workers.output_stats(self.workers)
+            self.last_tick = time.time()
 
     def async_command(self, argv):
         pass

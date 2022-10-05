@@ -92,11 +92,12 @@ class WorkerParent():   # Create a worker, and communicate with it
             # logging.info("client_workers:tick() time has advanced, so sending merge buffer")
             self.purge_merge_buffer(t)
 
-        try:
-            stats = self.qrx.get(timeout=0)
-            self.stats = stats
-        except queue.Empty:
-            pass
+        while True: # Grab all available stats feedback
+            try:
+                stats = self.qrx.get(timeout=0)
+                self.stats = stats
+            except queue.Empty:
+                break
 
     def _send(self, data, check_alive=True):  # Don't use this directly if you want message merging
         self.qtx.put(data)
@@ -137,6 +138,7 @@ def output_stats(workers):
     max_queue_size = 0
     max_t_delta = 0
     empty_workers = 0
+    slowest_post = 0
     for w in workers:
         if w.stats:
             num_workers += 1
@@ -144,6 +146,7 @@ def output_stats(workers):
             new_blocks += w.stats["num_blocks_sent_ever"]
             max_queue_size = max(max_queue_size, w.stats["max_queue_size_recently"])
             min_queue_size = min(min_queue_size, w.stats["max_queue_size_recently"])
+            slowest_post = max(slowest_post, w.stats["slowest_post_recently"])
             if w.stats["max_queue_size_recently"] == 0:
                 empty_workers += 1
             max_t_delta = max(max_t_delta, w.stats["t_delta"])
@@ -151,4 +154,12 @@ def output_stats(workers):
             new_blocks -= w.old_stats["num_blocks_sent_ever"]
         w.old_stats = w.stats
      
-    logging.info("T+ "+str(int(time.time()-start_time))+" "+str(num_workers)+" workers, " + str(tot_blocks) + " blocks, "+str(new_blocks/REPORT_EVERY_S) + " blocks/s over " + str(REPORT_EVERY_S) + "s, " + str((min_queue_size,max_queue_size)) + " Qmin,max, "+str(empty_workers)+" empty workers, "+str(max_t_delta)+" max_t_delta")
+    logging.info("T+ "+str(int(time.time()-start_time)) + " " +
+                str(num_workers)+" workers, " +
+                str(tot_blocks) + " blocks, " +
+                str(new_blocks/REPORT_EVERY_S) + " blocks/s over " + str(REPORT_EVERY_S) + "s, " +
+                "%1.1f" % (slowest_post) + "s slowest post" +
+                str((min_queue_size,max_queue_size)) + " Qmin,max, " +
+                str(empty_workers)+" empty workers, " +
+                str(max_t_delta)+" max_t_delta"
+                )
