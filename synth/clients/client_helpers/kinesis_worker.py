@@ -88,6 +88,9 @@ class Worker():
         self.max_shards_seen = 0
         self.max_shards_seen_recently = 0
         self.max_queue_size_recently = 0
+        self.slowest_post_recently = 0
+        self.post_stats = [0,0,0,0,0]
+        self.total_post_latency = 0
 
 
     def note_input_queuesize(self, n):
@@ -135,21 +138,42 @@ class Worker():
             result = {
                 "num_blocks_sent_ever" : self.num_blocks_sent_ever,
                 "max_queue_size_recently" : self.max_queue_size_recently,
+                "slowest_post_recently" : self.slowest_post_recently,
+                "post_stats" : self.post_stats,
+                "total_post_latency" : self.total_post_latency,
                 "t_delta" : tDelta
             }
 
             self.num_blocks_sent_recently = 0
+            self.slowest_post_recently = 0
             self.max_shards_seen_recently = 0
             self.max_queue_size_recently = 0
             self.last_report_time = t
 
         # Transmit waiting messages
         while len(self.queue) > 0:  # Will result in last send being a partial block - not best efficiency, but alternative is to leave a partial block unsent (perhaps forever)
+            tA = time.time()
             num = min(KINESIS_MAX_MESSAGES_PER_POST, len(self.queue))
             self.send_to_kinesis(self.queue[0:num])
             self.num_blocks_sent_ever += 1
             self.num_blocks_sent_recently += 1
             self.queue = self.queue[num:]
+            tB = time.time()
+            
+            tTot = tB-tA
+            if tTot < 0.1:
+                self.post_stats[0] += 1
+            elif tTot < 0.2:
+                self.post_stats[1] += 1
+            elif tTot < 0.5:
+                self.post_stats[2] += 1
+            elif tTot < 1.0:
+                self.post_stats[3] += 1
+            else:
+                self.post_stats[4] += 1
+            if tTot > self.slowest_post_recently:
+                self.slowest_post_recently = tTot
+            self.total_post_latency += tTot
 
         return result
 

@@ -3,11 +3,13 @@ import botocore
 from botocore.config import Config
 import os, sys
 import time
+import random
 import logging
 from .client import Client
 from .client_helpers import client_workers
 
 DEFAULT_NUM_WORKERS = 1
+TICK_EVERY_S = 1
 
 class Timestream(Client):
     def __init__(self, instance_name, context, params, logfile_abspath):
@@ -15,11 +17,15 @@ class Timestream(Client):
         self.instance_name = instance_name
         self.context = context
         self.params = params
+        self.last_tick = 0
         logging.info(str(self.context)+"\n"+str(self.params))
         if "setenv" in params:
             for (key, value) in params["setenv"].items():
                 # logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
+
+        self.map_id_to_worker = {}  # Create a stable, but evenly-distributed, map between IDs and workers
+        self.next_worker_to_map = 0
 
         session = boto3.Session(profile_name = params.get("profile_name", None))
         if session.get_credentials().secret_key:
@@ -58,7 +64,14 @@ class Timestream(Client):
         pass
 
     def update_device(self, device_id, time, properties):
-        w = hash(properties["$id"]) % self.num_workers   # Shard onto workers by ID (so data from each device stays in sequence). Python hash is stable per run, not across runs.
+        I = properties["$id"]
+        # w = hash(I) % self.num_workers   # Shard onto workers by ID (so data from each device stays in sequence). Python hash is stable per run, not across runs.
+                                                         # For high numbers of workers (relative to actual number of Synth devices) it becomes more and more likely that some workers run empty
+        if I not in self.map_id_to_worker:
+            self.map_id_to_worker[I] = self.next_worker_to_map
+            self.next_worker_to_map = (self.next_worker_to_map + 1) % self.num_workers
+
+        w = self.map_id_to_worker[I]
         self.workers[w].enqueue(properties)
 
     def get_device(self, device_id):
@@ -74,10 +87,12 @@ class Timestream(Client):
         pass
 
     def tick(self, t):
-        for w in self.workers:
-            w.tick(t)
+        if time.time() - self.last_tick  > TICK_EVERY_S:
+            for w in self.workers:
+                w.tick(t)   # This uses a lot of IPC so with a lot of workers is expensive, so don't do it too often
 
-        client_workers.output_stats(self.workers)
+            client_workers.output_stats(self.workers)
+            self.last_tick = time.time()
 
     def async_command(self, argv):
         pass
