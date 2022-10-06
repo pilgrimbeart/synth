@@ -48,7 +48,7 @@ MAX_MESSAGES_PER_POST = 500     # Kinesis requirement
 REPORT_EVERY_S = 60
 BACKOFF_S = 0  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
 
-DEFAULT_NUM_WORKERS = 4
+DEFAULT_NUM_WORKERS = 1
 POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 
 class Kinesis(Client):
@@ -59,7 +59,7 @@ class Kinesis(Client):
         self.params = params
         if "setenv" in params:
             for (key, value) in params["setenv"].items():
-                logging.info("SETENV "+key+" "+value)
+                # logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
 
         self.num_workers = params.get("num_workers", DEFAULT_NUM_WORKERS)
@@ -71,7 +71,7 @@ class Kinesis(Client):
 
         self.workers = []
         for w in range(self.num_workers):
-            self.workers.append(client_workers.WorkerParent(params))
+            self.workers.append(client_workers.WorkerParent(params, logfile_abspath))
 
     def add_device(self, device_id, time, properties):
         pass
@@ -95,6 +95,8 @@ class Kinesis(Client):
     def tick(self, t):
         for w in self.workers:
             w.tick(t)
+
+        client_workers.output_stats(self.workers)
 
     def async_command(self, argv):
         pass

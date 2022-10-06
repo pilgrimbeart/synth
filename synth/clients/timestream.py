@@ -4,12 +4,8 @@ from botocore.config import Config
 import os, sys
 import time
 import logging
-if __name__ == "__main__":
-    from client import Client
-else:
-    from .client import Client
-    from .client_helpers import client_workers
-
+from .client import Client
+from .client_helpers import client_workers
 
 DEFAULT_NUM_WORKERS = 1
 
@@ -90,14 +86,3 @@ class Timestream(Client):
         for w in self.workers:
             w.wait_until_stopped()
 
-
-
-
-if __name__ == "__main__":
-    logging.root.setLevel(logging.INFO)
-    writer = Timestream("instance_name", None, { "profile_name":"playground", "database_name":"FOO_DATABASE", "table_name":"FOO_TABLE"})
-    writer._write([
-        {"$id" : "1", "$ts" : time.time(), "temp" : 42 },
-        {"$id" : "2", "$ts" : time.time(), "temp" : 60 }
-    ])
- 

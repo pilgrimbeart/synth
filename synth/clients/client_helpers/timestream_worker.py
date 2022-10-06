@@ -148,7 +148,7 @@ class Worker():
                 self._enqueue(prop_copy)
 
     def tick(self):
-        # Returns stats occasionally
+        # Transmits waiting messages, and occasionally returns stats
         result = None
 
         t =  time.time()
@@ -157,17 +157,6 @@ class Worker():
             tDelta = 0
             if len(self.queue) > 0:
                 tDelta = int(time.time() - int(self.queue[0]["Time"])/1000.0)   # Sample the timestamp in next message (which will be first to send, so reasonable)
-
-            #logging.info("Worker " + str(os.getpid()) + ": {:,} blocks sent total in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. In last {:}s sent {:0.1f} blocks/s, max shards {:}, max Q size {:}. {:}s behind.".format(
-            #    self.num_blocks_sent_ever,
-            #    elap,
-            #    self.num_blocks_sent_ever / elap,
-            #    self.max_shards_seen,
-            #    REPORT_EVERY_S,
-            #    self.num_blocks_sent_recently / float(REPORT_EVERY_S),
-            #    self.max_shards_seen_recently,
-            #    self.max_queue_size_recently,
-            #    tDelta))
 
             result = {
                         "num_blocks_sent_ever" : self.num_blocks_sent_ever,
@@ -182,14 +171,11 @@ class Worker():
 
         # logging.info(str(len(self.queue))+" records to send")
         while len(self.queue) > 0:  # Will result in last send being a partial block - not best efficiency, but alternative is to leave a partial block unsent (perhaps forever)
-            tA = time.time()
             num = min(TIMESTREAM_MAX_MESSAGES_PER_POST, len(self.queue))
             self.send_to_timestream(self.queue[0:num])
             self.num_blocks_sent_ever += 1
             self.num_blocks_sent_recently += 1
             self.queue = self.queue[num:]
-            tB = time.time()
-            # logging.info("Sending "+str(num)+" records took "+str(tB-tA))
 
         return result
 

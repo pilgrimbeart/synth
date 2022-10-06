@@ -43,25 +43,27 @@ POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 
 ### This code is executed in the target process(es), so must not refer to Synth environment
 
-def child_func(q):
-    (params, logfile_abspath) = q.get()    # First item sent is a dict of params
+def child_func(qtx, qrx):   # qtx is messages to send, qrx is feedback to Synth
+    (params, logfile_abspath) = qtx.get()    # First item sent is a dict of params
     worker = Worker(params)
     while True:
         try:
-            v = q.get(timeout=POLL_PERIOD_S)
+            v = qtx.get(timeout=POLL_PERIOD_S)
             # logging.info("Worker "+str(os.getpid())+" got from queue "+str(v)+". Queue size now "+str(q.qsize()))
             if v is None:
                 logging.info("Worker "+str(os.getpid()) + " requested to exit")
                 return
             worker.enqueue(v)
-            worker.note_input_queuesize(q.qsize())
+            worker.note_input_queuesize(qtx.qsize())
         except queue.Empty:
             pass
 
-        worker.tick()
+        result = worker.tick()
+        if result:
+            qrx.put(result)
 
 
-class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
+class Worker():
     def __init__(self, params):
         logging.info("Kinesis Worker "+str(os.getpid())+" initialising with params "+str(params))
         self.params = params
@@ -120,34 +122,36 @@ class Worker(): # The worker itself, which runs IN A SEPARATE PROCESS
                 self.queue.append(d)
 
     def tick(self):
+        # Occasionally return stats
+        result = None
         t =  time.time()
         if t > self.last_report_time + REPORT_EVERY_S :
             elap = t - self.start_time
-            logging.info("Worker " + str(os.getpid()) + ": {:,} blocks sent total in {:0.1f}s which is {:0.1f} blocks/s with max shards {:}. In last {:}s sent {:0.1f} blocks/s, max shards {:}, max Q size {:}".format(
-                self.num_blocks_sent_ever,
-                elap,
-                self.num_blocks_sent_ever / elap,
-                self.max_shards_seen,
-                REPORT_EVERY_S,
-                self.num_blocks_sent_recently / float(REPORT_EVERY_S),
-                self.max_shards_seen_recently,
-                self.max_queue_size_recently))
-
+            tDelta = 0
             if len(self.queue) > 0:
-                props = json.loads(self.queue[0]["Data"])   # Sample the timestamp in next message (which will be first to send, so reasonable)
-                logging.info("Worker posting is running " + str(time.time() - props["$ts"]) + "s behind real-time")
+                props = json.loads(self.queue[0]["Data"])
+                tDelta = int(time.time() - props["$ts"])
+
+            result = {
+                "num_blocks_sent_ever" : self.num_blocks_sent_ever,
+                "max_queue_size_recently" : self.max_queue_size_recently,
+                "t_delta" : tDelta
+            }
 
             self.num_blocks_sent_recently = 0
             self.max_shards_seen_recently = 0
             self.max_queue_size_recently = 0
             self.last_report_time = t
 
+        # Transmit waiting messages
         while len(self.queue) > 0:  # Will result in last send being a partial block - not best efficiency, but alternative is to leave a partial block unsent (perhaps forever)
             num = min(KINESIS_MAX_MESSAGES_PER_POST, len(self.queue))
             self.send_to_kinesis(self.queue[0:num])
             self.num_blocks_sent_ever += 1
             self.num_blocks_sent_recently += 1
             self.queue = self.queue[num:]
+
+        return result
 
     def send_to_kinesis(self, records, retries=0):
         if retries==0:
