@@ -4,24 +4,24 @@
     "comment" : "we did have explode_factor here, so was enacted in the top-level events module. But that was too inefficient, so now moved into client module so enacted on output",
     "engine" : {
         "type" : "sim",
-        "start_time" : "-PT20M",
-        "end_time" : "now"
+        "start_time" : "2022-10-13T00:00:00",
+        "end_time" : "2022-10-13T01:00:00"
     },
    "client" : {
         "comment" : "Ask client to explode output for us",
         "explode_factor" : 6000,
         "num_workers" : 200
     },
-    "comment" : "Create 6m Smart Meters, each talking every 5m, 10% of which go offline after 5m",
+    "comment" : "Create 6m Smart Meters, each talking every 5m",
     "events" : [
         {
-            "repeats" : 900,
+            "repeats" : 1,  // Was 900
             "action": {
                 "create_device" : {
                     "functions" : {
                         #include test_functions,
                         "commswave" : {
-                            "timefunction" : {
+                            "timefunction" : {  // For test 1
                                 "pulsewave" : {
                                     "interval" : "P1D",
                                     "transition" : "P1D",
@@ -29,27 +29,37 @@
                                     "comment" : "Always communicating - we add commswave even in devices we don't want to take offline so they emit a 'connected' flag"
                                 }
                             }
-                        }
+                       },
+                        "comment" : "We use a timefunction to cause variable to be emitted periodically, even though in this case its value doesn't change",
+                        "variable" : [
+                            { "name" : "shiftablekWh", "timefunction" : { "randomwave" : { "period" : "PT5M", "lower" : 0, "upper" : 0 } } }   // For Test 2
+                        ]
                     }
                 }
             }
         },
         {
-            "repeats" : 100,
+            "repeats" : 1,  // Was 100
+            "comment" : "10% of the devices go offline after 5 minutes",
             "action": {
                 "create_device" : {
                     "functions" : {
                         #include test_functions,
                         "commswave" : {
-                            "timefunction" : {
+                            "timefunction" : {  // For test 1
                                 "pulsewave" : {
                                     "interval" : "P1D",
-                                    "transition" : "PT5M",
-                                    "invert" : true,
-                                    "comment" : "Communicate for 5 minutes then go offline"
+                                    "delay" : "PT5M",       // After 5m
+                                    "transition" : "PT5M",  // Go offline for 5m
+                                    "invert" : false
                                 }
                             }
-                        }
+                        },
+                        "comment" : "We use a timefunction to cause variable to be emitted periodically, even though in this case its value doesn't change",
+                        "variable" : [
+                            { "name" : "shiftablekWh", "timefunction" : { "randomwave" : { "period" : "PT5M", "lower" : 7, "upper" : 7 } } },   // For Test 2
+                            { "name" : "kWhEV", "timefunction" : { "timeout" : { "max_time" : "PT30M", "on_value" : 7 } } } // For Test 3
+                        ]
                     }
                 }
             }

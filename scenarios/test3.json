@@ -20,7 +20,7 @@
                 "create_device" : {
                     "functions" : {
                         #include test_functions,
-						"variable" : { "name" : "DNO", "series" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid", "Electricity North West Limited"] }
+                        "variable" : { "name" : "DNO", "series" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid", "Electricity North West Limited"] }
                     }
                 }
             }

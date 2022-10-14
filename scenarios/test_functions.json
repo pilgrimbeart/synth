@@ -10,5 +10,6 @@
 							{ "name" : "g", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
 							{ "name" : "h", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
 							{ "name" : "i", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-							{ "name" : "j", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } }
+							{ "name" : "j", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
+                            { "name" : "DNO", "series" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid", "Electricity North West Limited"] }
 						]
