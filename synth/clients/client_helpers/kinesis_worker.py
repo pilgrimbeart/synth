@@ -31,6 +31,8 @@ import logging, time
 import json
 import os
 import queue    # Multiprocessing uses this internally, and returns queue.Empty exception
+import multiprocessing
+import setproctitle
 
 import boto3 # AWS library
 
@@ -44,6 +46,7 @@ POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 ### This code is executed in the target process(es), so must not refer to Synth environment
 
 def child_func(qtx, qrx):   # qtx is messages to send, qrx is feedback to Synth
+    setproctitle.setproctitle(multiprocessing.current_process().name)
     (params, logfile_abspath) = qtx.get()    # First item sent is a dict of params
     worker = Worker(params)
     while True:

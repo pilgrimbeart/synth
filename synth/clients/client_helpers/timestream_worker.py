@@ -32,6 +32,7 @@ import json
 import os, sys
 import queue    # Multiprocessing uses this internally, and returns queue.Empty exception
 import traceback
+import setproctitle, multiprocessing
 
 import boto3 # AWS library
 from botocore.config import Config
@@ -50,8 +51,7 @@ g_id_time = {}    # Unique combinations of ID and timestamp (to check if we ever
 ### This code is executed in the target process(es), so must not refer to Synth environment
 
 def child_func(qtx, qrx):   # qtx is messages to send, qrx is feedback to Synth
-    # sys.stderr = sys.stdout # Ensure our errors go to same place as our normal output, so get captured in logfiles (doesn't seem to work for e.g. stack trace on crash -  need lower-level?)
-    # os.dup2(sys.stderr.fileno(), sys.stdout.fileno()) # Doesn't seem to work either!
+    setproctitle.setproctitle(multiprocessing.current_process().name)
     (params, logfile_abspath) = qtx.get()    # First item sent is a dict of params
     worker = Worker(params)
     while True:
