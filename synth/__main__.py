@@ -186,6 +186,29 @@ def preprocess_includes(s): # Unlike C #includes, these can occur anywhere in a 
 
     return re.sub(r"#include\ \S+", do_include, s)    # The filename ends with any whitespace character
 
+def merge_duplicate_keys(ordered_pairs):
+    """Merge duplicate keys."""
+    d = {}
+    for k, v in ordered_pairs:
+        if k in d:
+            # logging.warning("Merging duplicate key "+str(k))
+            # logging.warning("First value is "+str(d[k]))
+            # logging.warning("Second value is "+str(v))
+            if type(v) == list:
+                # logging.warning("Extending list")
+                d[k].extend(v)
+            elif type(v) == dict:
+                # logging.warning("Updating dict")
+                d[k].update(v)
+            elif type(v) == str:
+                # logging.warning("Concatenating string")
+                d[k] = d[k] + " " + v
+            else:
+                assert False, "Don't know how to merge duplicate keys " + str(d[k]) + " and " + str(v)
+        else:
+            d[k] = v
+    return d
+
 def get_params():
     """Read command-line to ingest parameters and parameter files"""
     def macro(matchobj):
@@ -204,7 +227,7 @@ def get_params():
         # We no-longer support Python-style comments, because interferes with auto-numbering in models s = re.sub("#.*$",  "", s, flags=re.MULTILINE) # Remove Python-style comments
         s = re.sub('<<<.*?>>>', macro, s)    # Do macro-substitution. TODO: Do once we've read ALL param files
         open("../synth_logs/latest.json", "wt").write(s+"\n (from "+file+")\n")  # If we get a parsing error, output the processed file so we can find the line & column easily
-        j = json.loads(s)
+        j = json.loads(s, object_pairs_hook = merge_duplicate_keys)
         if place == ACCOUNTS_DIR:   # We inherit the instance name from the file in the account directory (on the assumption we can only run one simulation at once per account, so that's what we want logfiles to be unique by)
             g_instance_name = file
             logging.info("Naming this instance '" + str(g_instance_name) + "'")
@@ -219,7 +242,7 @@ def get_params():
     for arg in sys.argv[1:]:
         if arg.startswith("{"):
             logging.info("Setting parameters "+arg)
-            params = merge(params, json.loads(arg))
+            params = merge(params, json.loads(arg, object_pairs_hook = merge_duplicate_keys))
         elif "=" in arg:    # RHS always interpreted as a string
             logging.info("Setting parameter "+arg)
             (key,value) = arg.split("=",1)  # split(,1) so that "a=b=c" means "a = b=c"
