@@ -1,5 +1,5 @@
 						"basic" : { "no_metadata" : true },
-						"energy" : { "no_metadata" : true, "reading_interval" : "PT5M" },
+						"energy" : { "no_metadata" : true, "test_mode" : true, "reading_interval" : "PT5M" },
 						"variable" : [
 							{ "name" : "a", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
 							{ "name" : "b", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
@@ -11,5 +11,6 @@
 							{ "name" : "h", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
 							{ "name" : "i", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
 							{ "name" : "j", "timefunction" : { "randomwave" : { "period" : "PT5M", "precision" : 1000 } } },
-                            { "name" : "DNO", "series" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid", "Electricity North West Limited"] }
+                            { "name" : "DNO", "series" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid", "Electricity North West Limited"] },
+                            { "name" : "substation", "random_lower" : 0, "random_upper" : 200, "precision" : 1 }
 						]

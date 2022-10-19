@@ -1,0 +1,48 @@
+{
+    "comment" : "2. [TSL] Total shiftable load at this time",
+    "restart_log" : true,
+    "write_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "2022-10-19T00:00:00",
+        "end_time" : "2022-10-19T01:00:00"
+    },
+   "client" : {
+        "comment" : "Ask client to explode output for us",
+        "explode_factor" : 6000,
+        "num_workers" : 200
+    },
+    "comment" : "Create 6m Smart Meters, each talking every 5m",
+    "events" : [
+        {
+            "repeats" : 950, 
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions,
+                        "comment" : "We use a timefunction to cause variable to be emitted periodically, even though in this case its value doesn't change",
+                        "variable" : [
+                            { "name" : "shiftablekWh", "timefunction" : { "randomwave" : { "period" : "PT5M", "lower" : 0, "upper" : 0 } } } 
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 50, 
+            "comment" : "5% of the devices have a shiftable load",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions,
+                        "comment" : "We use a timefunction to cause variable to be emitted periodically, even though in this case its value doesn't change",
+                        "variable" : [
+                            { "name" : "shiftablekWh", "timefunction" : { "randomwave" : { "period" : "PT5M", "lower" : 7, "upper" : 7 } } }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
+

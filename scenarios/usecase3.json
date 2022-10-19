@@ -1,0 +1,43 @@
+{
+    "comment" : "3. [EVA] Notify me when the EV charging load for an area exceeds the available generated green energy",
+    "restart_log" : true,
+    "write_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "2022-10-19T00:00:00",
+        "end_time" : "2022-10-19T01:00:00"
+    },
+   "client" : {
+        "comment" : "Ask client to explode output for us",
+        "explode_factor" : 6000,
+        "num_workers" : 200
+    },
+    "comment" : "Create 6m Smart Meters, each talking every 5m",
+    "events" : [
+        {
+            "repeats" : 950,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 50, 
+            "comment" : "5% of the devices have EV chargers which turn on randomly such that all are on after 30M",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions,
+                        "variable" : [
+                            { "name" : "kWhEV", "timefunction" : { "timeout" : { "max_time" : "PT30M", "on_value" : 7 } } } // For Test 3
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
+

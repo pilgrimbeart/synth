@@ -1,0 +1,29 @@
+{
+    "comment" : "5. [REP] Report total power consumption at this point today vs yesterday",
+    "restart_log" : true,
+    "write_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "2022-10-18T00:00:00",
+        "end_time" : "2022-10-19T01:00:00"
+    },
+   "client" : {
+        "comment" : "Ask client to explode output for us",
+        "explode_factor" : 6000,
+        "num_workers" : 200
+    },
+    "comment" : "Create 6m Smart Meters, each talking every 5m",
+    "events" : [
+        {
+            "repeats" : 1000,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions
+                    }
+                }
+            }
+        }
+    ]
+}
+

@@ -1,0 +1,29 @@
+{
+    "comment" : "4. [SUB] Notify when total power of homes connected to substation ABC123 exceeds 25MW for more than 2 hours",
+    "restart_log" : true,
+    "write_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "2022-10-19T00:00:00",
+        "end_time" : "2022-10-19T01:00:00"
+    },
+   "client" : {
+        "comment" : "Ask client to explode output for us",
+        "explode_factor" : 6000,
+        "num_workers" : 200
+    },
+    "comment" : "Create 6m Smart Meters, each talking every 5m",
+    "events" : [
+        {
+            "repeats" : 1000,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions
+                    }
+                }
+            }
+        }
+    ]
+}
+

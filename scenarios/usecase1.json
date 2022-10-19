@@ -1,0 +1,59 @@
+{
+    "comment" : "1. [CCU] Cloud connected Uptime % - starts at 100%, falls to 90%, returns to 100%",
+    "restart_log" : true,
+    "write_log" : true,
+    "engine" : {
+        "type" : "sim",
+        "start_time" : "2022-10-19T00:00:00",
+        "end_time" : "2022-10-19T01:00:00"
+    },
+   "client" : {
+        "comment" : "Ask client to explode output for us",
+        "explode_factor" : 6000,
+        "num_workers" : 200
+    },
+    "events" : [
+        {
+            "repeats" : 900,
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions,
+                        "commswave" : {
+                            "timefunction" : { 
+                                "pulsewave" : {
+                                    "interval" : "P1D",
+                                    "transition" : "P1D",
+                                    "invert" : true,
+                                    "comment" : "Always communicating - we add commswave even in devices we don't want to take offline so they emit a 'connected' flag"
+                                }
+                            }
+                       }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 100,  // Was 100
+            "comment" : "10% of the devices go offline",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions,
+                        "commswave" : {
+                            "timefunction" : {
+                                "pulsewave" : {
+                                    "interval" : "P1D",
+                                    "delay" : "PT10M",       // After 10m
+                                    "transition" : "PT15M",  // Go offline for 15m (ensure there's at least 1 whole 5-minute bin where we're offline)
+                                    "invert" : false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
+
