@@ -35,7 +35,7 @@ class Timeout(Timefunction):
         r.random()
         r.random()
         self.timeout_time = int(self.min_time_S + (self.max_time_S - self.min_time_S) * r.random()) # Make it an integer number of seconds, to avoid precision issues when we test exactly on the boundary
-        logging.info("Timeout: timeout_time = "+str(self.timeout_time))
+        # logging.info("Timeout: timeout_time = "+str(self.timeout_time))
         self.init_time = engine.get_now()
 
     def state(self, t=None, t_relative=False):
@@ -54,7 +54,7 @@ class Timeout(Timefunction):
         t -= self.init_time
 
         if t < self.timeout_time: # Avoid precision issues
-            logging.info("next_change at t="+str(t)+" orig_t="+str(orig_t)+" returning "+str(self.init_time + self.timeout_time))
+            # logging.info("next_change at t="+str(t)+" orig_t="+str(orig_t)+" returning "+str(self.init_time + self.timeout_time))
             return self.init_time + self.timeout_time
         else:
             return None
