@@ -13,6 +13,7 @@ Configurable parameters::
         "power_variation" : (optional) how much "noise" on the reading
         "no_metadata" : (optional) don't send metadata
         "test_mode" : (optional) if true then kW starts at zero and rises slowly
+        "reset_interval" : (optional) "PT4H" in test mode, when to reset
     }
 
 Device properties created::
@@ -50,6 +51,10 @@ class Energy(Device):
         self.power_variation_kW = params["energy"].get("power_variation", DEFAULT_POWER_VARIATION_KW)
         self.no_metadata = params["energy"].get("no_metadata", False)
         self.test_mode = params["energy"].get("test_mode", False)
+        if "reset_interval" not in params["energy"]:
+            self.reset_interval = None
+        else:
+            self.reset_interval = isodate.parse_duration(params["energy"]["reset_interval"]).total_seconds()
         if not self.property_exists("device_type"):
             if not self.no_metadata:
                 self.set_property("device_type", "energy")
@@ -82,7 +87,10 @@ class Energy(Device):
     # Private methods
     def tick_reading(self, _):
         if self.test_mode:
-            kW = (self.engine.get_now() - self.start_time) * (TEST_MODE_INC_KW_PER_DAY / (60*60*24.0))
+            dT = self.engine.get_now() - self.start_time
+            if self.reset_interval:
+                dT = dT % self.reset_interval
+            kW = dT * (TEST_MODE_INC_KW_PER_DAY / (60*60*24.0))
         else:
             open_chance = opening_times.chance_of_occupied(self.engine.get_now(), self.opening_times)
             kW = self.baseload_power_kW + open_chance * (self.max_power_kW - self.baseload_power_kW - self.power_variation_kW/2.0)
