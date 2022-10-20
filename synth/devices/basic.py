@@ -10,6 +10,7 @@ Configurable parameters::
         "use_label_as_$id" : (optional) - if true then instead of creating a "label" property, the $id property is given the label name  (i.e. human-named $id)
         "always_send_metadata" : ["list", "of", "metadata"] - if defined, then all transmissions will be enriched with these metadata properties
         "no_metadata" : If true then doesn't send metadata
+        "labels" : A list of values to use as labels
     }
 
 Device properties created::
@@ -54,11 +55,18 @@ class Basic(Device):
                 self.clock_skew = max_retard + skew
             self.always_send_metadata = params["basic"].get("always_send_metadata", None)
             self.no_metadata = params["basic"].get("no_metadata", False)
+
         if not self.no_metadata:
             self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
-        label = label_root + str(Basic.device_number)
+
+        if "labels" in params["basic"]:
+            labs = params["basic"]["labels"]
+            label = labs[Basic.device_number % len(labs)]
+        else:
+            label = label_root + str(Basic.device_number)
+
         if use_label_as_id:
-            self.properties["$id"] = label.replace(" ","_") # Should really replace ALL illegal characters
+            self.properties["$id"] = label  # label.replace(" ","_") # Should really replace ALL illegal characters
         else:
             if not "$id" in self.properties:
                 self.properties["$id"] = "-".join([format(Basic.myRandom.randrange(0,255),'02x') for i in range(6)])  # A 6-byte MAC address 01-23-45-67-89-ab

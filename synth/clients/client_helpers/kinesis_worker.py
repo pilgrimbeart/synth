@@ -100,7 +100,8 @@ class Worker():
         self.max_queue_size_recently = max(self.max_queue_size_recently, n)
 
     def enqueue(self, properties):
-        if ("explode_factor" not in self.params) or (self.params["explode_factor"] == 1):
+        if ("explode_factor" not in self.params) or (self.params["explode_factor"] == 1) or ("dont_explode" in properties):
+            properties.pop("dont_explode", None)
             self.queue.append({
                     'Data' : json.dumps(properties),                    # This is format in which Kinesis expects every item
                     'PartitionKey' : str(properties['$id'])
