@@ -8,11 +8,13 @@ Configurable parameters::
 
     {
         "name" : the name of the variable
-        "value" : a static number or string - or an array to pick one randomly OR
-        "timefunction" : a timefunction definition OR
-        "random_lower", "random_upper" : a range of values to pick randomly within (with optional "precision" parameter) OR
-        "randstruct" : "["A definition like this where",[" lists "," are "," concatenated"], " and tuples are ("chosen from","selected betwixt"), "randomly]" OR
-        "series" : a list: first device gets first value, second device second value etc.
+        ONE OF:
+            "value" : a static number or string - or an array to pick one randomly
+            "timefunction" : a timefunction definition
+            "random_lower", "random_upper" : a range of values to pick randomly within (with optional "precision" parameter)
+            "randstruct" : "["A definition like this where",[" lists "," are "," concatenated"], " and tuples are ("chosen from","selected betwixt"), "randomly]"
+            "series" : a list: first device gets first value, second device second value etc.
+            "index" : the device number (i.e. first device is 1, second gets 2, etc.)
 
         "randomness_property": Name of a property whose value to use for randomness (e.g. location)
     }
@@ -37,6 +39,7 @@ from common import randstruct
 
 class Variable(Device):
     device_indices = {}  # For every series-type variable we see, this maintains an index into the series
+    dev_count = 1
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         """A property whose value is static or driven by some time function."""
         def create_var(params):
@@ -77,8 +80,11 @@ class Variable(Device):
                 idx = Variable.device_indices[var_name]
                 var_value = series[idx % len(series)]
                 variables[var_name] = var_value
+            elif "index" in params:
+                variables[var_name] = Variable.dev_count
+                Variable.dev_count += 1
             else:
-                assert False,"variable " + var_name + " must have either value, timefunction, random_lower/upper, randstruct or series"
+                assert False,"variable " + var_name + " must have either value, timefunction, random_lower/upper, randstruct, series or index"
 
         super(Variable, self).__init__(instance_name, time, engine, update_callback, context, params)
         variables = {} # Keep all variables in the same message, so store them then update them all 
