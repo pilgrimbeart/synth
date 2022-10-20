@@ -4,17 +4,18 @@
     "write_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "2022-10-19T00:00:00",
-        "end_time" : "2022-10-19T01:00:00"
+        "start_time" : "now",
+        "end_time" : null
     },
    "client" : {
-        "comment" : "Ask client to explode output for us",
-        "explode_factor" : 6000,
-        "num_workers" : 200
+        "comment" : "Ask client to explode output for us"
+        //"explode_factor" : 6000,
+        //"num_workers" : 200
     },
     "events" : [
         {
             "repeats" : 900,
+            "interval" : "PT0.3S",
             "action": {
                 "create_device" : {
                     "functions" : {
@@ -22,10 +23,11 @@
                         "commswave" : {
                             "timefunction" : { 
                                 "pulsewave" : {
-                                    "interval" : "P1D",
-                                    "transition" : "P1D",
+                                    "comment" : "Always communicating - we add commswave even in devices we don't want to take offline so they emit a 'connected' flag",
+                                    "interval" : "PT20M",
+                                    "transition" : "PT20M",
                                     "invert" : true,
-                                    "comment" : "Always communicating - we add commswave even in devices we don't want to take offline so they emit a 'connected' flag"
+                                    "phase_absolute" : true
                                 }
                             }
                        }
@@ -34,8 +36,9 @@
             }
         },
         {
-            "repeats" : 100,  // Was 100
             "comment" : "10% of the devices go offline",
+            "repeats" : 100,  // Was 100
+            "interval" : "PT0.3S",
             "action": {
                 "create_device" : {
                     "functions" : {
@@ -43,10 +46,10 @@
                         "commswave" : {
                             "timefunction" : {
                                 "pulsewave" : {
-                                    "interval" : "P1D",
-                                    "delay" : "PT10M",       // After 10m
-                                    "transition" : "PT15M",  // Go offline for 15m (ensure there's at least 1 whole 5-minute bin where we're offline)
-                                    "invert" : false
+                                    "interval" : "PT20M",
+                                    "transition" : "PT10M",  // Go offline for 10m (ensure there's at least 1 whole 5-minute bin where we're offline)
+                                    "invert" : true,
+                                    "phase_absolute" : true
                                 }
                             }
                         }
