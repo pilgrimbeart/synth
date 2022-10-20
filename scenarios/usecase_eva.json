@@ -4,18 +4,19 @@
     "write_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "2022-10-19T00:00:00",
-        "end_time" : "2022-10-19T01:00:00"
+        "start_time" : "now",
+        "end_time" : null
     },
    "client" : {
-        "comment" : "Ask client to explode output for us",
-        "explode_factor" : 6000,
-        "num_workers" : 200
+        "comment" : "Ask client to explode output for us"
+        // "explode_factor" : 6000,
+        // "num_workers" : 200
     },
     "comment" : "Create 6m Smart Meters, each talking every 5m",
     "events" : [
         {
             "repeats" : 950,
+            "interval" : "PT0.3S",
             "action": {
                 "create_device" : {
                     "functions" : {
@@ -26,13 +27,14 @@
         },
         {
             "repeats" : 50, 
-            "comment" : "5% of the devices have EV chargers which turn on randomly such that all are on after 30M",
+            "interval" : "PT0.3S",
+            "comment" : "5% of the devices have EV chargers which turn on randomly such that all are on after 10M",
             "action": {
                 "create_device" : {
                     "functions" : {
                         #include usecase_functions,
                         "variable" : [
-                            { "name" : "kWhEV", "timefunction" : { "timeout" : { "max_time" : "PT30M", "on_value" : 7 } } } // For Test 3
+                            { "name" : "kWhEV", "timefunction" : { "timeout" : { "max_time" : "PT10M", "on_value" : 7, "period" : "PT20M" } } }
                         ]
                     }
                 }
