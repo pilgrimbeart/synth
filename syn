@@ -66,11 +66,14 @@ def account_from_pid(pid):
     return account
 
 def watch(pid):
-    account = account_from_pid(pid)
-    if account is None:
-        print("No such PID")
-    else:
-        subprocess.run(["tail", "-f", LOG_DIR + account + ".out"])
+    try:
+        account = account_from_pid(pid)
+        if account is None:
+            print("No such PID")
+        else:
+            subprocess.run(["tail", "-f", LOG_DIR + account + ".out"])
+    except KeyboardInterrupt:
+        pass # Don't print traceback if user just quits
 
 def run(account, scenario):
     pid = pid_from_account(account)
