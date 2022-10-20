@@ -141,7 +141,7 @@ class Worker():
         self.queue.append(record)
 
     def enqueue(self, properties):
-        if self.params["explode_factor"] == 1:
+        if ("explode_factor" not in self.params) or (self.params["explode_factor"] == 1):
             self._enqueue(properties)
         else:
             prop_copy = properties.copy()
