@@ -169,7 +169,7 @@ if __name__ == "__main__":
         elif sys.argv[1] == "run":
             run(sys.argv[2], sys.argv[3])
         elif sys.argv[1] == "kill":
-            signal_pid(int(sys.argv[2]), signal.SIGKILL, "Killed")
+            signal_pid(int(sys.argv[2]), signal.SIGINT, "Killed")   # Send SIGINT not SIGKILL so any worker children die too
         elif sys.argv[1] == "pause":
             signal_pid(int(sys.argv[2]), signal.SIGUSR1, "Paused")
         elif sys.argv[1] == "unpause":
