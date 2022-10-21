@@ -14,28 +14,6 @@
     },
     "events" : [
         {
-            "repeats" : 900,
-            "interval" : "PT0.3S",
-            "action": {
-                "create_device" : {
-                    "functions" : {
-                        #include usecase_functions,
-                        "commswave" : {
-                            "timefunction" : { 
-                                "pulsewave" : {
-                                    "comment" : "Always communicating - we add commswave even in devices we don't want to take offline so they emit a 'connected' flag",
-                                    "interval" : "PT20M",
-                                    "transition" : "PT20M",
-                                    "invert" : true,
-                                    "phase_absolute" : true
-                                }
-                            }
-                       }
-                    }
-                }
-            }
-        },
-        {
             "comment" : "10% of the devices go offline",
             "repeats" : 100,  // Was 100
             "interval" : "PT0.3S",
@@ -53,6 +31,28 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 900,
+            "interval" : "PT0.3S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions,
+                        "commswave" : {
+                            "timefunction" : { 
+                                "pulsewave" : {
+                                    "comment" : "Always communicating - we add commswave even in devices we don't want to take offline so they emit a 'connected' flag",
+                                    "interval" : "PT20M",
+                                    "transition" : "PT20M",
+                                    "invert" : true,
+                                    "phase_absolute" : true
+                                }
+                            }
+                       }
                     }
                 }
             }

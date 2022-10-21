@@ -16,27 +16,28 @@
     "events" : [
         #include usecase_dnos,
         {
+            "repeats" : 50, 
+            "interval" : "PT0.3S",
+            "comment" : "5% of the devices have EV chargers which turn on gradually such that all are on after 10M",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions,
+                        "variable" : [
+                            { "name" : "kWhEV", "timefunction" : { "timeout" : { "max_time" : "PT10M", "denominator" : 50, "on_value" : 7, "period" : "PT20M" } } }
+                        ],
+                        "repeater" : { "period" : "PT5M", "properties" : ["kWhEV"] }
+                    }
+                }
+            }
+        },
+        {
             "repeats" : 950,
             "interval" : "PT0.3S",
             "action": {
                 "create_device" : {
                     "functions" : {
                         #include usecase_functions
-                    }
-                }
-            }
-        },
-        {
-            "repeats" : 50, 
-            "interval" : "PT0.3S",
-            "comment" : "5% of the devices have EV chargers which turn on randomly such that all are on after 10M",
-            "action": {
-                "create_device" : {
-                    "functions" : {
-                        #include usecase_functions,
-                        "variable" : [
-                            { "name" : "kWhEV", "timefunction" : { "timeout" : { "max_time" : "PT10M", "on_value" : 7, "period" : "PT20M" } } }
-                        ]
                     }
                 }
             }

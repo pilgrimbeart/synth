@@ -1,6 +1,6 @@
         {
-            "repeats" : 6,
-            "comment" : "The data from DNOs - conceptually this is a separate stream from the device telemetry",
+            "repeats" : 5, 
+            "comment" : "The data from DNOs - conceptually a separate stream but for simplicity here we deliver it in the same stream as device telemetry",
             "action": {
                 "create_device" : {
                     "functions" : {
@@ -10,13 +10,13 @@
                             "use_label_as_$id" : true
                         },
                         "variable" : [
-                            { "name" : "dno", "value" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid", "Electricity North West Limited"]},
+                            { "name" : "dno", "value" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid"]},
                             { "name" : "green_kWh", "value" : 1000 },
-                            { "name" : "dont_explode" }
+                            { "name" : "dont_explode", "value" : true }
                         ],
                         "repeater" : {
                             "period" : "PT1M",
-                            "properties" : ["dno", "green_kWh"]
+                            "properties" : ["dno", "green_kWh", "dont_explode"]
                         }
                     }
                 }

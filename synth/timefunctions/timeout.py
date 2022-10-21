@@ -11,6 +11,7 @@ Arguments::
         "off_value" : 0.0,
         "on_value" : 7.0,
         "period" : "PT2H" (optional) - reset after this time
+        "denominator" : 50  (optional) - if specified, then devices turn on non-randomly such that this many devices will be on by max_time
     }
 """
 
@@ -26,6 +27,7 @@ import logging
  
 class Timeout(Timefunction):
     """Changes a value after a random period of time based on device id """
+    __device_count = 0
     def __init__(self, engine, device, params):
         self.engine = engine
         self.device = device
@@ -37,13 +39,19 @@ class Timeout(Timefunction):
             self.period = float(isodate.parse_duration(params["period"]).total_seconds())
         else:
             self.period = None
-        r = random.Random()
-        r.seed(crc32(self.device.get_property("$id").encode("utf-8")) / 2**32)
-        r.random()
-        r.random()
-        r.random()
-        self.timeout_time = int(self.min_time_S + (self.max_time_S - self.min_time_S) * r.random()) # Make it an integer number of seconds, to avoid precision issues when we test exactly on the boundary
-        # logging.info("Timeout: timeout_time = "+str(self.timeout_time))
+        self.denominator = params.get("denominator", None)
+
+        if self.denominator:    # Turn on predictably
+            self.timeout_time = int(self.min_time_S + (self.max_time_S - self.min_time_S) * Timeout.__device_count / self.denominator)
+            Timeout.__device_count += 1
+        else:                   # Turn on randomly
+            r = random.Random()
+            r.seed(crc32(self.device.get_property("$id").encode("utf-8")) / 2**32)
+            r.random()
+            r.random()
+            r.random()
+            self.timeout_time = int(self.min_time_S + (self.max_time_S - self.min_time_S) * r.random()) # Make it an integer number of seconds, to avoid precision issues when we test exactly on the boundary
+
         self.init_time = engine.get_now()
 
     def state(self, t=None, t_relative=False):

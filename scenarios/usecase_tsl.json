@@ -15,21 +15,6 @@
     "comment" : "Create 6m Smart Meters, each talking every 5m",
     "events" : [
         {
-            "repeats" : 950, 
-            "interval" : "PT0.3S",
-            "action": {
-                "create_device" : {
-                    "functions" : {
-                        #include usecase_functions,
-                        "comment" : "We use a timefunction to cause variable to be emitted periodically, even though in this case its value doesn't change",
-                        "variable" : [
-                            { "name" : "shiftablekWh", "timefunction" : { "randomwave" : { "period" : "PT5M", "lower" : 0, "upper" : 0 } } } 
-                        ]
-                    }
-                }
-            }
-        },
-        {
             "comment" : "5% of the devices have a shiftable load",
             "repeats" : 50, 
             "interval" : "PT0.3S",
@@ -40,6 +25,21 @@
                         "comment" : "We use a timefunction to cause variable to be emitted periodically, even though in this case its value doesn't change",
                         "variable" : [
                             { "name" : "shiftablekWh", "timefunction" : { "randomwave" : { "period" : "PT5M", "lower" : 7, "upper" : 7 } } }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "repeats" : 950, 
+            "interval" : "PT0.3S",
+            "action": {
+                "create_device" : {
+                    "functions" : {
+                        #include usecase_functions,
+                        "comment" : "We use a timefunction to cause variable to be emitted periodically, even though in this case its value doesn't change",
+                        "variable" : [
+                            { "name" : "shiftablekWh", "timefunction" : { "randomwave" : { "period" : "PT5M", "lower" : 0, "upper" : 0 } } } 
                         ]
                     }
                 }

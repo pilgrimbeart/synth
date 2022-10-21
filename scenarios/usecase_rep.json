@@ -4,22 +4,24 @@
     "write_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "2022-10-18T00:00:00",
-        "end_time" : "2022-10-19T01:00:00"
+        "start_time" : "now",
+        "end_time" : null
     },
    "client" : {
-        "comment" : "Ask client to explode output for us",
-        "explode_factor" : 6000,
-        "num_workers" : 200
+        "comment" : "Ask client to explode output for us"
+        // "explode_factor" : 6000,
+        // "num_workers" : 200
     },
     "comment" : "Create 6m Smart Meters, each talking every 5m",
     "events" : [
         {
             "repeats" : 1000,
+            "interval" : "PT0.3S",
             "action": {
                 "create_device" : {
                     "functions" : {
-                        #include usecase_functions
+                        #include usecase_functions,
+                        "energy" : { "no_metadata" : true, "test_mode" : true, "reading_interval" : "PT5M" }
                     }
                 }
             }

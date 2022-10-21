@@ -4,7 +4,7 @@
     "write_log" : true,
     "engine" : {
         "type" : "sim",
-        "start_time" : "-PT4H",
+        "start_time" : "now",
         "end_time" : null
     },
    "client" : {
@@ -21,7 +21,7 @@
                 "create_device" : {
                     "functions" : {
                         #include usecase_functions,
-                        "energy" : { "no_metadata" : true, "test_mode" : true, "reset_interval" : "PT3H", "reading_interval" : "PT5M" }
+                        "energy" : { "no_metadata" : true, "test_mode" : true, "reset_interval" : "PT20M", "reading_interval" : "PT5M" } // reset_interval should be PT3H, shortened for early testing
                     }
                 }
             }
