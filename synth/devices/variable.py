@@ -16,7 +16,9 @@ Configurable parameters::
             "series" : a list: first device gets first value, second device second value etc.
             "index" : the device number (i.e. first device is 1, second gets 2, etc.)
 
+        (optionally)
         "randomness_property": Name of a property whose value to use for randomness (e.g. location)
+        "pick_sequentially" : true to pick values from a list in sequence, not randomly
     }
 
     -or-
@@ -52,10 +54,16 @@ class Variable(Device):
 
             var_name = params["name"]
 
+            pick_seq = params.get("pick_sequentially", False)
+
             if "value" in params:
                 var_value = params["value"]
                 if type(var_value) == list:
-                    var_value = self.my_random.choice(var_value)
+                    if pick_seq:
+                        var_value = var_value[Variable.dev_count % len(var_value)] 
+                        Variable.dev_count += 1
+                    else:
+                        var_value = self.my_random.choice(var_value)
                 variables[var_name] = var_value
             elif "timefunction" in params:
                 tf_name = list(params["timefunction"].keys())[0]    # We know there's only 1
