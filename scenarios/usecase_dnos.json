@@ -5,18 +5,18 @@
                 "create_device" : {
                     "functions" : {
                         "basic" : {
-                            "label_root" : "dno-",
+                            "label_root" : "dno_",
                             "no_metadata" : true,
                             "use_label_as_$id" : true
                         },
                         "variable" : [
-                            { "name" : "dno", "value" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid"]},
-                            { "name" : "green_kWh", "value" : 1000 },
+                            { "name" : "dno", "value" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid"], "pick_sequentially" : true},
+                            { "name" : "green_kW", "value" : 40 },
                             { "name" : "dont_explode", "value" : true }
                         ],
                         "repeater" : {
                             "period" : "PT1M",
-                            "properties" : ["dno", "green_kWh", "dont_explode"]
+                            "properties" : ["dno", "green_kW", "dont_explode"]
                         }
                     }
                 }

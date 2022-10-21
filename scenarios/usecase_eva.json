@@ -24,9 +24,8 @@
                     "functions" : {
                         #include usecase_functions,
                         "variable" : [
-                            { "name" : "kWhEV", "timefunction" : { "timeout" : { "max_time" : "PT10M", "denominator" : 50, "on_value" : 7, "period" : "PT20M" } } }
-                        ],
-                        "repeater" : { "period" : "PT5M", "properties" : ["kWhEV"] }
+                            { "name" : "kWEV", "timefunction" : { "timeout" : { "min_time" : "PT10M", "max_time" : "PT20M", "denominator" : 50, "on_value" : 7.0, "period" : "PT30M", "metronomic" : "PT5M" } } }
+                        ]
                     }
                 }
             }
