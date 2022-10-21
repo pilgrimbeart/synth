@@ -12,6 +12,7 @@ Arguments::
         "on_value" : 7.0,
         "period" : "PT2H" (optional) - reset after this time
         "denominator" : 50  (optional) - if specified, then devices turn on non-randomly such that this many devices will be on by max_time
+        "metronomic" : "PT5M" (optional) - if specified, only emits values at this time interval, and always does
     }
 """
 
@@ -40,6 +41,10 @@ class Timeout(Timefunction):
         else:
             self.period = None
         self.denominator = params.get("denominator", None)
+        if "metronomic" in params:
+            self.metronomic = isodate.parse_duration(params["metronomic"]).total_seconds()
+        else:
+            self.metronomic = None
 
         if self.denominator:    # Turn on predictably
             self.timeout_time = int(self.min_time_S + (self.max_time_S - self.min_time_S) * Timeout.__device_count / self.denominator)
@@ -69,6 +74,9 @@ class Timeout(Timefunction):
         if t is None:
             t = self.engine.get_now()
         t -= self.init_time
+
+        if self.metronomic:
+            return self.init_time + (int(t / self.metronomic) + 1) * self.metronomic
 
         if self.period is None:
             if t < self.timeout_time: # Avoid precision issues
@@ -124,5 +132,12 @@ if __name__ == "__main__":
     assert fn.next_change(t=50) == 100
     assert 125 <= fn.next_change(t=100) <= 150
     assert fn.next_change(t=150) == 200
+
+    print("Testing metronomic and denominator")
+    fn = Timeout(dummy_engine(), dummy_device(), { "min_time" : "PT10S", "max_time" : "PT50S", "period" : "PT100S", "off_value" : False, "on_value" : True, "denominator" : 3, "metronomic" : "PT60S" })
+    assert fn.state(t=10)==True
+    assert fn.next_change(t=0) == 60
+    assert fn.next_change(t=30) == 60
+    assert fn.next_change(t=60) == 120
 
     print("Passed")
