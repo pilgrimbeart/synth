@@ -42,7 +42,7 @@ from . import kinesis_worker, timestream_worker
 REPORT_EVERY_S = 60
 
 class WorkerParent():   # Create a worker, and communicate with it
-    def __init__(self, params, logfile_abspath):
+    def __init__(self, instance_name, params, logfile_abspath):
         self.merge_buffer = {}  # Messages, keyed by ID
 
         self.qtx = MP_Queue()
@@ -54,7 +54,7 @@ class WorkerParent():   # Create a worker, and communicate with it
             child_func = timestream_worker.child_func
         else:
             assert False, "Invalid option for type param in client params"
-        self.p = MP_Process(target=child_func, args=(self.qtx, self.qrx), name="synth_worker")
+        self.p = MP_Process(target=child_func, args=(self.qtx, self.qrx), name="synth_worker " + instance_name)
         self.p.start()
         self.qtx.put( (params, logfile_abspath) ) # First item on queue is parameters
 

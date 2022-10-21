@@ -71,7 +71,7 @@ class Kinesis(Client):
 
         self.workers = []
         for w in range(self.num_workers):
-            self.workers.append(client_workers.WorkerParent(params, logfile_abspath))
+            self.workers.append(client_workers.WorkerParent(instance_name + " " + str(w) + " of " + str(self.num_workers), params, logfile_abspath))
 
     def add_device(self, device_id, time, properties):
         pass
