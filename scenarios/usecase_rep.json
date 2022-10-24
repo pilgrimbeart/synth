@@ -21,7 +21,7 @@
                 "create_device" : {
                     "functions" : {
                         #include usecase_functions,
-                        "energy" : { "no_metadata" : true, "test_mode" : true, "reading_interval" : "PT5M" }
+                        "energy" : { "no_metadata" : true, "test_mode" : [1,"PT24H"], "reading_interval" : "PT5M" }
                     }
                 }
             }
