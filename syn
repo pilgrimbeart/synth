@@ -78,7 +78,7 @@ def watch(pid):
     except KeyboardInterrupt:
         pass # Don't print traceback if user just quits
 
-def run(account, scenario):
+def run(account, scenarios):
     pid = pid_from_account(account)
     if pid != None:
         print("ERROR: A Synth job is already running on account",account,"with PID",pid)
@@ -95,12 +95,12 @@ def run(account, scenario):
         delete_file(file)
 
     with open(LOG_DIR + account + ".nohup", "wt") as outfile:
-        x = subprocess.Popen(["nohup", "python3", "synth", account, scenario], stdout=outfile, stderr=outfile)
+        x = subprocess.Popen(["nohup", "python3", "synth", account ] + scenarios, stdout=outfile, stderr=outfile)
     if x.errors != None:
         print(x.errors)
     else:
-        print("Running",account,scenario,"as PID",x.pid)
-        open(HISTORY_FILE,"at").write(time.ctime() + " " + "Started" + " " + account + " " + scenario + "\n")
+        print("Running",account,* scenarios,"as PID",x.pid)
+        open(HISTORY_FILE,"at").write(time.ctime() + " " + "Started" + " " + account + " " + " ".join(scenarios) + "\n")
         time.sleep(1)
         list_processes()
     # Very important to exit quickly, otherwise a ^C sent to us will also kill our child
@@ -168,7 +168,7 @@ if __name__ == "__main__":
         elif sys.argv[1] == "watch":
             watch(int(sys.argv[2]))
         elif sys.argv[1] == "run":
-            run(sys.argv[2], sys.argv[3])
+            run(sys.argv[2], sys.argv[3:])
         elif sys.argv[1] == "kill":
             signal_pid(int(sys.argv[2]), signal.SIGINT, "Killed")   # Send SIGINT not SIGKILL so any worker children die too
         elif sys.argv[1] == "pause":
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         elif sys.argv[1] == "help":
             print("Commands:")
             print("    list                        List all synth jobs, with their PID")
-            print("    run <account> <scenario>    Run a synth job. <account> is one of ../synth_accounts and <scenario> is one of ./scenarios e.g. 'run OnFStest 10secs'")
+            print("    run <account> <scenario>    Run a synth job. <account> is one of ../synth_accounts and <scenario> is one or more of ./scenarios e.g. 'run OnFStest 10secs'")
             print("    watch <pid>                 Monitor the output from a synth job")
             print("    kill <pid>                  Kill a synth job")
             print("    pause <pid>                 Pause a synth job")
