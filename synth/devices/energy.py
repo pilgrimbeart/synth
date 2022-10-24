@@ -12,7 +12,7 @@ Configurable parameters::
         "baseload_power" : (optional) baseload power level (e.g. night-time)
         "power_variation" : (optional) how much "noise" on the reading
         "no_metadata" : (optional) don't send metadata
-        "test_mode" : (optional) if true then kW starts at zero and rises slowly
+        "test_rate" : (optional) if true then kW starts at zero and rises forever (unless reset, below). [Numerator, Denominator] e.g. "[10, "PT10M"] means that the power will rise to 10kW after 10 minutes, and keep rising
         "reset_interval" : (optional) "PT4H" in test mode, when to reset
     }
 
@@ -50,7 +50,11 @@ class Energy(Device):
         self.baseload_power_kW = params["energy"].get("baseload_power", DEFAULT_BASELOAD_POWER_KW)
         self.power_variation_kW = params["energy"].get("power_variation", DEFAULT_POWER_VARIATION_KW)
         self.no_metadata = params["energy"].get("no_metadata", False)
-        self.test_mode = params["energy"].get("test_mode", False)
+        if not "test_mode" in params["energy"]:
+            self.test_mode = None
+        else:
+            (n,d) = params["energy"].get("test_mode")
+            self.test_mode = float(n) / isodate.parse_duration(d).total_seconds()
         if "reset_interval" not in params["energy"]:
             self.reset_interval = None
         else:
@@ -58,11 +62,11 @@ class Energy(Device):
         if not self.property_exists("device_type"):
             if not self.no_metadata:
                 self.set_property("device_type", "energy")
-        if self.test_mode:
+        if self.test_mode is not None:
             kWh = 0
         else:
             kWh = int(random.random() * 100000)
-        self.set_property("kWh", kWh)
+        self.set_properties({"kW" : 0, "kWh" : kWh})    # First kW reading is zero, so that integrating kW over time gives us kWh correctly
         self.occupied_bodge = params["energy"].get("occupied_bodge", False)
         if self.occupied_bodge:
             self.set_property("occupied", False)    # !!!!!!!!!!! TEMP BODGE TO OVERCOME CLUSTERING PROBLEM
@@ -86,11 +90,11 @@ class Energy(Device):
 
     # Private methods
     def tick_reading(self, _):
-        if self.test_mode:
+        if self.test_mode is not None:
             dT = self.engine.get_now() - self.start_time
             if self.reset_interval:
                 dT = dT % self.reset_interval
-            kW = dT * (TEST_MODE_INC_KW_PER_DAY / (60*60*24.0))
+            kW = dT * self.test_mode
         else:
             open_chance = opening_times.chance_of_occupied(self.engine.get_now(), self.opening_times)
             kW = self.baseload_power_kW + open_chance * (self.max_power_kW - self.baseload_power_kW - self.power_variation_kW/2.0)
@@ -103,7 +107,7 @@ class Energy(Device):
         kWh = int(100 * kWh) / 100.0
 
         reading_fault_chance = READING_FAULT_DAILY_CHANCE / ((60 * 60 * 24.0) / self.energy_reading_interval_s)
-        if (not self.test_mode) and (random.random() < reading_fault_chance):
+        if (self.test_mode is None) and (random.random() < reading_fault_chance):
             if random.random() > 0.5:
                 delta = 1
             else:
