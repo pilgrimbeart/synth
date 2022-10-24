@@ -107,16 +107,16 @@ class WorkerParent():   # Create a worker, and communicate with it
                 assert(False)
 
     def wait_until_stopped(self):
-        logging.info("Telling worker " + str(self.p.pid) + " to stop")
+        logging.info("Worker " + str(self.p.pid) + " asked to stop")
         try:
             while True: # Flush the queue (so our stop signal gets there ASAP)
                 self.qtx.get(timeout=0) #
         except:
             pass
         self._send(None, check_alive=False)    # Signal to stop (OK if already dead!)
-        logging.info("Waiting for worker " + str(self.p.pid) + " to stop")
+        # logging.info("Waiting for worker " + str(self.p.pid) + " to stop")
         self.p.join()
-        logging.info("Worker " + str(self.p.pid) + " has stopped")
+        logging.info("...stopped")
 
 
 start_time = 0

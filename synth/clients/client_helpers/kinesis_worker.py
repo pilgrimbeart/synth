@@ -46,24 +46,27 @@ POLL_PERIOD_S = 0.1 # How often the workers poll for new work
 ### This code is executed in the target process(es), so must not refer to Synth environment
 
 def child_func(qtx, qrx):   # qtx is messages to send, qrx is feedback to Synth
-    setproctitle.setproctitle(multiprocessing.current_process().name)
-    (params, logfile_abspath) = qtx.get()    # First item sent is a dict of params
-    worker = Worker(params)
-    while True:
-        try:
-            v = qtx.get(timeout=POLL_PERIOD_S)
-            # logging.info("Worker "+str(os.getpid())+" got from queue "+str(v)+". Queue size now "+str(q.qsize()))
-            if v is None:
-                logging.info("Worker "+str(os.getpid()) + " requested to exit")
-                return
-            worker.enqueue(v)
-            worker.note_input_queuesize(qtx.qsize())
-        except queue.Empty:
-            pass
-
-        result = worker.tick()
-        if result:
-            qrx.put(result)
+    try:
+        setproctitle.setproctitle(multiprocessing.current_process().name)
+        (params, logfile_abspath) = qtx.get()    # First item sent is a dict of params
+        worker = Worker(params)
+        while True:
+            try:
+                v = qtx.get(timeout=POLL_PERIOD_S)
+                # logging.info("Worker "+str(os.getpid())+" got from queue "+str(v)+". Queue size now "+str(q.qsize()))
+                if v is None:
+                    logging.info("Worker "+str(os.getpid()) + " requested to exit")
+                    return
+                worker.enqueue(v)
+                worker.note_input_queuesize(qtx.qsize())
+            except queue.Empty:
+                pass
+    
+            result = worker.tick()
+            if result:
+                qrx.put(result)
+    except KeyboardInterrupt:
+        pass    # Avoid printing reams of traceback from every worker if user hits ^C
 
 
 class Worker():
