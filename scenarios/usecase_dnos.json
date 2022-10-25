@@ -11,7 +11,7 @@
                         },
                         "variable" : [
                             { "name" : "dno", "value" : ["Western Power Distribution", "UK Power Networks", "ScottishPower Energy Networks", "Scottish and Southern Energy", "Northern Powergrid"], "pick_sequentially" : true},
-                            { "name" : "green_kW", "value" : 40 },
+                            { "name" : "green_kW", "value" : 240000 },
                             { "name" : "dont_explode", "value" : true }
                         ],
                         "repeater" : {
