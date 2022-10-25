@@ -204,7 +204,8 @@ class Worker():
                     ec = errors[i]["ErrorCode"]
                     if ec not in errors_seen:
                         errors_seen.append(ec)
-            logging.warning("Kinesis: Failed to post " + str(fails) + " of " + str(len(records)) + " records (retries so far " + str(retries)+") " + str(errors_seen))
+            if retries > 0: # Don't log the occasional retry, only multiple ones
+                logging.warning("Kinesis: Failed to post " + str(fails) + " of " + str(len(records)) + " records (retries so far " + str(retries)+") " + str(errors_seen))
             time.sleep(BACKOFF_S)
             self.send_to_kinesis(new_records, retries+1)
             # "Records": [ 
