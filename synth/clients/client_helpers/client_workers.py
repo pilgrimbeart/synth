@@ -160,13 +160,13 @@ def output_stats(workers):
         w.old_stats = w.stats
      
     logging.info("T+ "+str(int(time.time()-start_time)) + " " +
-                str(num_workers)+" workers, " +
-                str(tot_blocks) + " blocks, " +
-                str(new_blocks/REPORT_EVERY_S) + " blocks/s over " + str(REPORT_EVERY_S) + "s, " +
-                "%1.1f" % (slowest_post) + "s slowest post" +
+                str(num_workers)+" workers " +
+                str(tot_blocks) + " posts " +
+                str(new_blocks/REPORT_EVERY_S) + " posts/s (" + str(REPORT_EVERY_S) + "s) " +
+                "%1.1f" % (slowest_post) + "s slowest " +
                 str(post_stats) + " " +
                 str(int(total_post_latency)) + "tpl " +
-                str((min_queue_size,max_queue_size)) + " Qmin,max, " +
-                str(empty_workers)+" empty workers, " +
+                str((min_queue_size,max_queue_size)) + "Q " +
+                str(empty_workers)+" empty w's, " +
                 str(max_t_delta)+" max_t_delta"
                 )
