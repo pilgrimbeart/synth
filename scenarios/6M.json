@@ -2,6 +2,6 @@
    "client" : {
         "comment" : "Ask client to explode output for us",
         "explode_factor" : 6000,
-        "num_workers" : 16  // Works for Kinesis
+        "num_workers" : 4  // Works for Kinesis
     }
 }

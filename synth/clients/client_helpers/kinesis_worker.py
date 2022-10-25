@@ -38,7 +38,7 @@ import boto3 # AWS library
 
 KINESIS_MAX_MESSAGES_PER_POST = 500     # Kinesis requirement
 REPORT_EVERY_S = 60
-BACKOFF_S = 0  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
+BACKOFF_S = 1  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
 MAX_EXPLODE = 1_000_000
 
 POLL_PERIOD_S = 0.1 # How often the workers poll for new work
@@ -51,6 +51,7 @@ def child_func(qtx, qrx):   # qtx is messages to send, qrx is feedback to Synth
         (params, logfile_abspath) = qtx.get()    # First item sent is a dict of params
         worker = Worker(params)
         while True:
+            # logging.info(str(os.getppid()))
             try:
                 v = qtx.get(timeout=POLL_PERIOD_S)
                 # logging.info("Worker "+str(os.getpid())+" got from queue "+str(v)+". Queue size now "+str(q.qsize()))
