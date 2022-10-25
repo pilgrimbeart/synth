@@ -103,8 +103,9 @@ class Energy(Device):
         kWh = self.get_property("kWh")
         kWh += kW * self.energy_reading_interval_s / (60 * 60.0)
 
-        kW = int(1000 * kW) / 1000.0   # Round to 1 Watt
-        kWh = int(100 * kWh) / 100.0
+        if self.test_mode is None:
+            kW = int(1000 * kW) / 1000.0   # Round to 1 Watt
+            kWh = int(100 * kWh) / 100.0
 
         reading_fault_chance = READING_FAULT_DAILY_CHANCE / ((60 * 60 * 24.0) / self.energy_reading_interval_s)
         if (self.test_mode is None) and (random.random() < reading_fault_chance):
