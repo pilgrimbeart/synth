@@ -2,6 +2,6 @@
    "client" : {
         "comment" : "Ask client to explode output for us",
         "explode_factor" : 6000,
-        "num_workers" : 4  // Works for Kinesis
+        "num_workers" : 8  // Kinesis gives us about 10 posts/sec per worker, if everything perfect. For 6M 5m devices we need around 40 posts/sec.
     }
 }

@@ -26,8 +26,7 @@
                                 "pulsewave" : {
                                     "interval" : "PT20M",
                                     "transition" : "PT10M",  // Go offline for 10m (ensure there's at least 1 whole 5-minute bin where we're offline)
-                                    "invert" : true,
-                                    "phase_absolute" : true
+                                    "invert" : true
                                 }
                             }
                         }
@@ -48,8 +47,7 @@
                                     "comment" : "Always communicating - we add commswave even in devices we don't want to take offline so they emit a 'connected' flag",
                                     "interval" : "PT20M",
                                     "transition" : "PT20M",
-                                    "invert" : true,
-                                    "phase_absolute" : true
+                                    "invert" : true
                                 }
                             }
                        }
