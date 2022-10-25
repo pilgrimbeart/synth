@@ -38,7 +38,7 @@ import boto3 # AWS library
 
 KINESIS_MAX_MESSAGES_PER_POST = 500     # Kinesis requirement
 REPORT_EVERY_S = 60
-BACKOFF_S = 1  # How long to wait when AWS says its under-provisioned (set to 0 to force AWS to just cope!)
+BACKOFF_S = 0.1  # How long to wait when AWS says its under-provisioned. If we're running a stream close to capacity then we'll get capacity exceeded retries quite a lot, don't want to wait too much
 MAX_EXPLODE = 1_000_000
 
 POLL_PERIOD_S = 0.1 # How often the workers poll for new work

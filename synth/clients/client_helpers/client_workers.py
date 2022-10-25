@@ -162,11 +162,12 @@ def output_stats(workers):
     logging.info("T+ "+str(int(time.time()-start_time)) + " " +
                 str(num_workers)+" workers " +
                 str(tot_blocks) + " posts " +
-                str(new_blocks/REPORT_EVERY_S) + " posts/s (" + str(REPORT_EVERY_S) + "s) " +
+                str(REPORT_EVERY_S) + "s: " + 
+                "%0.1f" % (new_blocks/REPORT_EVERY_S) + " posts/s " + 
                 "%1.1f" % (slowest_post) + "s slowest " +
                 str(post_stats) + " " +
                 str(int(total_post_latency)) + "tpl " +
                 str((min_queue_size,max_queue_size)) + "Q " +
                 str(empty_workers)+" empty w's, " +
-                str(max_t_delta)+" max_t_delta"
+                str(max_t_delta)+" max_delta"
                 )
