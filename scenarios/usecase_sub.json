@@ -21,8 +21,8 @@
                 "create_device" : {
                     "functions" : {
                         #include usecase_functions,
-                        // "energy" : { "no_metadata" : true, "test_mode" : [2.084, "PT20M"], "reset_interval" : "PT4H", "reading_interval" : "PT5M" } // Correct numbers for 6M scale test - hits 25MW per substation after 20M
-                        "energy" : { "no_metadata" : true, "test_mode" : [2.083333333, "PT10M"], "reset_interval" : "PT30M", "reading_interval" : "PT5M" } // Shortened for quicker test
+                        "energy" : { "no_metadata" : true, "test_mode" : [2.084, "PT20M"], "reset_interval" : "PT4H",  "reading_interval" : "PT5M" } // Correct numbers for 6M scale test - hits 25MW per substation after 20M
+                     // "energy" : { "no_metadata" : true, "test_mode" : [2.084, "PT10M"], "reset_interval" : "PT30M", "reading_interval" : "PT5M" } // Shortened for quicker test
                     }
                 }
             }
