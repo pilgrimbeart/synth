@@ -176,8 +176,16 @@ class Model():
                 assert "Element of model file contains neither hierarchy or model: "+repr(elem)
 
     def enact_models(self, models, specification, engine):
-        now = engine.get_now()
-        original_now = now
+        def create_device(args):
+            (device_space, slf, m, properties, model_props) = args
+            device = self.create_device(device_spec)
+            device.model = self
+            device.model_spec = m
+            device.set_properties(properties) 
+            if MODEL_FIELDS_BECOME_PROPERTIES:
+                device.set_properties(m["model"])
+
+        t = engine.get_now()
         for m in models:
             if "devices" in m:
                 properties = self.collect_properties(self.find_matching_models(m))
@@ -186,18 +194,10 @@ class Model():
                 for device_spec in m["devices"]:
                     assert type(device_spec) == dict, "This should be a {dict} : "+str(device_spec)
                     for count in range(number):
-                        device = self.create_device(device_spec)
-                        device.model = self
-                        device.model_spec = m
-                        device.set_properties(properties) 
-                        if MODEL_FIELDS_BECOME_PROPERTIES:
-                            device.set_properties(m["model"])
+                        engine.register_event_at(t, create_device, (device_spec, self, m, properties, m["model"]), None)
                 if self.model_interval is not None:
-                    now += self.model_interval
-                    engine.set_now(now)
+                    t += self.model_interval
 
-        if now != original_now:
-            engine.set_now(original_now)    # Slightly nasty hack as it requires us to move time backwards here to set it to where it was - is this a problem?
 
     def collect_properties(self, models):
         props = {}
