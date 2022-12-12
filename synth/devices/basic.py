@@ -59,7 +59,7 @@ class Basic(Device):
         if not self.no_metadata:
             self.properties["is_demo_device"] = True    # Flag this device so it's easy to delete (only) demo devices from an account that has also started to have real customer devices in it too.
 
-        if "labels" in params["basic"]:
+        if "labels" in params.get("basic",{}):
             labs = params["basic"]["labels"]
             label = labs[Basic.device_number % len(labs)]
         else:
