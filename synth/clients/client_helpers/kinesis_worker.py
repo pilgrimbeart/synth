@@ -74,11 +74,14 @@ class Worker():
     def __init__(self, params):
         logging.info("Kinesis Worker "+str(os.getpid())+" initialising with params "+str(params))
         self.params = params
+        if "setenv" in params:
+            for (key, value) in params["setenv"].items():
+                logging.info("SETENV "+key+" "+value)
+                os.environ[key] = value
 
-        if "profile_name" in self.params:
-            session = boto3.Session(self.params["profile_name"])
-        else:
-            session = boto3.Session()
+        session = boto3.Session(
+            profile_name = self.params.get("profile_name", None),
+            region_name = self.params.get("region_name", None))
 
         if session.get_credentials().secret_key:
             logging.info("Kinesis worker sees AWS secret key is set")
