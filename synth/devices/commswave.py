@@ -28,17 +28,22 @@ import inspect
 class Commswave(Device):
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         """Take Comms up and down according to some time function"""
+        self.comms_timefunction = None
+        self.comms_tf_threshold = None
+        self.comms_gate_properties = None
+        self.messages_sent = 0
+        self.messages_attempted = 0
+        super(Commswave,self).__init__(instance_name, time, engine, update_callback, context, params)   # This may send messages (calling our comms_ok() and transmit() functions), so we need to be set-up-enough before calling it 
         tf = params["commswave"]["timefunction"]
         self.comms_timefunction = importer.get_class("timefunction", list(tf.keys())[0])(engine, self, tf[list(tf.keys())[0]])
         self.comms_tf_threshold = params["commswave"].get("threshold", None)
         self.comms_gate_properties = params["commswave"].get("gate_properties", None)
-        self.messages_sent = 0
-        self.messages_attempted = 0
-        super(Commswave,self).__init__(instance_name, time, engine, update_callback, context, params)   # This may send messages (calling our comms_ok() and transmit() functions), so we need to be set-up-enough before calling it
         self.set_property("connected", self.timefunction_says_communicate())
         self.engine.register_event_at(self.comms_timefunction.next_change(), self.tick_commswave, self, self) # Tick the "connected" flag 
 
     def timefunction_says_communicate(self):
+        if self.comms_timefunction is None:
+            return True # This should only happen at startup under strange init order
         thresh = 0.0
         if self.comms_tf_threshold is not None:
             thresh = self.comms_tf_threshold

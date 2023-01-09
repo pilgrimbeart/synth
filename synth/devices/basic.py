@@ -129,6 +129,7 @@ class Basic(Device):
         self.transmit(self.properties["$id"], timestamp, properties, force_comms)
 
     def get_property(self, prop_name, default_value=None):
+        assert hasattr(self, "properties"), "basic::get_property('"+prop_name+"') called before basic:__init__() has been called"
         if default_value is not None:
             if self.property_absent(prop_name):
                 return default_value
