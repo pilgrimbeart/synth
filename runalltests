@@ -1,0 +1,11 @@
+echo
+echo "This script runs the 5 use-cases (CCU, TSL, EVA, SUB and REP) into the 5 Kinesis streams at 6M device volume"
+echo "Are you SURE you have terminated any other jobs running into these streams? If not, press ^C now."
+echo "Press return to continue."
+read
+
+./syn run OnKinesis_ccu usecase_ccu 6M
+./syn run OnKinesis_tsl usecase_tsl 6M
+./syn run OnKinesis_eva usecase_eva 6M
+./syn run OnKinesis_sub usecase_sub 6M
+./syn run OnKinesis_rep usecase_rep 6M

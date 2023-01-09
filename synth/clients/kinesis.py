@@ -59,7 +59,7 @@ class Kinesis(Client):
         self.params = params
         if "setenv" in params:
             for (key, value) in params["setenv"].items():
-                # logging.info("SETENV "+key+" "+value)
+                logging.info("SETENV "+key+" "+value)
                 os.environ[key] = value
 
         self.num_workers = params.get("num_workers", DEFAULT_NUM_WORKERS)
