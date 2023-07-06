@@ -73,7 +73,7 @@ KWH_PER_CHARGE_MAX = 70
 KWH_PER_CHARGE_AV = 20
 
 
-HEARTBEAT_PERIOD = 15 * MINS
+HEARTBEAT_PERIOD = 5 * MINS
 
 POWER_TO_MONTHLY_VALUE = 8 # Ratio to turn charger's max kW into currency
 
@@ -116,10 +116,16 @@ class Charger(Device):
 
     def __init__(self, instance_name, time, engine, update_callback, context, params):
         super(Charger,self).__init__(instance_name, time, engine, update_callback, context, params)
-        self.loc_rand = utils.consistent_hash(self.get_property_or_None("address_postal_code")) # Allows us to vary behaviour based on our location
+        if self.property_exists("address_postal_code"):
+            self.loc_rand = utils.consistent_hash(self.get_property_or_None("address_postal_code")) # Allows us to vary behaviour based on our location
+            domain = self.get_property("address_postal_code").replace(" ","") + ".example.com"
+        else:
+            self.loc_rand = utils.consistent_hash(self.get_property("$id"))
+            domain = "example.com"
+        self.set_property("domain", domain)
 
         (mfr,model,max_rate,datasheet) = ev_mfrs.pick_mfr_model_kW_datasheet(self.loc_rand)
-        self.set_properties( {
+        self.set_properties_with_metadata( {
             "manufacturer" : mfr,
             "model" : model,
             "max_kW" : max_rate,
@@ -130,8 +136,6 @@ class Charger(Device):
         self.opening_time_pattern = opening_times.pick_pattern(self.loc_rand)
         self.set_property("opening_times", opening_times.specification(self.opening_time_pattern))
         self.set_property("device_type", "charger") 
-        domain = self.get_property("address_postal_code").replace(" ","") + ".example.com"
-        self.set_property("domain", domain)
         self.set_property("email", self.get_property("$id") + "@" + domain)
         sevendigits = "%07d" % int(self.loc_rand * 1E7)
         self.set_property("phone", "+1" + sevendigits[0:3] + "555" + sevendigits[3:7])
@@ -140,7 +144,7 @@ class Charger(Device):
 
         self.last_charging_start_time = None
         self.last_charging_end_time = None
-        self.set_properties( {
+        self.set_properties_with_metadata( {
             "pilot" : "A",
             "energy" : 0,
             "energy_delta" : 0,
@@ -160,7 +164,7 @@ class Charger(Device):
         logging.info("Handling external event for "+str(self.properties["$id"]))
         if event_name=="resetVoltageExcursion":
             logging.info("Resetting voltage excursion on device "+self.properties["$id"])
-            self.set_properties({
+            self.set_properties_with_metadata({
                     "pilot" : "A",
                     "fault" : None
                     })
@@ -171,6 +175,29 @@ class Charger(Device):
     def close(self):
         super(Charger,self).close()
     
+    # ---- internal methods
+    def metadata(self):
+        def hexdigit(n):
+            chars = "0123456789abcdef"
+            return chars[(utils.consistent_hash_int(myid)+n*12345) % len(chars)]
+        myid = self.get_property("$id")
+        props = {}
+        props["mac_address"] = ""
+        for i in range(12):
+            props["mac_address"] += hexdigit(i)
+
+        props["metadata.ppid"] = "PSL-" + str(int(utils.consistent_hash_int(myid) % 1E6))
+        props["metadata.door"] = "A"
+        props["metadata.evseId"] = 1
+        props["sn"] = str(int(utils.consistent_hash_int(myid) % 1E10))
+        logging.info("metadata for "+myid+" is "+str(props))
+        return props
+
+    def set_properties_with_metadata(self, props):
+        props.copy()
+        props.update(self.metadata())
+        self.set_properties(props)
+
     def pick_a_fault(self, sampling_interval_s):
         for (fault, mtbf, var) in FAULTS:
             var *= self.loc_rand    # 0..1 based on location
@@ -183,8 +210,9 @@ class Charger(Device):
         return None
 
     def tick_heartbeat(self, _):
-        self.set_properties({
-            "heartbeat" : True
+        self.set_properties_with_metadata({
+            "heartbeat" : True,
+            "event" : "HEARTBEAT"
             })
 
         # Go into fault state if voltage outside legal limits
@@ -225,7 +253,7 @@ class Charger(Device):
         self.max_charging_time_s = self.expo_random(DWELL_TIME_MIN_S, DWELL_TIME_MAX_S, DWELL_TIME_AV_S)
         self.energy_this_charge = 0
         self.last_charging_start_time = self.engine.get_now()
-        self.set_properties({
+        self.set_properties_with_metadata({
             "pilot" : "C",
             "uui" : self.uui,
             "energy" : 0,
@@ -238,7 +266,7 @@ class Charger(Device):
 
     def enter_fault_state(self, fault):
         logging.info(str(self.get_property("$id")) + " " + str(fault) + " fault")
-        self.set_properties({
+        self.set_properties_with_metadata({
            "pilot" : "F",
            "fault" : fault,
            "energy" : 0,    # We might have been charging so stop charge
@@ -261,7 +289,7 @@ class Charger(Device):
             self.enter_fault_state(fault)
         else:
             if (self.energy_to_transfer > 0) and (self.engine.get_now() - self.last_charging_start_time < self.max_charging_time_s):    # STILL CHARGING
-                self.set_properties({
+                self.set_properties_with_metadata({
                     # "pilot" : "C",
                     "energy" : int(self.energy_this_charge),
                     "energy_delta" : energy_transferred,
@@ -271,14 +299,14 @@ class Charger(Device):
                 self.time_finished_charging = self.engine.get_now()
                 if Charger.myRandom.random() < CHANCE_OF_BLOCKING:
                     self.will_block_for = Charger.myRandom.random() * self.average_blocking_time_s   # BLOCKING
-                    self.set_properties({
+                    self.set_properties_with_metadata({
                         "pilot" : "B",
                         "energy" : int(self.energy_this_charge),
                         "energy_delta" : 0,
                         "power" : 0})
                     self.engine.register_event_in(CHARGE_POLL_INTERVAL_S, self.tick_check_blocking, self, self)
                 else:                                                               # AVAILABLE
-                    self.set_properties({
+                    self.set_properties_with_metadata({
                         "pilot" : "A",
                         "occupied" : False,
                         "energy" : 0,
@@ -289,13 +317,13 @@ class Charger(Device):
 
     def tick_check_blocking(self, _):
         if self.engine.get_now() >= self.time_finished_charging + self.will_block_for:
-            self.set_properties({
+            self.set_properties_with_metadata({
                 "pilot" : "A",
                 "energy" : 0,
                 "occupied" : False})  # Disconnect
             self.engine.register_event_at(self.time_of_next_charge(), self.tick_start_charge, self, self)
         else:
-            self.set_properties({
+            self.set_properties_with_metadata({
                 "pilot" : "B",
                 "energy" : int(self.energy_this_charge)
                 })
@@ -309,7 +337,7 @@ class Charger(Device):
         if self.get_property("fault") in [VOLTAGE_FAULT]:  # Some faults don't fix themselves
             return
 
-        self.set_properties({
+        self.set_properties_with_metadata({
                 "pilot" : "A",
                 "fault" : None
                 })

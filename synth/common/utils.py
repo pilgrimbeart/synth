@@ -36,9 +36,12 @@ def hashIt(n, limit):
     else:
         return abs(hash(n)) % limit
     
+def consistent_hash_int(s):
+    """Return a large int based on a string, consistently"""
+    if s is None:
+        s = ""
+    return int(hashlib.sha256(s.encode('utf-8')).hexdigest(), 16) 
 
 def consistent_hash(s):
     """Return a float 0..1 based on a string, consistently (Python's hash() is intentionally not consistent between runs!)"""
-    if s is None:
-        s = ""
-    return int(hashlib.sha256(s.encode('utf-8')).hexdigest(), 16) % 10**8 / 10**8.0
+    return consistent_hash_int(s) % 10**8 / 10**8.0
