@@ -90,7 +90,7 @@
                                 "timefunction" : {
                                     "sinewave" : {
                                         "period" : ["PT15M", "PT13M", "PT17M", "PT23M", "PT37M", "PT3H", "PT13H", "PT27H", "P3D", "P7D", "P13D"],
-                                        "overall_amplitude" : 52.0, "overall_offset" : 204, "sample_period" : "PT5M", "randomise_phase_by" : "$id", "precision" : 1
+                                        "overall_amplitude" : 0.0, "overall_offset" : 0, "sample_period" : "PT5M", "randomise_phase_by" : "$id", "precision" : 1
                                     }
                                 }
                             }
